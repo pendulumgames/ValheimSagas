@@ -1,0 +1,1 @@
+<Project><PropertyGroup><Deterministic>true</Deterministic><ContinuousIntegrationBuild>true</ContinuousIntegrationBuild><RestorePackagesWithLockFile>true</RestorePackagesWithLockFile></PropertyGroup></Project>

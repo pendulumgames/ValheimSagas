@@ -1,0 +1,11 @@
+README.md
+CHANGELOG.md
+LICENSE
+THIRD-PARTY-NOTICES.md
+icon.png
+docs/VERIFICATION.md
+docs/LORE.md
+docs/IN-GAME-TESTS.md
+docs/screenshots/character.png
+docs/screenshots/atlas.png
+docs/screenshots/leaderboard.png

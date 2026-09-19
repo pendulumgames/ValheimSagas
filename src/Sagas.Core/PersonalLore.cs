@@ -1,0 +1,38 @@
+using System;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Security.Cryptography;
+using System.Collections.Generic;
+using System.Net;
+using System.Threading.Tasks;
+using LiteDB;
+using Newtonsoft.Json;
+namespace ValheimSagas;
+public sealed class LorePreset {public string Name {get;set;}="My saga";public string Route {get;set;}="openrouter/free";public bool AllowPaid {get;set;}public decimal MaxPrice {get;set;}public int DailyRequests {get;set;}=5;}
+public sealed class PersonalLoreSettings {public string Active {get;set;}="";public List<LorePreset> Presets {get;set;}=new List<LorePreset>();public string Key {get;set;}="";public bool ClearKey {get;set;}}
+public sealed partial class SagaStore {
+ string secretDirectory="";
+ byte[] SecretKey(){var path=Path.Combine(secretDirectory,"personal-lore.key");if(!File.Exists(path)){var key=new byte[64];using(var rng=RandomNumberGenerator.Create())rng.GetBytes(key);using(var file=new FileStream(path,FileMode.CreateNew,FileAccess.Write,FileShare.None))file.Write(key,0,key.Length);}var bytes=File.ReadAllBytes(path);if(bytes.Length!=64)throw new InvalidDataException("Personal lore key storage is unavailable.");return bytes;}
+ string Seal(string value){var key=SecretKey();using var aes=Aes.Create();aes.Key=key.Take(32).ToArray();aes.GenerateIV();using var encrypt=aes.CreateEncryptor();var input=Encoding.UTF8.GetBytes(value);var body=aes.IV.Concat(encrypt.TransformFinalBlock(input,0,input.Length)).ToArray();using var mac=new HMACSHA256(key.Skip(32).ToArray());return Convert.ToBase64String(body.Concat(mac.ComputeHash(body)).ToArray());}
+ string Unseal(string value){var key=SecretKey();var bytes=Convert.FromBase64String(value);if(bytes.Length<64)throw new InvalidDataException();var body=bytes.Take(bytes.Length-32).ToArray();using var mac=new HMACSHA256(key.Skip(32).ToArray());var expected=mac.ComputeHash(body);int diff=0;for(int i=0;i<32;i++)diff|=expected[i]^bytes[body.Length+i];if(diff!=0)throw new InvalidDataException("Personal lore key could not be read.");using var aes=Aes.Create();aes.Key=key.Take(32).ToArray();aes.IV=body.Take(16).ToArray();using var decrypt=aes.CreateDecryptor();return Encoding.UTF8.GetString(decrypt.TransformFinalBlock(body,16,body.Length-16));}
+ public PersonalLoreSettings PersonalLore(string world,string player,bool includeKey=false){lock(gate){var d=db.GetCollection("personalLore").FindById(Key(world,player));if(d==null)return new PersonalLoreSettings();var s=JsonConvert.DeserializeObject<PersonalLoreSettings>(d["json"].AsString)!;s.Key=includeKey&&!string.IsNullOrEmpty(d["secret"].AsString)?Unseal(d["secret"].AsString):d["secret"].AsString!=""?"configured":"";return s;}}
+ public void SavePersonalLore(string world,string player,PersonalLoreSettings settings){lock(gate){var id=Key(world,player);var c=db.GetCollection("personalLore");var old=c.FindById(id);var secret=settings.ClearKey?"":settings.Key!=""?Seal(settings.Key):old?["secret"].AsString??"";var copy=new PersonalLoreSettings{Active=settings.Active,Presets=settings.Presets};c.Upsert(new BsonDocument{{"_id",id},{"json",JsonConvert.SerializeObject(copy)},{"secret",secret}});}}
+ public bool LoreReady(string world,string player){lock(gate){var d=db.GetCollection("loreRetry").FindById(Key(world,player));return d==null||d["utc"].AsDateTime.ToUniversalTime()<=DateTime.UtcNow;}}
+ public void DeferLore(string world,string player){lock(gate)db.GetCollection("loreRetry").Upsert(new BsonDocument{{"_id",Key(world,player)},{"utc",DateTime.UtcNow.AddMinutes(5)}});}
+ public bool ReservePersonalLore(string world,string player,int limit){lock(gate){var id=Key(world,player,DateTime.UtcNow.ToString("yyyy-MM-dd"));var c=db.GetCollection("personalLoreBudget");var d=c.FindById(id);var used=d?["used"].AsInt32??0;if(used>=limit)return false;c.Upsert(new BsonDocument{{"_id",id},{"used",used+1}});return true;}}
+}
+public sealed partial class SagaService {
+ SagaOptions PlayerLoreOptions(string world,string player){var s=store.PersonalLore(world,player,true);var p=s.Presets.FirstOrDefault(p=>p.Name==s.Active);if(s.Key==""||p==null)return options;return new SagaOptions{LoreEnabled=options.LoreEnabled,OpenRouterKey=s.Key,LoreModel=p.Route,LoreAllowPaid=p.AllowPaid,LoreMaxPrice=p.AllowPaid?p.MaxPrice:0,LoreDailyBudget=Math.Min(20,p.DailyRequests),Log=options.Log};}
+ async Task PersonalLoreApi(HttpListenerContext c,PlayerLoginIdentity? identity){
+  if(identity==null){await Respond(c,403,new{error="Personal login required."});return;}
+  if(c.Request.HttpMethod=="POST"){
+   if(c.Request.ContentLength64<1||c.Request.ContentLength64>12000||!(c.Request.ContentType??"").StartsWith("application/json",StringComparison.OrdinalIgnoreCase)){await Respond(c,400,new{error="A bounded JSON request is required."});return;}
+   PersonalLoreSettings? settings;try{using var reader=new StreamReader(c.Request.InputStream,Encoding.UTF8);var read=reader.ReadToEndAsync();if(await Task.WhenAny(read,Task.Delay(5000))!=read){await Respond(c,408,new{error="Request timed out."});return;}settings=JsonConvert.DeserializeObject<PersonalLoreSettings>(await read,new JsonSerializerSettings{MaxDepth=5,MissingMemberHandling=MissingMemberHandling.Error});}catch(JsonException){await Respond(c,400,new{error="Invalid settings."});return;}
+   if(settings==null||settings.Key==null||settings.Key.Length>512||settings.Key.Any(char.IsControl)||settings.Presets==null||settings.Presets.Count>8||settings.Presets.Any(p=>p==null||!TextValid(p.Name,60,true)||!LoreEngine.IsRoute(p.Route)||p.DailyRequests<1||p.DailyRequests>20||p.MaxPrice<0||p.MaxPrice>100||p.AllowPaid&&p.MaxPrice<=0||!p.AllowPaid&&!LoreEngine.IsFreeModel(p.Route)&&!p.Route.StartsWith("@preset/",StringComparison.Ordinal))||settings.Presets.Select(p=>p.Name).Distinct(StringComparer.Ordinal).Count()!=settings.Presets.Count||settings.Active==null||settings.Active!=""&&!settings.Presets.Any(p=>p.Name==settings.Active)) {await Respond(c,400,new{error="Use up to 8 uniquely named presets, a valid model or @preset/name, and an explicit paid ceiling when paid routing is enabled."});return;}
+   if(settings.Key!=""&&!c.Request.IsSecureConnection&&(c.Request.RemoteEndPoint==null||!IPAddress.IsLoopback(c.Request.RemoteEndPoint.Address))){await Respond(c,400,new{error="Use HTTPS or a loopback reverse proxy to submit an API key."});return;}
+   store.SavePersonalLore(identity.World,identity.PlayerId,settings);store.QueueLore(identity.World,identity.PlayerId);
+  }
+  var current=store.PersonalLore(identity.World,identity.PlayerId);await Respond(c,200,new{world=identity.World,hostEnabled=options.LoreEnabled&&!string.IsNullOrWhiteSpace(options.OpenRouterKey),hasKey=current.Key!="",active=current.Active,presets=current.Presets});
+ }
+}

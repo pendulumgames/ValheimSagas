@@ -1,0 +1,8 @@
+{
+  "name": "valheim-sagas-web-checks",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Isolated browser acceptance checks against the explicitly synthetic DevHost",
+  "scripts": { "test": "node acceptance.cjs && node profile-links.cjs && node heatmap.cjs && node readability.cjs && node login.cjs && node storyteller.cjs" },
+  "devDependencies": { "playwright": "1.55.0" }
+}

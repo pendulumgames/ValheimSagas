@@ -1,0 +1,266 @@
+[
+  {
+    "job": "grounded-meadows-horizon-1440-max-v1",
+    "model": "gpt-image-2.5-sunburst",
+    "quality": "max",
+    "size": "2560x1440",
+    "utc": "2026-09-19T03:15:52.394826+00:00",
+    "status": "complete",
+    "reserved_usd": 0.65,
+    "prompt": "Use case: stylized-concept. Original Nordic fantasy environment painting for a Viking character-profile background. One continuous wide 16:9 landscape, premium cinematic painterly realism, rich deep colors, atmospheric depth, organic restrained textures.\nCOMPOSITION IS CRITICAL: camera at a standing person's chest height, aimed straight toward the distance, level and horizontal, not tilted down and not an aerial overlook. Preserve a generous beautiful sky occupying roughly the upper 40-45 percent of the canvas. Distant skyline and open horizon around 43-48 percent from the top; mountain peaks can rise higher at the outer sides but must not fill the entire upper picture. A broad near-level walkable foreground already reaches the center of the image at 56 percent from the top. The future character's boots will be centered at x=50 percent, y=68 percent: this point and the entire area around it from x=35 to65 percent, y=59 to82 percent MUST be solid flat continuous ground, clearly on the near side of any water, drop or cliff edge. The standing point is higher in the composition than a conventional bottom-edge landscape foreground. Keep the near ground short and gently foreshortened, not an immense downward-looking apron. The standing area extends to the bottom edge and naturally joins the landscape; no artificial circular platform, pedestal or isolated island. The unseen character will extend upward through the center, so frame strong features toward the outer thirds and keep the middle open. Do not depict the character or any marker for this placement. Balance readable firm ground with a broad visible sky and a level sense of perspective.\n\nSCENE: A lush Nordic coastal meadow at golden sunset. Deep emerald and olive grass, restrained small wildflowers and low shrubs, weathered stones and white-barked birches at the outer edges. A level short-grass clearing fills the middle foreground, not bare dirt. Beyond the clearing, gentle green hills lead to a calm fjord, distant blue-slate craggy mountains remain low in the frame. Sun toward upper-right side near horizon, rich copper and gold broken clouds filling the spacious sky with dramatic cool slate shadows. Warm amber rim light and textured green grass, luminous sunset without bleaching or a white glare hotspot. Keep clear grass under the future boots, with rocks near edges only.\nAvoid excessive repetitive microdetail, vertical texture bands, copied/pasted vegetation, duplicated forms, striped ground textures, sharpening halos, dull desaturated colors or overexposure. No people, creatures, human silhouettes, weapons, text, symbols, UI, borders, watermarks, diagrams, split panels or copied game assets. Do not draw coordinates, a footprint or a target. The entire image is finished original environmental artwork.",
+    "reference_sha256": null,
+    "usage": {
+      "input_tokens": 556,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 556
+      },
+      "output_tokens": 7370,
+      "total_tokens": 7926,
+      "output_tokens_details": {
+        "image_tokens": 7370,
+        "text_tokens": 0
+      }
+    },
+    "estimated_usage_cost_usd": 0.22388,
+    "request_id": "req_eac31a39a5a1457f9da29001660debc1",
+    "dimensions": [
+      2560,
+      1440
+    ],
+    "bytes": 7053219,
+    "sha256": "1232255d272a040af06716b03e635ae0ac856884f995fac9a9774491d1389c99",
+    "output": "output/grounded-meadows-horizon-1440-max-v1.png"
+  },
+  {
+    "job": "grounded-black-forest-horizon-1440-max-v1",
+    "model": "gpt-image-2.5-sunburst",
+    "quality": "max",
+    "size": "2560x1440",
+    "utc": "2026-09-19T03:17:39.811271+00:00",
+    "status": "complete",
+    "reserved_usd": 0.65,
+    "prompt": "Use case: stylized-concept. Original Nordic fantasy environment painting for a Viking character-profile background. One continuous wide 16:9 landscape, premium cinematic painterly realism, rich deep colors, atmospheric depth, organic restrained textures.\nCOMPOSITION IS CRITICAL: camera at a standing person's chest height, aimed straight toward the distance, level and horizontal, not tilted down and not an aerial overlook. Preserve a generous beautiful sky occupying roughly the upper 40-45 percent of the canvas. Distant skyline and open horizon around 43-48 percent from the top; mountain peaks can rise higher at the outer sides but must not fill the entire upper picture. A broad near-level walkable foreground already reaches the center of the image at 56 percent from the top. The future character's boots will be centered at x=50 percent, y=68 percent: this point and the entire area around it from x=35 to65 percent, y=59 to82 percent MUST be solid flat continuous ground, clearly on the near side of any water, drop or cliff edge. The standing point is higher in the composition than a conventional bottom-edge landscape foreground. Keep the near ground short and gently foreshortened, not an immense downward-looking apron. The standing area extends to the bottom edge and naturally joins the landscape; no artificial circular platform, pedestal or isolated island. The unseen character will extend upward through the center, so frame strong features toward the outer thirds and keep the middle open. Do not depict the character or any marker for this placement. Balance readable firm ground with a broad visible sky and a level sense of perspective.\n\nSCENE: Deep Nordic Black Forest at a blue-green evening with warm light breaking through clouds. Towering spruce and pine trunks frame left and right edges but the central opening has a broad sky view. Ferns, moss-covered boulders and dark forest floor frame a level mossy earthen glade; calm clear solid moss/earth at the future boot position. Beyond the glade, a small distant lake and low pine-covered hills lead to subdued craggy peaks. Deep emerald and teal forest shadows, cool blue haze, a rich amber cloud opening high right. The forest feels dense at the sides and expansive through the middle, not a narrow dark corridor. No dense canopy covering the central sky.\nAvoid excessive repetitive microdetail, vertical texture bands, copied/pasted vegetation, duplicated forms, striped ground textures, sharpening halos, dull desaturated colors or overexposure. No people, creatures, human silhouettes, weapons, text, symbols, UI, borders, watermarks, diagrams, split panels or copied game assets. Do not draw coordinates, a footprint or a target. The entire image is finished original environmental artwork.",
+    "reference_sha256": null,
+    "usage": {
+      "input_tokens": 558,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 558
+      },
+      "output_tokens": 7370,
+      "total_tokens": 7928,
+      "output_tokens_details": {
+        "image_tokens": 7370,
+        "text_tokens": 0
+      }
+    },
+    "estimated_usage_cost_usd": 0.22389,
+    "request_id": "req_35090d7c8cd047058b98944bda78395e",
+    "dimensions": [
+      2560,
+      1440
+    ],
+    "bytes": 6988080,
+    "sha256": "8045c5ab23c61a95fb3aa47c42953bf54ce79037cac7b966a1b7f8c9e7aa6df8",
+    "output": "output/grounded-black-forest-horizon-1440-max-v1.png"
+  },
+  {
+    "job": "grounded-swamp-horizon-1440-max-v1",
+    "model": "gpt-image-2.5-sunburst",
+    "quality": "max",
+    "size": "2560x1440",
+    "utc": "2026-09-19T03:19:35.468850+00:00",
+    "status": "complete",
+    "reserved_usd": 0.65,
+    "prompt": "Use case: stylized-concept. Original Nordic fantasy environment painting for a Viking character-profile background. One continuous wide 16:9 landscape, premium cinematic painterly realism, rich deep colors, atmospheric depth, organic restrained textures.\nCOMPOSITION IS CRITICAL: camera at a standing person's chest height, aimed straight toward the distance, level and horizontal, not tilted down and not an aerial overlook. Preserve a generous beautiful sky occupying roughly the upper 40-45 percent of the canvas. Distant skyline and open horizon around 43-48 percent from the top; mountain peaks can rise higher at the outer sides but must not fill the entire upper picture. A broad near-level walkable foreground already reaches the center of the image at 56 percent from the top. The future character's boots will be centered at x=50 percent, y=68 percent: this point and the entire area around it from x=35 to65 percent, y=59 to82 percent MUST be solid flat continuous ground, clearly on the near side of any water, drop or cliff edge. The standing point is higher in the composition than a conventional bottom-edge landscape foreground. Keep the near ground short and gently foreshortened, not an immense downward-looking apron. The standing area extends to the bottom edge and naturally joins the landscape; no artificial circular platform, pedestal or isolated island. The unseen character will extend upward through the center, so frame strong features toward the outer thirds and keep the middle open. Do not depict the character or any marker for this placement. Balance readable firm ground with a broad visible sky and a level sense of perspective.\n\nSCENE: Gloomy Nordic swamp beneath an expansive stormy slate-green sky. Twisted leafless trees, dangling moss and ancient weathered stone ruins stand off to the sides. A broad firm nearly level bank of dark peat and moss occupies the central foreground through the specified standing area, not a tiny island. Shallow still pools and reeds begin well BEHIND it, beyond y=55 percent, receding toward distant skeletal woods and low ruined silhouettes. Deep bottle-green, ochre moss, wet umber and charcoal; muted silver light through layered storm clouds and ground-hugging haze in the middle distance. Eerie, rich and atmospheric, with readable terrain and coherent reflections. No water or reeds beneath the future boots.\nAvoid excessive repetitive microdetail, vertical texture bands, copied/pasted vegetation, duplicated forms, striped ground textures, sharpening halos, dull desaturated colors or overexposure. No people, creatures, human silhouettes, weapons, text, symbols, UI, borders, watermarks, diagrams, split panels or copied game assets. Do not draw coordinates, a footprint or a target. The entire image is finished original environmental artwork.",
+    "reference_sha256": null,
+    "usage": {
+      "input_tokens": 564,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 564
+      },
+      "output_tokens": 7370,
+      "total_tokens": 7934,
+      "output_tokens_details": {
+        "image_tokens": 7370,
+        "text_tokens": 0
+      }
+    },
+    "estimated_usage_cost_usd": 0.22392,
+    "request_id": "req_ccbf9542a73f4752a100c6ddea21cb26",
+    "dimensions": [
+      2560,
+      1440
+    ],
+    "bytes": 6861121,
+    "sha256": "a2826c1666e4497e9147e59bf6843aad032ec9fa3cd8e31ff243d6e8750e17ae",
+    "output": "output/grounded-swamp-horizon-1440-max-v1.png"
+  },
+  {
+    "job": "grounded-mountain-horizon-1440-max-v1",
+    "model": "gpt-image-2.5-sunburst",
+    "quality": "max",
+    "size": "2560x1440",
+    "utc": "2026-09-19T03:21:33.060264+00:00",
+    "status": "complete",
+    "reserved_usd": 0.65,
+    "prompt": "Use case: stylized-concept. Original Nordic fantasy environment painting for a Viking character-profile background. One continuous wide 16:9 landscape, premium cinematic painterly realism, rich deep colors, atmospheric depth, organic restrained textures.\nCOMPOSITION IS CRITICAL: camera at a standing person's chest height, aimed straight toward the distance, level and horizontal, not tilted down and not an aerial overlook. Preserve a generous beautiful sky occupying roughly the upper 40-45 percent of the canvas. Distant skyline and open horizon around 43-48 percent from the top; mountain peaks can rise higher at the outer sides but must not fill the entire upper picture. A broad near-level walkable foreground already reaches the center of the image at 56 percent from the top. The future character's boots will be centered at x=50 percent, y=68 percent: this point and the entire area around it from x=35 to65 percent, y=59 to82 percent MUST be solid flat continuous ground, clearly on the near side of any water, drop or cliff edge. The standing point is higher in the composition than a conventional bottom-edge landscape foreground. Keep the near ground short and gently foreshortened, not an immense downward-looking apron. The standing area extends to the bottom edge and naturally joins the landscape; no artificial circular platform, pedestal or isolated island. The unseen character will extend upward through the center, so frame strong features toward the outer thirds and keep the middle open. Do not depict the character or any marker for this placement. Balance readable firm ground with a broad visible sky and a level sense of perspective.\n\nSCENE: Snowy Nordic mountain pass at moonlit night, viewed level across a broad firm stone-and-snow plateau. Flattened slate with thin settled snow forms clear solid foreground at the specified standing area. Snowbanks and angular rocks frame the outer edges. Distant snowy peaks lie across the horizon with taller peaks at the sides, leaving a generous central indigo sky. A clear silver moon sits high to the right, surrounded by soft moonlit clouds and subtle stars. Rich midnight blue shadows, steel blue stone, gently luminous silver snow with detail preserved, no blown-out whites. A few distant conifers low in the valley. Keep the glacier scenery distant, not a steep view down an enormous valley.\nAvoid excessive repetitive microdetail, vertical texture bands, copied/pasted vegetation, duplicated forms, striped ground textures, sharpening halos, dull desaturated colors or overexposure. No people, creatures, human silhouettes, weapons, text, symbols, UI, borders, watermarks, diagrams, split panels or copied game assets. Do not draw coordinates, a footprint or a target. The entire image is finished original environmental artwork.",
+    "reference_sha256": null,
+    "usage": {
+      "input_tokens": 558,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 558
+      },
+      "output_tokens": 7370,
+      "total_tokens": 7928,
+      "output_tokens_details": {
+        "image_tokens": 7370,
+        "text_tokens": 0
+      }
+    },
+    "estimated_usage_cost_usd": 0.22389,
+    "request_id": "req_15efe2bddd0343e183737b741775a16c",
+    "dimensions": [
+      2560,
+      1440
+    ],
+    "bytes": 6468008,
+    "sha256": "ff18052b0467bb17fd934054aa59b38a1bc63678ae94e425904cb7e227198c2e",
+    "output": "output/grounded-mountain-horizon-1440-max-v1.png"
+  },
+  {
+    "job": "grounded-plains-horizon-1440-max-v1",
+    "model": "gpt-image-2.5-sunburst",
+    "quality": "max",
+    "size": "2560x1440",
+    "utc": "2026-09-19T03:23:01.816722+00:00",
+    "status": "complete",
+    "reserved_usd": 0.65,
+    "prompt": "Use case: stylized-concept. Original Nordic fantasy environment painting for a Viking character-profile background. One continuous wide 16:9 landscape, premium cinematic painterly realism, rich deep colors, atmospheric depth, organic restrained textures.\nCOMPOSITION IS CRITICAL: camera at a standing person's chest height, aimed straight toward the distance, level and horizontal, not tilted down and not an aerial overlook. Preserve a generous beautiful sky occupying roughly the upper 40-45 percent of the canvas. Distant skyline and open horizon around 43-48 percent from the top; mountain peaks can rise higher at the outer sides but must not fill the entire upper picture. A broad near-level walkable foreground already reaches the center of the image at 56 percent from the top. The future character's boots will be centered at x=50 percent, y=68 percent: this point and the entire area around it from x=35 to65 percent, y=59 to82 percent MUST be solid flat continuous ground, clearly on the near side of any water, drop or cliff edge. The standing point is higher in the composition than a conventional bottom-edge landscape foreground. Keep the near ground short and gently foreshortened, not an immense downward-looking apron. The standing area extends to the bottom edge and naturally joins the landscape; no artificial circular platform, pedestal or isolated island. The unseen character will extend upward through the center, so frame strong features toward the outer thirds and keep the middle open. Do not depict the character or any marker for this placement. Balance readable firm ground with a broad visible sky and a level sense of perspective.\n\nSCENE: Wide golden Nordic plains at warm sunset. Nearly level tawny grass foreground, sparse white-barked birch trees and green bushes scattered through rolling golden grassland. Giant rough natural stone monolith towers stand scattered far across the connected plains landscape, attached to solid grassy land; never in water, on offshore islands or rising from the ocean. No conifers, no dark pine trees. A distant coastal inlet can appear off to one side beyond the continuous grassy land. Low distant mountains and expansive golden-rose cloud sky, rich honey gold, ochre, olive green bushes and cool blue-grey shadows. A flat short-grass standing area feels like part of the plains, not a bare dirt patch, and the horizon stays low enough to retain the spectacular sky.\nAvoid excessive repetitive microdetail, vertical texture bands, copied/pasted vegetation, duplicated forms, striped ground textures, sharpening halos, dull desaturated colors or overexposure. No people, creatures, human silhouettes, weapons, text, symbols, UI, borders, watermarks, diagrams, split panels or copied game assets. Do not draw coordinates, a footprint or a target. The entire image is finished original environmental artwork.",
+    "reference_sha256": null,
+    "usage": {
+      "input_tokens": 570,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 570
+      },
+      "output_tokens": 7370,
+      "total_tokens": 7940,
+      "output_tokens_details": {
+        "image_tokens": 7370,
+        "text_tokens": 0
+      }
+    },
+    "estimated_usage_cost_usd": 0.22395,
+    "request_id": "req_6ee7b1ccddae457eb7abb0719ff2a64e",
+    "dimensions": [
+      2560,
+      1440
+    ],
+    "bytes": 7167194,
+    "sha256": "6ca70812231b41b4d77afd17474b1b21cdf3316f12b8ffad8a9922cdef8b4ca7",
+    "output": "output/grounded-plains-horizon-1440-max-v1.png"
+  },
+  {
+    "job": "grounded-mistlands-horizon-1440-max-v1",
+    "model": "gpt-image-2.5-sunburst",
+    "quality": "max",
+    "size": "2560x1440",
+    "utc": "2026-09-19T03:24:35.407051+00:00",
+    "status": "complete",
+    "reserved_usd": 0.65,
+    "prompt": "Use case: stylized-concept. Original Nordic fantasy environment painting for a Viking character-profile background. One continuous wide 16:9 landscape, premium cinematic painterly realism, rich deep colors, atmospheric depth, organic restrained textures.\nCOMPOSITION IS CRITICAL: camera at a standing person's chest height, aimed straight toward the distance, level and horizontal, not tilted down and not an aerial overlook. Preserve a generous beautiful sky occupying roughly the upper 40-45 percent of the canvas. Distant skyline and open horizon around 43-48 percent from the top; mountain peaks can rise higher at the outer sides but must not fill the entire upper picture. A broad near-level walkable foreground already reaches the center of the image at 56 percent from the top. The future character's boots will be centered at x=50 percent, y=68 percent: this point and the entire area around it from x=35 to65 percent, y=59 to82 percent MUST be solid flat continuous ground, clearly on the near side of any water, drop or cliff edge. The standing point is higher in the composition than a conventional bottom-edge landscape foreground. Keep the near ground short and gently foreshortened, not an immense downward-looking apron. The standing area extends to the bottom edge and naturally joins the landscape; no artificial circular platform, pedestal or isolated island. The unseen character will extend upward through the center, so frame strong features toward the outer thirds and keep the middle open. Do not depict the character or any marker for this placement. Balance readable firm ground with a broad visible sky and a level sense of perspective.\n\nSCENE: Spooky Nordic Mistlands at night under a silver moon and deep violet-indigo sky. Enormous dark jagged rock spires and natural stone arches frame the far left and right and recede into purple-lavender mist. Keep spires out of the central upper sky so the moonlit cloudscape remains spacious. A broad nearly level weathered dark-stone shelf with restrained moss and fine cracks provides solid ground well behind and beneath the specified boot position. Purple mist pools BEYOND the shelf in the middle distance, with tiny gnarled trees and layered rock silhouettes. Rich amethyst haze, blue-black stone, muted moss green, silver moonlight. Gloomy and mysterious, but clearly readable flat foreground. No abyss, mist hole or water beneath the future character.\nAvoid excessive repetitive microdetail, vertical texture bands, copied/pasted vegetation, duplicated forms, striped ground textures, sharpening halos, dull desaturated colors or overexposure. No people, creatures, human silhouettes, weapons, text, symbols, UI, borders, watermarks, diagrams, split panels or copied game assets. Do not draw coordinates, a footprint or a target. The entire image is finished original environmental artwork.",
+    "reference_sha256": null,
+    "usage": {
+      "input_tokens": 576,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 576
+      },
+      "output_tokens": 7370,
+      "total_tokens": 7946,
+      "output_tokens_details": {
+        "image_tokens": 7370,
+        "text_tokens": 0
+      }
+    },
+    "estimated_usage_cost_usd": 0.22398,
+    "request_id": "req_27dd61b5c37d4bb6b839d6d55ff5548b",
+    "dimensions": [
+      2560,
+      1440
+    ],
+    "bytes": 6480614,
+    "sha256": "580ebc4cf5d99dd04be9e453c3e4de1f4f9167db07bdff8c90261f95eab15156",
+    "output": "output/grounded-mistlands-horizon-1440-max-v1.png"
+  },
+  {
+    "job": "grounded-ashlands-horizon-1440-max-v1",
+    "model": "gpt-image-2.5-sunburst",
+    "quality": "max",
+    "size": "2560x1440",
+    "utc": "2026-09-19T03:26:06.971354+00:00",
+    "status": "complete",
+    "reserved_usd": 0.65,
+    "prompt": "Use case: stylized-concept. Original Nordic fantasy environment painting for a Viking character-profile background. One continuous wide 16:9 landscape, premium cinematic painterly realism, rich deep colors, atmospheric depth, organic restrained textures.\nCOMPOSITION IS CRITICAL: camera at a standing person's chest height, aimed straight toward the distance, level and horizontal, not tilted down and not an aerial overlook. Preserve a generous beautiful sky occupying roughly the upper 40-45 percent of the canvas. Distant skyline and open horizon around 43-48 percent from the top; mountain peaks can rise higher at the outer sides but must not fill the entire upper picture. A broad near-level walkable foreground already reaches the center of the image at 56 percent from the top. The future character's boots will be centered at x=50 percent, y=68 percent: this point and the entire area around it from x=35 to65 percent, y=59 to82 percent MUST be solid flat continuous ground, clearly on the near side of any water, drop or cliff edge. The standing point is higher in the composition than a conventional bottom-edge landscape foreground. Keep the near ground short and gently foreshortened, not an immense downward-looking apron. The standing area extends to the bottom edge and naturally joins the landscape; no artificial circular platform, pedestal or isolated island. The unseen character will extend upward through the center, so frame strong features toward the outer thirds and keep the middle open. Do not depict the character or any marker for this placement. Balance readable firm ground with a broad visible sky and a level sense of perspective.\n\nSCENE: Apocalyptic Nordic Ashlands under an expansive smoky crimson and burnt-orange sky. Broad level cooled basalt and fine grey ash ground fills the standing area, solid and walkable. Broken black rocks frame the outer corners; ruined fortress walls sit in the middle distance off to the left. Distant volcanic ridges and a volcano off to the right show restrained glowing lava veins, never lava underneath or immediately around the future boots. Smoldering red haze and ember light beyond the foreground, deep charcoal blacks, burnt umber, muted crimson and amber. A dramatic spacious ash-cloud sky with rich tonal detail, not bright white fire. Foreground has naturally irregular cracks and ash, no repeated tile patterns, no giant rock pillars blocking the central view.\nAvoid excessive repetitive microdetail, vertical texture bands, copied/pasted vegetation, duplicated forms, striped ground textures, sharpening halos, dull desaturated colors or overexposure. No people, creatures, human silhouettes, weapons, text, symbols, UI, borders, watermarks, diagrams, split panels or copied game assets. Do not draw coordinates, a footprint or a target. The entire image is finished original environmental artwork.",
+    "reference_sha256": null,
+    "usage": {
+      "input_tokens": 566,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 566
+      },
+      "output_tokens": 7370,
+      "total_tokens": 7936,
+      "output_tokens_details": {
+        "image_tokens": 7370,
+        "text_tokens": 0
+      }
+    },
+    "estimated_usage_cost_usd": 0.22393,
+    "request_id": "req_675b5e04bf194b83b017771c81e121e4",
+    "dimensions": [
+      2560,
+      1440
+    ],
+    "bytes": 6192172,
+    "sha256": "d8029b8b0ab28c84df2edebc4b5d61ee89f3ba0975c2a22002886b0169cb9445",
+    "output": "output/grounded-ashlands-horizon-1440-max-v1.png"
+  },
+  {
+    "job": "grounded-deep-north-horizon-1440-max-v1",
+    "model": "gpt-image-2.5-sunburst",
+    "quality": "max",
+    "size": "2560x1440",
+    "utc": "2026-09-19T03:27:43.588579+00:00",
+    "status": "complete",
+    "reserved_usd": 0.65,
+    "prompt": "Use case: stylized-concept. Original Nordic fantasy environment painting for a Viking character-profile background. One continuous wide 16:9 landscape, premium cinematic painterly realism, rich deep colors, atmospheric depth, organic restrained textures.\nCOMPOSITION IS CRITICAL: camera at a standing person's chest height, aimed straight toward the distance, level and horizontal, not tilted down and not an aerial overlook. Preserve a generous beautiful sky occupying roughly the upper 40-45 percent of the canvas. Distant skyline and open horizon around 43-48 percent from the top; mountain peaks can rise higher at the outer sides but must not fill the entire upper picture. A broad near-level walkable foreground already reaches the center of the image at 56 percent from the top. The future character's boots will be centered at x=50 percent, y=68 percent: this point and the entire area around it from x=35 to65 percent, y=59 to82 percent MUST be solid flat continuous ground, clearly on the near side of any water, drop or cliff edge. The standing point is higher in the composition than a conventional bottom-edge landscape foreground. Keep the near ground short and gently foreshortened, not an immense downward-looking apron. The standing area extends to the bottom edge and naturally joins the landscape; no artificial circular platform, pedestal or isolated island. The unseen character will extend upward through the center, so frame strong features toward the outer thirds and keep the middle open. Do not depict the character or any marker for this placement. Balance readable firm ground with a broad visible sky and a level sense of perspective.\n\nSCENE: Remote Deep North polar coast at blue-hour night. A broad level firm snow-covered rock plain fills the foreground and the specified standing area, smooth thin settled snow and occasional flat dark stone, not deep drifts or a narrow ledge. Beyond it, distant sculpted blue glacial cliffs and frozen sea with scattered sea ice recede toward low snowy headlands. Severe and pristine, treeless polar wilderness. A luminous green-teal aurora with restrained violet fringes arcs broadly across a generous deep-indigo starry sky; thin softly lit clouds. Rich polar blues, icy cyan, softly shaded silver snow and emerald aurora. Preserve snow detail, no blown-out whites. No crevasses, ice spikes or water anywhere under or immediately behind the future boots. This is a broad polar plain, not an alpine ravine or a downward cliff overlook.\nAvoid excessive repetitive microdetail, vertical texture bands, copied/pasted vegetation, duplicated forms, striped ground textures, sharpening halos, dull desaturated colors or overexposure. No people, creatures, human silhouettes, weapons, text, symbols, UI, borders, watermarks, diagrams, split panels or copied game assets. Do not draw coordinates, a footprint or a target. The entire image is finished original environmental artwork.",
+    "reference_sha256": null,
+    "usage": {
+      "input_tokens": 589,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 589
+      },
+      "output_tokens": 7370,
+      "total_tokens": 7959,
+      "output_tokens_details": {
+        "image_tokens": 7370,
+        "text_tokens": 0
+      }
+    },
+    "estimated_usage_cost_usd": 0.224045,
+    "request_id": "req_cc9cf81c45e44401bc06ec5df01d4a6f",
+    "dimensions": [
+      2560,
+      1440
+    ],
+    "bytes": 6167316,
+    "sha256": "d4815e57d60c1f09aec209c606e481fdddd4893ff79c87bb809d621664d8cb71",
+    "output": "output/grounded-deep-north-horizon-1440-max-v1.png"
+  }
+]

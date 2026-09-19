@@ -1,0 +1,346 @@
+{
+  "pillow": "12.3.0",
+  "format": "WebP",
+  "quality": 92,
+  "method": 6,
+  "resampling": "Lanczos; centered16:9 fit",
+  "native_4k_claim": false,
+  "images": [
+    {
+      "set": "grounded",
+      "biome": "meadows",
+      "source": "assets/artwork/v034/grounded/meadows.png",
+      "source_size": [
+        2560,
+        1440
+      ],
+      "source_sha256": "1232255d272a040af06716b03e635ae0ac856884f995fac9a9774491d1389c99",
+      "variants": [
+        {
+          "path": "src/Sagas.Web/biomes/grounded/meadows-1920.webp",
+          "size": [
+            1920,
+            1080
+          ],
+          "bytes": 749282,
+          "upscaled": false,
+          "sha256": "ee74c899ea3bb912a2b5844c7201dca4dba74330b9b9706db142efeca1a82872"
+        },
+        {
+          "path": "src/Sagas.Web/biomes/grounded/meadows-2560.webp",
+          "size": [
+            2560,
+            1440
+          ],
+          "bytes": 1241422,
+          "upscaled": false,
+          "sha256": "6b74b2ec8ef34a60f5b14e6b8779dada3b8b0870c7bbbff2baa8d7854263b577"
+        },
+        {
+          "path": "src/Sagas.Web/biomes/grounded/meadows-3840.webp",
+          "size": [
+            3840,
+            2160
+          ],
+          "bytes": 2020022,
+          "upscaled": true,
+          "sha256": "5cda003eacc2c0879bf4c8e23d061207f63f92ca663cbb040d3164efc1109c5c"
+        }
+      ]
+    },
+    {
+      "set": "grounded",
+      "biome": "black-forest",
+      "source": "assets/artwork/v034/grounded/black-forest.png",
+      "source_size": [
+        2560,
+        1440
+      ],
+      "source_sha256": "8045c5ab23c61a95fb3aa47c42953bf54ce79037cac7b966a1b7f8c9e7aa6df8",
+      "variants": [
+        {
+          "path": "src/Sagas.Web/biomes/grounded/black-forest-1920.webp",
+          "size": [
+            1920,
+            1080
+          ],
+          "bytes": 726382,
+          "upscaled": false,
+          "sha256": "33c8fece08c7e9f0203d48287f2dcca044da83cae411b279bb88c20b18a11d47"
+        },
+        {
+          "path": "src/Sagas.Web/biomes/grounded/black-forest-2560.webp",
+          "size": [
+            2560,
+            1440
+          ],
+          "bytes": 1191080,
+          "upscaled": false,
+          "sha256": "3abb5643ad51c560bcb1075b67e56bc2de8829f4e59e739745ac8e0daf64e489"
+        },
+        {
+          "path": "src/Sagas.Web/biomes/grounded/black-forest-3840.webp",
+          "size": [
+            3840,
+            2160
+          ],
+          "bytes": 1893964,
+          "upscaled": true,
+          "sha256": "31d0da48b8661a6103c8ffb2c08920b4dfe93af500c0c0d6cde5c224dd0e79a2"
+        }
+      ]
+    },
+    {
+      "set": "grounded",
+      "biome": "swamp",
+      "source": "assets/artwork/v034/grounded/swamp.png",
+      "source_size": [
+        2560,
+        1440
+      ],
+      "source_sha256": "a2826c1666e4497e9147e59bf6843aad032ec9fa3cd8e31ff243d6e8750e17ae",
+      "variants": [
+        {
+          "path": "src/Sagas.Web/biomes/grounded/swamp-1920.webp",
+          "size": [
+            1920,
+            1080
+          ],
+          "bytes": 656708,
+          "upscaled": false,
+          "sha256": "8365e0f44cdca9de7590376d8b7c25a227658a5bc546962bd89194bce30d2de7"
+        },
+        {
+          "path": "src/Sagas.Web/biomes/grounded/swamp-2560.webp",
+          "size": [
+            2560,
+            1440
+          ],
+          "bytes": 1083766,
+          "upscaled": false,
+          "sha256": "ec0bf9302bdff28a8c64345995e67ff81c858424f2067b316642f2357f536e08"
+        },
+        {
+          "path": "src/Sagas.Web/biomes/grounded/swamp-3840.webp",
+          "size": [
+            3840,
+            2160
+          ],
+          "bytes": 1653460,
+          "upscaled": true,
+          "sha256": "82fcd194aad7a314ca501af9c8ac17349a382212fd339c4e81c82f59b797759e"
+        }
+      ]
+    },
+    {
+      "set": "grounded",
+      "biome": "mountain",
+      "source": "assets/artwork/v034/grounded/mountain.png",
+      "source_size": [
+        2560,
+        1440
+      ],
+      "source_sha256": "ff18052b0467bb17fd934054aa59b38a1bc63678ae94e425904cb7e227198c2e",
+      "variants": [
+        {
+          "path": "src/Sagas.Web/biomes/grounded/mountain-1920.webp",
+          "size": [
+            1920,
+            1080
+          ],
+          "bytes": 549082,
+          "upscaled": false,
+          "sha256": "fb543ad3e7bf51df589754e8f078a1d7d2e801d3fd6217804d18d229d56c6154"
+        },
+        {
+          "path": "src/Sagas.Web/biomes/grounded/mountain-2560.webp",
+          "size": [
+            2560,
+            1440
+          ],
+          "bytes": 893806,
+          "upscaled": false,
+          "sha256": "5aa76873454bd66ec02dcbfa5b17a33514f5b49dc67db79edcc96b84a0df6261"
+        },
+        {
+          "path": "src/Sagas.Web/biomes/grounded/mountain-3840.webp",
+          "size": [
+            3840,
+            2160
+          ],
+          "bytes": 1429058,
+          "upscaled": true,
+          "sha256": "0369e2cc73ed230337207388b72bf30f6048a03fdd0a9151a401541753ad949b"
+        }
+      ]
+    },
+    {
+      "set": "grounded",
+      "biome": "plains",
+      "source": "assets/artwork/v034/grounded/plains.png",
+      "source_size": [
+        2560,
+        1440
+      ],
+      "source_sha256": "6ca70812231b41b4d77afd17474b1b21cdf3316f12b8ffad8a9922cdef8b4ca7",
+      "variants": [
+        {
+          "path": "src/Sagas.Web/biomes/grounded/plains-1920.webp",
+          "size": [
+            1920,
+            1080
+          ],
+          "bytes": 773162,
+          "upscaled": false,
+          "sha256": "909bae1fd5c815812a6e7111763104d07263371cc504dbef07588689e7b35616"
+        },
+        {
+          "path": "src/Sagas.Web/biomes/grounded/plains-2560.webp",
+          "size": [
+            2560,
+            1440
+          ],
+          "bytes": 1281602,
+          "upscaled": false,
+          "sha256": "e26ab36888f1e869fa4e3a329a1be3cf7bc7f92d59d07de7cf0378109041d087"
+        },
+        {
+          "path": "src/Sagas.Web/biomes/grounded/plains-3840.webp",
+          "size": [
+            3840,
+            2160
+          ],
+          "bytes": 2100698,
+          "upscaled": true,
+          "sha256": "b0613d99ffd2d7a8967b4ee99096dd7684718adfa63e7f6db6c050cc8603a6a7"
+        }
+      ]
+    },
+    {
+      "set": "grounded",
+      "biome": "mistlands",
+      "source": "assets/artwork/v034/grounded/mistlands.png",
+      "source_size": [
+        2560,
+        1440
+      ],
+      "source_sha256": "580ebc4cf5d99dd04be9e453c3e4de1f4f9167db07bdff8c90261f95eab15156",
+      "variants": [
+        {
+          "path": "src/Sagas.Web/biomes/grounded/mistlands-1920.webp",
+          "size": [
+            1920,
+            1080
+          ],
+          "bytes": 548382,
+          "upscaled": false,
+          "sha256": "5b4838627809c96ea792010a150ad42744b760cc2c0aef729026a9a7e9685a54"
+        },
+        {
+          "path": "src/Sagas.Web/biomes/grounded/mistlands-2560.webp",
+          "size": [
+            2560,
+            1440
+          ],
+          "bytes": 898150,
+          "upscaled": false,
+          "sha256": "abca6add1a0010f2dd4da18b4c1c70d12c2866189bcc782e732a0ff7e14b09e3"
+        },
+        {
+          "path": "src/Sagas.Web/biomes/grounded/mistlands-3840.webp",
+          "size": [
+            3840,
+            2160
+          ],
+          "bytes": 1434072,
+          "upscaled": true,
+          "sha256": "6d013168bf2dfba85f1395f1d805d4e9c5f29ccb58a5e6671a0119fd47109a88"
+        }
+      ]
+    },
+    {
+      "set": "grounded",
+      "biome": "ashlands",
+      "source": "assets/artwork/v034/grounded/ashlands.png",
+      "source_size": [
+        2560,
+        1440
+      ],
+      "source_sha256": "d8029b8b0ab28c84df2edebc4b5d61ee89f3ba0975c2a22002886b0169cb9445",
+      "variants": [
+        {
+          "path": "src/Sagas.Web/biomes/grounded/ashlands-1920.webp",
+          "size": [
+            1920,
+            1080
+          ],
+          "bytes": 528708,
+          "upscaled": false,
+          "sha256": "27313a0e4d69d3fd9437df5bf48b825a6f2f1704086036899bdea611b3c278d4"
+        },
+        {
+          "path": "src/Sagas.Web/biomes/grounded/ashlands-2560.webp",
+          "size": [
+            2560,
+            1440
+          ],
+          "bytes": 871852,
+          "upscaled": false,
+          "sha256": "545fc674d786faf03af2cc6f7c976e89eb7c0cbed92cb5af2a8ded6d34bc07b0"
+        },
+        {
+          "path": "src/Sagas.Web/biomes/grounded/ashlands-3840.webp",
+          "size": [
+            3840,
+            2160
+          ],
+          "bytes": 1373052,
+          "upscaled": true,
+          "sha256": "4e59bf0d09235c11dfeb4d5d444c86f66537542a1e40f7ce7868769159efd8f0"
+        }
+      ]
+    },
+    {
+      "set": "grounded",
+      "biome": "deep-north",
+      "source": "assets/artwork/v034/grounded/deep-north.png",
+      "source_size": [
+        2560,
+        1440
+      ],
+      "source_sha256": "d4815e57d60c1f09aec209c606e481fdddd4893ff79c87bb809d621664d8cb71",
+      "variants": [
+        {
+          "path": "src/Sagas.Web/biomes/grounded/deep-north-1920.webp",
+          "size": [
+            1920,
+            1080
+          ],
+          "bytes": 541262,
+          "upscaled": false,
+          "sha256": "089b96da845ba353d604878c655b628724283b21481bc21bba8366e7dcbae4f5"
+        },
+        {
+          "path": "src/Sagas.Web/biomes/grounded/deep-north-2560.webp",
+          "size": [
+            2560,
+            1440
+          ],
+          "bytes": 885074,
+          "upscaled": false,
+          "sha256": "a309b1681eb33ca3a848a95218caab14276af7ef4ad431acfa36f1712831dab6"
+        },
+        {
+          "path": "src/Sagas.Web/biomes/grounded/deep-north-3840.webp",
+          "size": [
+            3840,
+            2160
+          ],
+          "bytes": 1380838,
+          "upscaled": true,
+          "sha256": "7661f73e24dd6dfae0f8092373bcfa3c2f2b22fe1725ce920005dde8599c7499"
+        }
+      ]
+    }
+  ]
+}
