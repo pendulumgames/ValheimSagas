@@ -29,3 +29,6 @@ Website production assets have no npm dependencies. This package is development-
 Operator installation instructions are maintained in the [main README](../../README.md#dedicated-servers-ip-and-allocated-port) and the [mod-site/package README](../../docs/MOD-README.md#dedicated-servers-ip-and-allocated-port). Dedicated hosts use their allocated TCP port with `ListenPrefix = http://*:PORT/` (including the trailing slash), then browse to `http://SERVER-IP:PORT/`. A blank DisplayName uses the Valheim server name, then the world name; AdvertisedAddress is the optional displayed game-join address.
 
 Update the host and every Sagas client for 0.3.9 transport throttling. These automated tests do not prove the reported multiplayer Steam send-limit incident is resolved. Follow the [in-game regression steps](../../docs/IN-GAME-TESTS.md#039-steam-send-limit-regression) and keep position-sharing permissions enabled when checking markers.
+
+
+For 0.3.10 host-funded saga presets, see [host setup](../../README.md#host-funded-models-and-openrouter-presets). Free is the default; AllowPaidModels explicitly enables spending, and paid host preset pricing is managed in OpenRouter. Automated fixtures do not spend credits.

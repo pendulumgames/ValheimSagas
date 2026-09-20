@@ -52,3 +52,8 @@ Compilation, metadata, synthetic browsers and isolated Mono do not constitute th
 4. Repeat with two updated clients joining together and sharing existing exploration/high-resolution portraits. Record whether all clients remain responsive. A congested connection may log `Sagas uploads paused`; it should resume without losing pending events when the queue drains.
 5. Disconnect/reconnect one client and verify deduplicated kills/loot, durable event retry and portrait completion. Confirm privacy switches stop queued map/art uploads.
 6. If stalls or send-limit spam continue, stop the test and compare with Sagas disabled on clients and host. Supply client BepInEx logs and the host console log covering the same interval, identifying versions and which process emitted each message. Redact keys/tokens. Do not keep a congested live session running to gather more spam.
+
+
+## 0.3.10 host-funded preset acceptance
+
+Use an operator-controlled OpenRouter key/preset with chosen monetary controls. Set Model to `@preset/your-saga-preset`, AllowPaidModels=true and a small DailyBudget; restart the host. Trigger consenting adventures for two players using Host default and verify generated personal chapters plus a server chapter, actual returned model provenance and shared daily usage. Change preset model/provider/pricing in OpenRouter and check that subsequent requests follow it; existing chapters must remain unchanged. Disable AllowPaidModels and confirm a paid-only preset cannot charge (generation remains pending if no free route qualifies). No operator credential or paid call is part of the automated checks.

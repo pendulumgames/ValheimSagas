@@ -14,7 +14,7 @@ using Newtonsoft.Json;
 using UnityEngine;
 namespace ValheimSagas;
 
-[BepInPlugin("org.valheimsagas.collector", "Valheim Sagas", "0.3.9")]
+[BepInPlugin("org.valheimsagas.collector", "Valheim Sagas", "0.3.10")]
 [BepInDependency("randyknapp.mods.epicloot", BepInDependency.DependencyFlags.SoftDependency)]
 [BepInDependency("MidnightsFX.StarLevelSystem", BepInDependency.DependencyFlags.SoftDependency)]
 public sealed partial class SagasPlugin : BaseUnityPlugin {
@@ -28,7 +28,7 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
  readonly Dictionary<string,Packet> pendingMaps=new Dictionary<string,Packet>();
  ConfigEntry<bool> requireToken=null!,host=null!, shareMap=null!, sharePosition=null!,shareProfile=null!;
  ConfigEntry<string> model=null!; ConfigEntry<int> daily=null!,cooldown=null!,milestones=null!,retention=null!,statisticsRetention=null!;
- ConfigEntry<string> data=null!, prefix=null!, token=null!, key=null!; ConfigEntry<bool> lore=null!;
+ ConfigEntry<string> data=null!, prefix=null!, token=null!, key=null!; ConfigEntry<bool> lore=null!,allowPaidLore=null!;
  readonly HashSet<string> knownCharacters=new HashSet<string>();
  readonly HashSet<ZRpc> registered=new HashSet<ZRpc>(); readonly Dictionary<long,string> online=new Dictionary<long,string>();
  readonly Dictionary<string,SagaEvent> pending=new Dictionary<string,SagaEvent>();
@@ -51,9 +51,10 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
   data=Config.Bind("Server","DataDirectory",Path.Combine(Paths.ConfigPath,"ValheimSagas"),"Persistent database path; back up separately from world saves.");
   prefix=Config.Bind("Server","ListenPrefix","http://127.0.0.1:8877/","Loopback by default. Use HTTPS reverse proxy for remote access.");
   token=Config.Bind("Server","ViewerToken",Guid.NewGuid().ToString("N")+Guid.NewGuid().ToString("N"),"Private member credential; never synced to game clients.");
-  lore=Config.Bind("Lore","EnableOpenRouter",true,"Opt in to send selected narrative facts to OpenRouter free models. No coordinates or account IDs.");
+  lore=Config.Bind("Lore","EnableOpenRouter",true,"Send selected narrative facts to OpenRouter. Free routing by default; paid models require AllowPaidModels. No coordinates or account IDs.");
   key=Config.Bind("Lore","OpenRouterKey","","Server only. Prefer OPENROUTER_API_KEY environment variable.");
-  model=Config.Bind("Lore","Model","openrouter/free","Free model or @preset/name. Host routes always enforce zero token prices; player-paid choices require personal login and explicit opt-in.");
+  model=Config.Bind("Lore","Model","openrouter/free","OpenRouter model ID or @preset/name from the key owner account. Defaults to openrouter/free. Paid routes require AllowPaidModels. Manage pricing/provider limits in your OpenRouter preset or account.");
+  allowPaidLore=Config.Bind("Lore","AllowPaidModels",false,"Allow the host key to pay for personal and server sagas using Model. False enforces zero token prices, including presets. Restart host after changing.");
   daily=Config.Bind("Lore","DailyBudget",20,"Maximum external requests per UTC day.");
   cooldown=Config.Bind("Lore","CooldownMinutes",180,"Minimum chapter interval per character.");
   milestones=Config.Bind("Lore","MilestoneEvents",20,"Ordinary event count before a chapter; notable events may qualify earlier.");
@@ -90,7 +91,7 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
   if(!ZNet.instance || ZNet.instance.GetWorldUID()==0) { RuntimeTerrain.Clear(); outbox?.Finish(pending.Values.ToArray());outbox=null; StopService(); activeWorld="";registered.Clear();online.Clear();pending.Clear();mediaTransfer.Clear();mediaCursors.Clear();return; }
   if(activeWorld!=World) {outbox?.Finish(pending.Values.ToArray());StopService();service=null;activeWorld=World;nextSlsRefresh=0;mediaTransfer.Clear();mediaCursors.Clear();knownCharacters.Clear();registered.Clear();online.Clear();pending.Clear();sentCells.Clear();tileVersions.Clear();fullyMapped.Clear();RuntimeTerrain.Clear();pendingMedia.Clear();sentMedia.Clear();artwork?.Clear();mapCursor=0;importing=true;pendingMaps.Clear();journalId="";outbox=null;}
   if(ZNet.instance.IsServer() && service==null) {
-   service=new SagaService(new SagaOptions{DataDirectory=data.Value,WebDirectory=Path.Combine(Path.GetDirectoryName(Info.Location)!,"web"),ListenPrefix=host.Value?prefix.Value:"",ViewerToken=token.Value,RequireViewerToken=requireToken.Value,World=World,WorldName=ZNet.instance.GetWorldName(),ServerName=WebsiteServerName(),ServerAddress=serverAddress.Value,SlsInstalled=SlsAdapter.Installed,LoreEnabled=lore.Value,LoreModel=model.Value,LoreDailyBudget=Math.Max(0,daily.Value),LoreCooldownMinutes=Math.Max(1,cooldown.Value),LoreMilestoneEvents=Math.Max(1,milestones.Value),RetentionDays=Math.Max(0,retention.Value),StatisticsRetentionDays=statisticsRetention.Value<=0?0:Math.Max(retention.Value,statisticsRetention.Value),Log=message=>Logger.LogWarning(message),OpenRouterKey=Environment.GetEnvironmentVariable("OPENROUTER_API_KEY")??key.Value}); service.Start();foreach(var stored in service.Store.Players(World))knownCharacters.Add(stored.PlayerId);
+   service=new SagaService(new SagaOptions{DataDirectory=data.Value,WebDirectory=Path.Combine(Path.GetDirectoryName(Info.Location)!,"web"),ListenPrefix=host.Value?prefix.Value:"",ViewerToken=token.Value,RequireViewerToken=requireToken.Value,World=World,WorldName=ZNet.instance.GetWorldName(),ServerName=WebsiteServerName(),ServerAddress=serverAddress.Value,SlsInstalled=SlsAdapter.Installed,LoreEnabled=lore.Value,LoreModel=model.Value,LoreAllowPaid=allowPaidLore.Value,LoreUseAccountPricing=true,LoreDailyBudget=Math.Max(0,daily.Value),LoreCooldownMinutes=Math.Max(1,cooldown.Value),LoreMilestoneEvents=Math.Max(1,milestones.Value),RetentionDays=Math.Max(0,retention.Value),StatisticsRetentionDays=statisticsRetention.Value<=0?0:Math.Max(retention.Value,statisticsRetention.Value),Log=message=>Logger.LogWarning(message),OpenRouterKey=Environment.GetEnvironmentVariable("OPENROUTER_API_KEY")??key.Value}); service.Start();foreach(var stored in service.Store.Players(World))knownCharacters.Add(stored.PlayerId);
   }
   RunStage("SLS world snapshot",RefreshSls);
   foreach(var peer in ZNet.instance.GetPeers()) if(peer.IsReady() && registered.Add(peer.m_rpc)) {

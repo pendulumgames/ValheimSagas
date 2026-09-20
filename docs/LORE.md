@@ -4,7 +4,27 @@ Sagas requires a host OpenRouter key and `EnableOpenRouter = true` before genera
 
 ## Host and personal presets
 
-The host sets `[Lore] OpenRouterKey` or `OPENROUTER_API_KEY` on the hosting process. Never put this key in a distributed client configuration. New configurations enable the worker, but it does nothing without a key. The default route is `openrouter/free`; explicit `vendor/model:free` and `@preset/slug` routes are supported. Host requests always set both prompt and completion price ceilings to zero and never silently select paid service.
+### Host-funded models and OpenRouter presets
+
+In 0.3.10 or later, the host can pay for everyone's default Viking sagas and the server saga using one OpenRouter key. Configure the host's `[Lore]` section, then restart:
+
+```ini
+[Lore]
+EnableOpenRouter = true
+OpenRouterKey = YOUR_OPENROUTER_KEY
+Model = @preset/your-saga-preset
+AllowPaidModels = true
+DailyBudget = 20
+```
+
+Create the preset in the OpenRouter account that owns the key. **Manage model selection, provider routing and price limits in that OpenRouter preset.** Sagas does not send a provider/pricing override for paid host requests. There is no second host price ceiling to configure in Sagas. If the preset has no price restriction, Sagas does not add one. A direct model ID also works (for example `deepseek/deepseek-v4-flash-0731`); its normal OpenRouter/account pricing applies.
+
+`DailyBudget` limits HTTP attempts per UTC day, including retries, shared across host-funded Viking and server sagas. It is a request count, not a dollar budget. Set monetary controls in OpenRouter. Sagas still controls the factual narrative prompt, structured output request, maximum output length and disabled tools/plugins; a preset does not replace those application requirements. Existing chapters remain cached and are not rewritten when the model changes.
+
+New installations keep `Model = openrouter/free` and `AllowPaidModels = false`. With paid routing disabled, Sagas rejects paid direct models and imposes zero token-price limits on presets. Players can keep **Host default** without adding their own keys; personal paid overrides retain their separate personal key and explicit limits.
+
+
+The host sets `[Lore] OpenRouterKey` or `OPENROUTER_API_KEY` on the hosting process. Never put this key in a distributed client configuration. New configurations enable the worker, but it does nothing without a key. The default route is `openrouter/free`; explicit `vendor/model:free` and `@preset/slug` routes are supported. Host requests default to zero prompt/completion price ceilings. Paid host routing requires an explicit `[Lore] AllowPaidModels = true`; it then omits the entire provider object so OpenRouter preset/account routing and pricing remain effective. No separate host price ceiling is configured in Sagas. Direct paid model IDs use normal account/model pricing. Personal-key requests retain their separate explicit price ceilings.
 
 A personal character/world login can save up to eight named presets and an optional personal key. A preset contains a model or OpenRouter preset route, an explicit paid opt-in, a USD-per-million-token ceiling (applied independently to input and output), and 1?20 HTTP attempts per UTC day. Named settings are local Sagas configurations; `@preset/slug` refers to a preset created in the key owner's OpenRouter account. Sagas does not create remote OpenRouter presets. Choosing Host default or removing the personal key restores host routing for future work. Existing chapters are not rewritten by a settings change.
 
@@ -31,3 +51,6 @@ Only validated JSON titles/prose are stored; HTML, links and control characters 
 All automated provider checks use synthetic HTTP responses without real credentials or paid calls. Tests cover free/paid ceilings, preset requests, key isolation/encryption/restart, request budgets, retries, response limits, consent, persistence and continuity. Real provider availability, preset execution and paid billing still need an operator-controlled test using their own key.
 
 Official documentation checked September 19, 2026: [free router](https://openrouter.ai/docs/guides/routing/routers/free-router), [presets](https://openrouter.ai/docs/guides/features/presets), [provider routing](https://openrouter.ai/docs/guides/routing/provider-selection). Free routing requires an account/API key and availability varies; it is not a storyteller quality ranking.
+
+
+September 20, 2026 API verification: the official [preset guide](https://openrouter.ai/blog/tutorials/presets/) describes shallow request-over-preset merging. Omitting the provider object for opted-in paid host routes is necessary to preserve preset provider/price settings. Free mode deliberately overrides that object with zero ceilings. The [model catalog](https://openrouter.ai/api/v1/models) listed `deepseek/deepseek-v4-flash-0731` at verification time; availability and prices can change. No live generation or billing was exercised.

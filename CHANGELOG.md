@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.10
+
+- Add host AllowPaidModels opt-in for direct models and OpenRouter presets, funding default Viking and shared server sagas with the host key. Free routing remains the default.
+- Preserve paid preset pricing/provider settings by omitting Sagas provider overrides; manage monetary limits in OpenRouter, with the existing shared daily attempt budget in Sagas.
+- Keep personal-key price ceilings, persistent chapters, retry queues and server-only credentials. Document setup in both publication READMEs.
+
 ## 0.3.9
 
 - Clarify the existing MIT license, Pendulumgames attribution and third-party content boundaries in the public READMEs and packaged notices.

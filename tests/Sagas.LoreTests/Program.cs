@@ -121,6 +121,34 @@ handler.Responses.Enqueue(Valid());
 await new LoreEngine(options,client,()=>true).GenerateAsync("Astrid",facts,null,default);
 var presetRequest=JObject.Parse(handler.Bodies.Last());
 Check((string?)presetRequest["model"]=="@preset/my-saga" && (decimal?)presetRequest["provider"]?["max_price"]?["completion"]==0, "Preset routing preserves explicit free ceiling");
+// Host paid presets use the same safeguards for personal and shared sagas.
+options.LoreAllowPaid=true;options.LoreMaxPrice=1m;options.LoreModel="@preset/fellowship";
+handler.Responses.Enqueue(Valid());
+await new LoreEngine(options,client,()=>true).GenerateServerAsync("Northern Hall",serverFacts,null,default);
+var paidShared=JObject.Parse(handler.Bodies.Last());
+Check((string?)paidShared["model"]=="@preset/fellowship"&&(decimal?)paidShared["provider"]?["max_price"]?["prompt"]==1m&&(decimal?)paidShared["provider"]?["max_price"]?["completion"]==1m,"Host paid preset reaches shared saga with input and output ceilings");
+foreach(var invalid in new[]{0m,-1m,101m}){
+ options.LoreMaxPrice=invalid;calls=handler.Calls;
+ await new LoreEngine(options,client,()=>true).GenerateAsync("Astrid",facts,null,default);
+ Check(calls==handler.Calls,"Invalid paid ceiling never makes a request");
+}
+options.LoreAllowPaid=false;options.LoreMaxPrice=1;options.LoreModel="vendor/paid";calls=handler.Calls;
+await new LoreEngine(options,client,()=>true).GenerateAsync("Astrid",facts,null,default);
+Check(handler.Calls==calls,"Positive ceiling alone never enables a paid direct model");
+options.LoreModel="@preset/fellowship";handler.Responses.Enqueue(Valid());
+await new LoreEngine(options,client,()=>true).GenerateAsync("Astrid",facts,null,default);
+Check((decimal?)JObject.Parse(handler.Bodies.Last())["provider"]?["max_price"]?["prompt"]==0,"Paid opt-out forces zero cost even with a retained positive ceiling and preset");
+options.LoreAllowPaid=true;options.LoreUseAccountPricing=true;options.LoreMaxPrice=0;
+foreach(var route in new[]{"@preset/fellowship","vendor/paid"}){
+ options.LoreModel=route;handler.Responses.Enqueue(Valid());
+ await new LoreEngine(options,client,()=>true).GenerateServerAsync("Northern Hall",serverFacts,null,default);
+ var delegated=JObject.Parse(handler.Bodies.Last());
+ Check((string?)delegated["model"]==route&&delegated.Property("provider")==null,"Host paid routing leaves OpenRouter preset/account price and provider controls untouched");
+ Check((int?)delegated["max_tokens"]==1000&&(string?)delegated["tool_choice"]=="none","Host paid routing preserves bounded narrative requests");
+}
+options.LoreAllowPaid=false;options.LoreModel="@preset/fellowship";handler.Responses.Enqueue(Valid());
+await new LoreEngine(options,client,()=>true).GenerateServerAsync("Northern Hall",serverFacts,null,default);
+Check((decimal?)JObject.Parse(handler.Bodies.Last())["provider"]?["max_price"]?["completion"]==0,"Account pricing flag cannot bypass paid opt-in");
 await ContextChecks.Run(Check);
 Console.WriteLine($"PASS: {assertions} lore checks (synthetic HTTP only; no credentials or game required).");
 

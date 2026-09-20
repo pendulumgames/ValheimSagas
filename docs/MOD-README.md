@@ -54,13 +54,13 @@ Public viewing is enabled by `RequireViewerToken = false`; existing configuratio
 
 ### Missing players or stale map positions
 
-A congested game connection can delay player snapshots, exploration and portraits even while the website itself opens normally. Upgrade the host **and every Sagas client** to 0.3.9 and restart their connections. A server name comes from host configuration, so a wrong name is a separate issue from delayed player uploads. If all website data is blank, check the website/API error and server logs too.
+A congested game connection can delay player snapshots, exploration and portraits even while the website itself opens normally. Upgrade the host **and every Sagas client** to 0.3.9 or later and restart their connections. A server name comes from host configuration, so a wrong name is a separate issue from delayed player uploads. If all website data is blank, check the website/API error and server logs too.
 
 For a live marker, the player needs Sagas installed, `[Privacy] SharePosition = true`, and **Visible to other players** enabled on Valheim's in-game map. The website's **Online Vikings** layer must be enabled and its player selection must include that player. Offline positions require the separate **Offline - last known** layer. Terrain additionally requires `ShareMap = true`. Upload pacing cannot override these privacy settings.
 
-## Multiplayer upload pacing (0.3.9)
+## Multiplayer upload pacing (0.3.9 and later)
 
-Upgrade **both the host and every participating client**, then restart their Valheim processes. Version 0.3.9 addresses a reported three-second multiplayer stall with Steam `k_EResultLimitExceeded` log spam: background transfers now yield to the game send queue, use separate byte allowances and wait 30 seconds before retrying unacknowledged data. Older clients still send bursts, so updating only the host is insufficient.
+Upgrade **both the host and every participating client** to the same current release, then restart their Valheim processes. Version 0.3.9 addresses a reported three-second multiplayer stall with Steam `k_EResultLimitExceeded` log spam: background transfers now yield to the game send queue, use separate byte allowances and wait 30 seconds before retrying unacknowledged data. Older clients still send bursts, so updating only the host is insufficient.
 
 Maps import gradually and a first high-resolution portrait can take several minutes on a busy connection. Existing saved portraits remain visible while a replacement uploads. The collector logs `Sagas uploads paused` when the game queue is busy and `Sagas slow stage` for work exceeding 50 ms, with repeated warnings limited to once per minute. These diagnostics contain timings/queue sizes, not credentials or coordinates. The multiplayer incident still requires an operator retest; automated transport checks are not in-game verification.
 
@@ -88,9 +88,28 @@ Epic Loot independently enhances rarity colors, gear effects, bounty tracking an
 
 On the **host**, set `[Lore] OpenRouterKey` or the host process's `OPENROUTER_API_KEY` environment variable. `EnableOpenRouter` must be true. An OpenRouter account/key is required, even for free routing; Sagas never accesses an existing browser account automatically.
 
-The host default is `openrouter/free`, with zero token-price ceilings, a 20-attempt daily budget and no paid fallback. Without a host key, stats, maps, portraits and leaderboards work normally; saga prose waits. Old template chapters are hidden and preserved locally rather than displayed as generated stories.
+The host default is `openrouter/free`, with `AllowPaidModels = false`, a 20-attempt daily budget and no paid fallback. Without a host key, stats, maps, portraits and leaderboards work normally; saga prose waits. Old template chapters are hidden and preserved locally rather than displayed as generated stories.
 
-Signed-in players may optionally save their own OpenRouter key and up to eight named storyteller presets in **Login**. A preset can select a model or an OpenRouter `@preset/name`. Paid routing requires the player's explicit checkbox, a per-million-token price ceiling and a daily attempt limit. The host key must still be configured. Personal keys are encrypted on the host and never returned to viewers, but the host administrator controls that machine: only entrust a key to a host you trust. HTTPS is required for remote browser key submission. Host generation always remains free-only.
+### Host-funded models and OpenRouter presets
+
+In 0.3.10 or later, the host can pay for everyone's default Viking sagas and the server saga using one OpenRouter key. Configure the host's `[Lore]` section, then restart:
+
+```ini
+[Lore]
+EnableOpenRouter = true
+OpenRouterKey = YOUR_OPENROUTER_KEY
+Model = @preset/your-saga-preset
+AllowPaidModels = true
+DailyBudget = 20
+```
+
+Create the preset in the OpenRouter account that owns the key. **Manage model selection, provider routing and price limits in that OpenRouter preset.** Sagas does not send a provider/pricing override for paid host requests. There is no second host price ceiling to configure in Sagas. If the preset has no price restriction, Sagas does not add one. A direct model ID also works (for example `deepseek/deepseek-v4-flash-0731`); its normal OpenRouter/account pricing applies.
+
+`DailyBudget` limits HTTP attempts per UTC day, including retries, shared across host-funded Viking and server sagas. It is a request count, not a dollar budget. Set monetary controls in OpenRouter. Sagas still controls the factual narrative prompt, structured output request, maximum output length and disabled tools/plugins; a preset does not replace those application requirements. Existing chapters remain cached and are not rewritten when the model changes.
+
+New installations keep `Model = openrouter/free` and `AllowPaidModels = false`. With paid routing disabled, Sagas rejects paid direct models and imposes zero token-price limits on presets. Players can keep **Host default** without adding their own keys; personal paid overrides retain their separate personal key and explicit limits.
+
+Signed-in players may optionally save their own OpenRouter key and up to eight named storyteller presets in **Login**. A preset can select a model or an OpenRouter `@preset/name`. Paid routing requires the player's explicit checkbox, a per-million-token price ceiling and a daily attempt limit. The host key must still be configured. Personal keys are encrypted on the host and never returned to viewers, but the host administrator controls that machine: only entrust a key to a host you trust. HTTPS is required for remote browser key submission. Host-paid routing is described above.
 
 Story prompts use relevant recorded events, career totals, bosses and credited teammates, notable loot, current equipment/effects, resistances, bounties and shared exploration summaries. Context is bounded and respects sharing consent; it does not transmit raw account/world IDs, precise coordinates or API keys as story content. Fiction is labeled separately from facts. See [lore details](https://github.com/pendulumgames/ValheimSagas/blob/main/docs/LORE.md).
 
@@ -98,7 +117,7 @@ Story prompts use relevant recorded events, career totals, bosses and credited t
 
 Back up `BepInEx/config/ValheimSagas` with the host stopped, including `sagas.db` and `personal-lore.key` if present. The key file is required to decrypt saved personal OpenRouter credentials. Do not share backups, configs or tokens publicly. Uninstalling the plugin does not delete recorded history.
 
-**0.3.8 is a tested preview release.** Automated tests use labeled synthetic fixtures; real credentialed OpenRouter generation, two-client multiplayer acceptance and Linux hosting still require testing. Unresolved attackers and uncertain loot provenance stay unattributed rather than being guessed. Fight durations are observed telemetry, and carried gold is a snapshot, not a lifetime earnings counter.
+**0.3.10 is a preview release verified with automated checks.** Automated tests use labeled synthetic fixtures; real credentialed OpenRouter generation, two-client multiplayer acceptance and Linux hosting still require testing. Unresolved attackers and uncertain loot provenance stay unattributed rather than being guessed. Fight durations are observed telemetry, and carried gold is a snapshot, not a lifetime earnings counter.
 
 ## License
 

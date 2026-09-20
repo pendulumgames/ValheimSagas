@@ -63,6 +63,7 @@ public sealed class LoreEngine {
   chapter.Summary = Clean(name + ": " + chapter.FromUtc.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + " to " + chapter.ToUtc.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) +
    "; credited kills " + kills + "; Nemesis finishing-blow kills " + ordered.Count(e=>e.Kind=="kill"&&e.NemesisBoss) + "; collected items " + collections + "; drop items " + drops + ".", 500);
   if (!options.LoreEnabled || string.IsNullOrWhiteSpace(options.OpenRouterKey)) return chapter;
+  if (options.LoreAllowPaid && !options.LoreUseAccountPricing && (options.LoreMaxPrice<=0 || options.LoreMaxPrice>100)) { Log("Lore: paid routing requires a price ceiling greater than zero and at most 100 USD per million tokens; leaving saga pending."); return chapter; }
   if (!IsRoute(options.LoreModel) || (!options.LoreAllowPaid && !IsFreeModel(options.LoreModel) && !options.LoreModel.StartsWith("@preset/",StringComparison.Ordinal))) { Log("Lore: unsupported model; leaving saga pending (paid routing requires opt-in)."); return chapter; }
 
   string Safe(string value, int limit) {
@@ -85,7 +86,7 @@ public sealed class LoreEngine {
    facts = chapter.Facts.Take(100).Select(f => Safe(f, 320)).ToArray(),
    omittedFactCount = Math.Max(0, chapter.Facts.Count - 100)
   };
-  var body = JsonConvert.SerializeObject(new {
+  var requestBody = JObject.FromObject(new {
    model = options.LoreModel, stream = false, max_tokens = 1000, temperature = 0.7, tool_choice="none", plugins=Array.Empty<object>(),
    provider = new { allow_fallbacks = true, max_price = new { prompt = options.LoreAllowPaid?options.LoreMaxPrice:0, completion = options.LoreAllowPaid?options.LoreMaxPrice:0 }, preferred_max_latency = new { p50 = 2 }, preferred_min_throughput = new { p50 = 30 } },
    messages = new[] {
@@ -93,6 +94,10 @@ public sealed class LoreEngine {
     new { role = "user", content = JsonConvert.SerializeObject(narrativeData) }
    }
   });
+  // OpenRouter preset merging is shallow: sending any provider object replaces
+  // preset routing/price restrictions. Paid host routes omit it entirely.
+  if(options.LoreAllowPaid&&options.LoreUseAccountPricing)requestBody.Remove("provider");
+  var body=requestBody.ToString(Formatting.None);
   for (int attempt = 0; attempt < 3; attempt++) {
    cancel.ThrowIfCancellationRequested();
    if (!reserveRequest()) { Log("Lore: request budget unavailable; leaving saga pending."); break; }

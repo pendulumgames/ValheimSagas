@@ -11,6 +11,8 @@ public sealed class SagaOptions { public string ServerName {get;set;} = "Valheim
  public string OpenRouterKey {get;set;} = "";
  public string LoreModel {get;set;} = "openrouter/free";
  public bool LoreAllowPaid {get;set;} = false; public decimal LoreMaxPrice {get;set;} = 0;
+ // Host paid routes defer provider/pricing settings to the OpenRouter preset/account. Personal settings retain explicit local ceilings.
+ public bool LoreUseAccountPricing {get;set;} = false;
  public int LoreDailyBudget {get;set;} = 20;
  public int LoreCooldownMinutes {get;set;} = 180;
  public int LoreMilestoneEvents {get;set;} = 20;

@@ -1,4 +1,16 @@
-# 0.3.9 transport hotfix verification
+# 0.3.10 host-funded preset verification
+
+Verified September 20, 2026 on Windows. No live OpenRouter generation, credentials, charges or multiplayer session were used.
+
+- Installed-assembly build: zero errors, two existing MSB3277 reference-unification warnings.
+- Core: 2,154 assertions. New synthetic worker coverage uses one host key/preset for two default character sagas and one server saga, checks omission of provider overrides, shared daily attempt accounting, actual-model provenance, restart persistence and absence of the key from viewer state.
+- Lore: 80 synthetic HTTP checks. Paid host models/presets omit the provider object; free host mode retains zero price ceilings; personal paid requests keep validated explicit ceilings. Requests still bound output and disable tools/plugins.
+- Terrain: 21,964 checks; portrait: 911 checks; installed API metadata: 150 checks; JavaScript syntax passes. Website assets/flows are unchanged from the previous browser verification.
+- Official OpenRouter documentation was checked for shallow preset merging/provider price limits, and the anonymous model catalog listed `deepseek/deepseek-v4-flash-0731`. A live preset/account billing check is still an operator task.
+
+The previous 0.3.9 transport hotfix remains included and still requires the multiplayer acceptance steps below. Updating the host configuration does not silently enable paid use: AllowPaidModels defaults to false. For opted-in paid presets, monetary restrictions are controlled in OpenRouter, not imposed a second time by Sagas.
+
+## Previous 0.3.9 verification
 
 Verified September 20, 2026 on Windows. This is a candidate fix for the reported multiplayer three-second lag / Steam `k_EResultLimitExceeded` incident, not a claim of in-game resolution.
 
