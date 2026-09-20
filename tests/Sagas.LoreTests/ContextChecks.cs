@@ -16,6 +16,7 @@ static class ContextChecks {
    store.Explore(new ExplorationBatch{World=astrid.World,PlayerId=hidden.PlayerId,Cells=new(){new MapCell{X=12345,Z=23456,Biome="HiddenBiome"}}});
    var boss=new SagaEvent{Id="secret-boss-context",World=astrid.World,PlayerId=bjorn.PlayerId,PlayerName="Bjorn",Name="Bonemass",Boss=true,Kind="kill",Contributors=new(){astrid.PlayerId,hidden.PlayerId},DurationSeconds=123};store.AddEvent(boss);
    var bounty=new SagaEvent{Id="secret-bounty-context",World=astrid.World,PlayerId=astrid.PlayerId,PlayerName="Astrid",Kind="bounty",Name="Hunted troll"};store.AddEvent(bounty);
+   var nemesis=new SagaEvent{Id="secret-nemesis-context",World=astrid.World,PlayerId=astrid.PlayerId,PlayerName="Astrid",Kind="kill",Name="Fader nemesis",Prefab="Fader",Boss=true,NemesisBoss=true};store.AddEvent(nemesis);
    var context=store.NarrativeContext(astrid.World,astrid.PlayerId);var contextText=string.Join("\n",context.Facts);
    check(contextText.Contains("Northern blade")&&contextText.Contains("Frost +12")&&contextText.Contains("Armor=72")&&contextText.Contains("Frost=Resistant"),"Lore includes current gear, effects, effective stats and resistances");
    check(contextText.Contains("last reported snapshot")&&contextText.Contains("not permanent traits")&&contextText.Contains("carried Coins balance 87"),"Snapshots distinguish current gear and carried balance from career claims");
@@ -25,9 +26,10 @@ static class ContextChecks {
    check(store.NarrativeContext(astrid.World,hidden.PlayerId).Facts.Count==0,"Cannot build private character context");
    var handler=new FakeHandler();handler.Responses.Enqueue(new System.Net.Http.HttpResponseMessage(System.Net.HttpStatusCode.Unauthorized));
    var options=new SagaOptions{LoreEnabled=true,OpenRouterKey="test-key-context-secret",LoreModel="openrouter/free"};
-   var chapter=await new LoreEngine(options,new HttpClient(handler),()=>true).GenerateAsync("Astrid",new[]{bounty},null,default,new[]{bounty},context);
+   var chapter=await new LoreEngine(options,new HttpClient(handler),()=>true).GenerateAsync("Astrid",new[]{bounty},null,default,new[]{bounty,nemesis},context);
    var request=handler.Bodies.Single();var data=JObject.Parse((string)JObject.Parse(request)["messages"]![1]!["content"]!);
    check(!new[]{astrid.World,astrid.PlayerId,bjorn.PlayerId,hidden.PlayerId,boss.Id,bounty.Id,options.OpenRouterKey,"12345","23456"}.Any(request.Contains),"Expanded API prompt redacts all identities, keys and coordinates");
+   check((int?)data["retainedCareer"]?["nemesisBossFinishingKills"]==1&&(int?)data["retainedCareer"]?["bossVictories"]==0,"Lore provider separates recorded Nemesis kills from vanilla boss victories");
    check(data["supportingContext"]!.Any(x=>x.ToString().Contains("Northern blade"))&&(int?)data["retainedCareer"]?["recordedBounties"]==1,"Queued API receives rich factual context and bounty totals");
    check(chapter.Facts.Any(x=>x.Contains("last reported snapshot"))&&chapter.MapParticipants.Contains(astrid.PlayerId)&&chapter.Participants.Any(p=>p.PlayerId==bjorn.PlayerId),"Local fallback preserves auditable context and privacy dependencies");
    check(chapter.Text=="","Provider failure does not invent a template story");chapter.Model="fixture/generated";chapter.Text="Synthetic persisted AI chapter for consent projection testing.";

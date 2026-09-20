@@ -2,7 +2,7 @@ using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using System.Collections.Immutable;
 var game=args.Length>0?args[0]:@"C:\Program Files (x86)\Steam\steamapps\common\Valheim\valheim_Data\Managed";
-var plugins=args.Length>1?args[1]:@"C:\Users\mecra\AppData\Roaming\Thunderstore Mod Manager\DataFolder\Valheim\profiles\Deep North\BepInEx\plugins";
+var plugins=args.Length>1?args[1]:@"C:\Users\mecra\AppData\Roaming\com.kesomannen.gale\valheim\profiles\Test\BepInEx\plugins";
 int passed=0;
 void Inspect(string path,Action<MetadataReader> inspect){using var stream=File.OpenRead(path);using var pe=new PEReader(stream);inspect(pe.GetMetadataReader());}
 TypeDefinition Type(MetadataReader r,string name){foreach(var h in r.TypeDefinitions){var d=r.GetTypeDefinition(h);var n=r.GetString(d.Namespace);if((n.Length==0?"":n+".")+r.GetString(d.Name)==name)return d;}throw new Exception("Missing type "+name);}
@@ -12,6 +12,14 @@ void Signature(MetadataReader r,string type,string method,params string[] parame
  var provider=new MetadataTypeNames();
  var match=Type(r,type).GetMethods().Select(r.GetMethodDefinition).Where(m=>r.GetString(m.Name)==method).Any(m=>m.DecodeSignature(provider,(object?)null).ParameterTypes.SequenceEqual(parameters));
  if(!match)throw new Exception($"Missing exact signature {type}.{method}({string.Join(",",parameters)})");passed++;
+}
+void TypedField(MetadataReader r,string type,string field,string expected){
+ var definition=Type(r,type).GetFields().Select(r.GetFieldDefinition).Single(f=>r.GetString(f.Name)==field);
+ if(definition.DecodeSignature(new MetadataTypeNames(),(object?)null)!=expected)throw new Exception($"Reflected field type changed: {type}.{field}");passed++;
+}
+void Property(MetadataReader r,TypeDefinition type,string property,string expected){
+ var definition=type.GetProperties().Select(r.GetPropertyDefinition).Single(p=>r.GetString(p.Name)==property);
+ if(definition.DecodeSignature(new MetadataTypeNames(),(object?)null).ReturnType!=expected)throw new Exception($"Reflected property type changed: {property}");passed++;
 }
 Inspect(Path.Combine(game,"assembly_valheim.dll"),r=>{
  foreach(var m in new[]{"OnDeath","ApplyDamage","GetLevel","GetHealth","IsBoss"})Method(r,"Character",m);Method(r,"Character","ApplyDamage","hit");Field(r,"Character","m_lastHit");
@@ -29,6 +37,43 @@ if(File.Exists(epic))Inspect(epic,r=>{
  foreach(var field in new[]{"PlayerID","State","Target","TargetName"})Field(r,"EpicLoot.Adventure.BountyInfo",field);
  Method(r,"EpicLoot.Adventure.BountyInfo","get_ID");Field(r,"EpicLoot.Adventure.BountyTargetInfo","MonsterID");
 });
+// Optional SLS integration resolves these members only when its assembly is present.
+if(File.Exists(sls))Inspect(sls,r=>{
+ const string config="StarLevelSystem.common.ValConfig";
+ foreach(var name in new[]{"EnableNemesisSystem","EnableZoneScalingBonus","EnableZoneMapOverlay","ZoneOverlayAboveFog"})
+  TypedField(r,config,name,"BepInEx.Configuration.ConfigEntry`1<Boolean>");
+ TypedField(r,config,"ZoneOverlayColorTransparency","BepInEx.Configuration.ConfigEntry`1<Single>");
+ const string zones="StarLevelSystem.Data.ZoneScaleSystemData";
+ TypedField(r,zones,"Zones","System.Collections.Generic.List`1<ZoneData>");TypedField(r,zones,"zonesBuilt","Boolean");
+ var zone=Type(r,"StarLevelSystem.common.DataObjects").GetNestedTypes().Select(r.GetTypeDefinition).Single(t=>r.GetString(t.Name)=="ZoneData");
+ foreach(var name in new[]{"MinX","MaxX","MinZ","MaxZ"})Property(r,zone,name,"Single");
+ Property(r,zone,"ZoneLevel","Int32");
+ TypedField(r,"StarLevelSystem.modules.Colorization","zoneOverlayColors","System.Collections.Generic.List`1<UnityEngine.Color>");
+});
+Inspect(Path.Combine(game,"assembly_valheim.dll"),r=>{
+ TypedField(r,"ZNetPeer","m_characterID","ZDOID");
+ Signature(r,"ZDO","GetFloat","String","Single&");
+});
+// Inspect the built Sagas binary without loading it or any proprietary dependency.
+var sagas=args.Length>2?args[2]:Path.GetFullPath("src/Sagas.Plugin/bin/Release/netstandard2.1/ValheimSagas.dll");
+if(File.Exists(sagas))Inspect(sagas,r=>{
+ var refs=r.AssemblyReferences.Select(r.GetAssemblyReference).Select(a=>r.GetString(a.Name)).ToArray();
+ foreach(var optional in new[]{"EpicLoot","StarLevelSystem"}){
+  if(refs.Contains(optional,StringComparer.OrdinalIgnoreCase))throw new Exception("Hard optional-mod assembly reference: "+optional);passed++;
+ }
+ var found=new HashSet<string>();
+ foreach(var handle in Type(r,"ValheimSagas.SagasPlugin").GetCustomAttributes()){
+  var a=r.GetCustomAttribute(handle);if(a.Constructor.Kind!=HandleKind.MemberReference)continue;
+  var ctor=r.GetMemberReference((MemberReferenceHandle)a.Constructor);if(ctor.Parent.Kind!=HandleKind.TypeReference)continue;
+  var type=r.GetTypeReference((TypeReferenceHandle)ctor.Parent);if(r.GetString(type.Name)!="BepInDependency")continue;
+  var blob=r.GetBlobReader(a.Value);if(blob.ReadUInt16()!=1)throw new Exception("Invalid dependency attribute");
+  var id=blob.ReadSerializedString();if(id is not ("randyknapp.mods.epicloot" or "MidnightsFX.StarLevelSystem"))continue;
+  if(blob.ReadInt32()!=2)throw new Exception("Optional mod declared as hard BepInEx dependency: "+id);
+  found.Add(id);passed++;
+ }
+ if(found.Count!=2)throw new Exception("Expected both optional mod declarations in Sagas plugin");passed++;
+});
+else Console.WriteLine("SKIP built plugin dependency audit: build Sagas.Plugin first or supply binary as third argument.");
 // Read actual installed metadata without loading game assemblies or executing
 // native calls. This proves API compatibility, not correct GPU output.
 Inspect(Path.Combine(game,"UnityEngine.ParticleSystemModule.dll"),r=>{

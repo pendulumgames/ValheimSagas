@@ -4,6 +4,7 @@ LICENSE
 THIRD-PARTY-NOTICES.md
 icon.png
 docs/VERIFICATION.md
+docs/OPTIONAL-MODS.md
 docs/LORE.md
 docs/IN-GAME-TESTS.md
 docs/screenshots/character.png

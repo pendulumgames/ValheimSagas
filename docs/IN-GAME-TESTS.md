@@ -32,3 +32,13 @@ Before public release, the earlier multiplayer ownership/telemetry, Linux hostin
 4. Optionally use a personal login to create/select/delete a named preset, save/remove a personal key and return to Host default. Free presets must retain zero ceilings. Paid presets require explicit opt-in and positive ceilings; only perform a chargeable live request if you choose to fund it. Verify another viewer cannot read settings or keys. Restart and verify key persistence without logging secrets.
 5. Inspect brown textured fog while panning/zooming and switching personal/combined maps. Previously unexplored terrain must stay masked. Check both heat layers and privacy revocation.
 6. Confirm personal/server stories exclude revoked profile/map context, retain factual attribution, and do not repeat template prose. Check recorded portrait/gear remain available after player logout while host website stays running.
+
+## 0.3.8 SLS / Nemesis
+
+1. In Gale Test with SLS enabled, compare zone outlines/level colors with the in-game SLS map. Hover a level>1 square and a level1 square. The latter should have no level tooltip. Changing SLS palette, opacity, scaling or overlay settings should reach the website within roughly15seconds.
+2. Test SLS above-fog on and off. Below fog, unknown terrain and level hover stay hidden; switch personal/combined explorers and verify the masks follow selection. Above fog, squares may cross unknown areas but terrain is still masked. Hide the optional layer in the browser.
+3. Compare the player's changing Nemesis score with SLS. Inspect the map tooltip and portrait-corner badge. Log out while another host remains online; confirm last-known score and timestamp persist. Disable profile sharing and confirm score is withheld.
+4. Defeat a flagged Nemesis boss with two Sagas clients; verify one event, one credit per recorded participant, correct personal time filters/leaderboard and no ordinary boss scenery unlock. Retry/reconnect/restart must not duplicate it. Ordinary bosses must not increment the Nemesis metric.
+5. If lore is enabled, inspect a subsequent chapter's ledger for qualified score/Nemesis evidence. Test independent isolated profiles with SLS only, Epic Loot only and neither. Base pages, telemetry, maps and vanilla tooltips should remain usable.
+
+Compilation, metadata, synthetic browsers and isolated Mono do not constitute these in-game checks.

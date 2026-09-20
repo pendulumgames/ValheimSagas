@@ -14,7 +14,7 @@ using Newtonsoft.Json;
 using UnityEngine;
 namespace ValheimSagas;
 
-[BepInPlugin("org.valheimsagas.collector", "Valheim Sagas", "0.3.7")]
+[BepInPlugin("org.valheimsagas.collector", "Valheim Sagas", "0.3.8")]
 [BepInDependency("randyknapp.mods.epicloot", BepInDependency.DependencyFlags.SoftDependency)]
 [BepInDependency("MidnightsFX.StarLevelSystem", BepInDependency.DependencyFlags.SoftDependency)]
 public sealed partial class SagasPlugin : BaseUnityPlugin {
@@ -78,10 +78,11 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
  void RunStage(string stage,Action action) {try{action();}catch(Exception e){Warn(stage,e);}}
  void Tick() {
   if(!ZNet.instance || ZNet.instance.GetWorldUID()==0) { RuntimeTerrain.Clear(); outbox?.Finish(pending.Values.ToArray());outbox=null; StopService(); activeWorld="";registered.Clear();online.Clear();pending.Clear();mediaTransfer.Clear();mediaCursors.Clear();return; }
-  if(activeWorld!=World) {outbox?.Finish(pending.Values.ToArray());StopService();service=null;activeWorld=World;mediaTransfer.Clear();mediaCursors.Clear();knownCharacters.Clear();registered.Clear();online.Clear();pending.Clear();sentCells.Clear();tileVersions.Clear();fullyMapped.Clear();RuntimeTerrain.Clear();pendingMedia.Clear();sentMedia.Clear();artwork?.Clear();mapCursor=0;importing=true;pendingMaps.Clear();journalId="";outbox=null;}
+  if(activeWorld!=World) {outbox?.Finish(pending.Values.ToArray());StopService();service=null;activeWorld=World;nextSlsRefresh=0;mediaTransfer.Clear();mediaCursors.Clear();knownCharacters.Clear();registered.Clear();online.Clear();pending.Clear();sentCells.Clear();tileVersions.Clear();fullyMapped.Clear();RuntimeTerrain.Clear();pendingMedia.Clear();sentMedia.Clear();artwork?.Clear();mapCursor=0;importing=true;pendingMaps.Clear();journalId="";outbox=null;}
   if(ZNet.instance.IsServer() && service==null) {
-   service=new SagaService(new SagaOptions{DataDirectory=data.Value,WebDirectory=Path.Combine(Path.GetDirectoryName(Info.Location)!,"web"),ListenPrefix=host.Value?prefix.Value:"",ViewerToken=token.Value,RequireViewerToken=requireToken.Value,World=World,WorldName=ZNet.instance.GetWorldName(),ServerName=string.IsNullOrWhiteSpace(serverName.Value)?ZNet.instance.GetWorldName():serverName.Value,ServerAddress=serverAddress.Value,LoreEnabled=lore.Value,LoreModel=model.Value,LoreDailyBudget=Math.Max(0,daily.Value),LoreCooldownMinutes=Math.Max(1,cooldown.Value),LoreMilestoneEvents=Math.Max(1,milestones.Value),RetentionDays=Math.Max(0,retention.Value),StatisticsRetentionDays=statisticsRetention.Value<=0?0:Math.Max(retention.Value,statisticsRetention.Value),Log=message=>Logger.LogWarning(message),OpenRouterKey=Environment.GetEnvironmentVariable("OPENROUTER_API_KEY")??key.Value}); service.Start();foreach(var stored in service.Store.Players(World))knownCharacters.Add(stored.PlayerId);
+   service=new SagaService(new SagaOptions{DataDirectory=data.Value,WebDirectory=Path.Combine(Path.GetDirectoryName(Info.Location)!,"web"),ListenPrefix=host.Value?prefix.Value:"",ViewerToken=token.Value,RequireViewerToken=requireToken.Value,World=World,WorldName=ZNet.instance.GetWorldName(),ServerName=string.IsNullOrWhiteSpace(serverName.Value)?ZNet.instance.GetWorldName():serverName.Value,ServerAddress=serverAddress.Value,SlsInstalled=SlsAdapter.Installed,LoreEnabled=lore.Value,LoreModel=model.Value,LoreDailyBudget=Math.Max(0,daily.Value),LoreCooldownMinutes=Math.Max(1,cooldown.Value),LoreMilestoneEvents=Math.Max(1,milestones.Value),RetentionDays=Math.Max(0,retention.Value),StatisticsRetentionDays=statisticsRetention.Value<=0?0:Math.Max(retention.Value,statisticsRetention.Value),Log=message=>Logger.LogWarning(message),OpenRouterKey=Environment.GetEnvironmentVariable("OPENROUTER_API_KEY")??key.Value}); service.Start();foreach(var stored in service.Store.Players(World))knownCharacters.Add(stored.PlayerId);
   }
+  RunStage("SLS world snapshot",RefreshSls);
   foreach(var peer in ZNet.instance.GetPeers()) if(peer.IsReady() && registered.Add(peer.m_rpc)) {
    var captured=peer;
    RegisterLogin(peer);
@@ -151,9 +152,9 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
   var id=peerPlayer==0 ? Identity(Player.m_localPlayer?Player.m_localPlayer.GetPlayerID():0) : Identity(peerPlayer);
   if(packet.MediaChunk!=null){var assembled=mediaTransfer.Accept(id,World,packet.MediaChunk,Time.unscaledTime);if(assembled!=null){packet.Media=assembled;packet.AckId="media:"+assembled.Id;}}
   if(packet.Media!=null){var m=packet.Media;m.World=World;m.PlayerId=id;service.UploadMedia(m,ok=>{if(ok)committed.Enqueue(()=>{if(rpc!=null)rpc.Invoke(AckName,packet.AckId);else pendingMedia.Remove(packet.AckId);});});}
-  if(packet.Player!=null) {var p=packet.Player;p.World=World;p.PlayerId=id;p.Utc=DateTime.UtcNow;p.Online=true; if(!service.UpdatePlayer(p))Warn("equipment validation",new InvalidOperationException("Snapshot rejected or storage queue full; presence and exploration continue."));}
+  if(packet.Player!=null) {var p=packet.Player;p.World=World;p.PlayerId=id;p.Utc=DateTime.UtcNow;p.Online=true;p.NemesisScore=HostNemesisScore(peerPlayer==0&&Player.m_localPlayer?Player.m_localPlayer.GetPlayerID():peerPlayer); if(!service.UpdatePlayer(p))Warn("equipment validation",new InvalidOperationException("Snapshot rejected or storage queue full; presence and exploration continue."));}
   if(packet.Exploration!=null) {var e=packet.Exploration;e.World=World;e.PlayerId=id;if(e.CellSize!=64||e.Cells.Count>128)return;service.Explore(e,ok=>{if(ok)committed.Enqueue(()=>{if(rpc!=null)rpc.Invoke(AckName,packet.AckId);else pendingMaps.Remove(packet.AckId);});});}
-  if(packet.Event!=null) {var e=packet.Event;e.World=World; if(e.Kind=="collect"||e.Kind=="pickup"||e.Kind=="death"||e.Kind=="bounty"){if(e.PlayerId!=id){if(rpc!=null)rpc.Invoke(AckName,e.Id);else pending.Remove(e.Id);return;}e.PlayerId=id;}
+  if(packet.Event!=null) {var e=packet.Event;e.World=World;e.NemesisBoss &= SlsAdapter.Installed&&e.Kind=="kill"; if(e.Kind=="collect"||e.Kind=="pickup"||e.Kind=="death"||e.Kind=="bounty"){if(e.PlayerId!=id){if(rpc!=null)rpc.Invoke(AckName,e.Id);else pending.Remove(e.Id);return;}e.PlayerId=id;}
    if(e.Kind=="kill"||e.Kind=="drop"){foreach(var peer in ZNet.instance.GetPeers())if(peer.IsReady()&&peer.m_playerID!=0)knownCharacters.Add(Identity(peer.m_playerID));if(!knownCharacters.Contains(e.PlayerId)){e.PlayerId="";e.PlayerName="Unattributed";}e.Contributors=e.Contributors.Where(knownCharacters.Contains).ToList();}
    if(e.Id.Length>160||e.Amount<1||e.Amount>10000||e.Stars<0||e.Stars>1000)return;
    service.TryEvent(e,ok=>{if(ok)committed.Enqueue(()=>{if(rpc!=null)rpc.Invoke(AckName,e.Id);else pending.Remove(e.Id);});});

@@ -15,7 +15,7 @@ public sealed class PlayerLoginIdentity {
 }
 public sealed partial class SagaStore {
  void RecordBossReceipt(SagaEvent e){
-  if(e.Kind!="kill"||!e.Boss)return;
+  if(e.Kind!="kill"||!e.Boss||e.NemesisBoss)return;
   var prefab=e.Prefab.EndsWith("(Clone)",StringComparison.Ordinal)?e.Prefab.Substring(0,e.Prefab.Length-7).Trim():e.Prefab;
   var boss=new[]{"Eikthyr","gd_king","Bonemass","Dragon","GoblinKing","SeekerQueen","Fader"}.FirstOrDefault(x=>x.Equals(prefab,StringComparison.OrdinalIgnoreCase));if(boss==null)return;
   foreach(var id in e.Contributors.Concat(new[]{e.PlayerId}).Where(x=>!string.IsNullOrEmpty(x)).Distinct(StringComparer.Ordinal))

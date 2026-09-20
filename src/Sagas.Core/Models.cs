@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 namespace ValheimSagas;
 public sealed class SagaEvent {
+ public bool NemesisBoss {get;set;}
  public double? DurationSeconds {get;set;}
  public string Id {get;set;} = ""; public string World {get;set;} = ""; public string PlayerId {get;set;} = ""; public string PlayerName {get;set;} = "";
  public DateTime Utc {get;set;} = DateTime.UtcNow; public string Kind {get;set;} = "kill"; public string Prefab {get;set;} = ""; public string Name {get;set;} = "";
@@ -10,6 +11,7 @@ public sealed class SagaEvent {
  public float? X {get;set;} public float? Z {get;set;} public bool DetailsExpired {get;set;} public List<string> Contributors {get;set;} = new List<string>();
 }
 public sealed class PlayerSnapshot { public string ProfileSlug {get;set;} = ""; public List<GearItem> Hotbar {get;set;} = new List<GearItem>(); public string PortraitStatus {get;set;} = ""; public DateTime? PositionUtc {get;set;} public bool PositionLive {get;set;} public string PortraitId {get;set;} = ""; public Dictionary<string,string> EffectiveResistances {get;set;} = new Dictionary<string,string>();
+ public float? NemesisScore {get;set;}
  public bool EpicLootInstalled {get;set;} public long? Gold {get;set;}
  public bool BackgroundUnlocked {get;set;} public string BackgroundPreference {get;set;} = "automatic";
  public string ProfileBiome {get;set;} = ""; public string ProfileBiomeEvidence {get;set;} = "";

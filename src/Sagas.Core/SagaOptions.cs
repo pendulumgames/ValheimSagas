@@ -18,6 +18,7 @@ public sealed class SagaOptions { public string ServerName {get;set;} = "Valheim
  public int StatisticsRetentionDays {get;set;} = 0;
  public int QueueCapacity {get;set;} = 8192;
  public int PresenceTimeoutSeconds {get;set;} = 20;
+ public bool? SlsInstalled {get;set;}
  public bool Synthetic {get;set;} = false;
  public Action<string>? Log {get;set;}
 }

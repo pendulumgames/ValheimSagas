@@ -11,6 +11,7 @@ Your adventures, remembered: a standalone Valheim mod with a server-hosted websi
 - **World Atlas:** Valheim terrain captured at runtime, textured brown fog of war, personal or combined exploration, named player markers, online/offline filters and separate kill/loot heat maps.
 - **Vikings:** persisted equipped-character portraits, game item icons, detailed hover/focus/tap tooltips, resistances, gear effects and personal statistics. Shared portraits and equipment remain available after logout while the host website is running.
 - **Leaderboards:** boss progression and credited teams, observed fight times, kills and stars, rarity discoveries, carried gold and optional Epic Loot bounties.
+- **Optional SLS enhancements:** host-colored zone squares that follow SLS fog settings, hover levels above 1, current Nemesis scores and distinct Nemesis boss-kill rankings.
 - **Sagas:** persistent personal and server stories with a separate recorded-facts ledger. The host must configure OpenRouter first; no template stories are generated.
 - **Make it yours:** boxed, full-screen or full-screen scrolling scenery. Your personal login can select backgrounds up to your recorded boss progression; everyone sees the saved selection. New browsers default to full-screen scroll.
 
@@ -42,6 +43,16 @@ While playing, press **Left Ctrl + F8** to copy a personal login token, then pas
 
 Scenery progression follows recorded credit: Meadows initially; Eikthyr unlocks Black Forest, Elder unlocks Swamp, Bonemass unlocks Mountains, Moder unlocks Plains, Yagluth unlocks Mistlands, Queen unlocks Ashlands, and Fader unlocks Deep North. Tracking cannot reconstruct unrecorded boss kills from before installation.
 
+## Optional SLS and Epic Loot
+
+Neither mod is required. Without them, statistics, vanilla gear/tooltips, portraits, maps, leaderboards and sagas continue to work. SLS and Epic Loot are independently detected; installing one does not require the other.
+
+When **SLS is installed on the host**, the atlas mirrors its enabled zone overlay, resolved level palette, transparency and above/below-fog setting. The website adds a zone-level tooltip only above level 1. Below-fog outlines and tooltips follow the selected shared exploration; above-fog mode reveals the zone grid without revealing terrain. Host zone settings refresh about every 15 seconds. The website also offers a local SLS-layer visibility toggle.
+
+With the SLS Nemesis system enabled, a received score appears on the Viking's portrait and map tooltip. It is the latest host-observed replicated score, not a lifetime total; missing scores remain unknown. Profile privacy still applies. Nemesis boss defeats have separate filtered player metrics and a team-credit leaderboard, and can inform saga evidence. Repeated death reports count once. These encounters do not unlock ordinary boss progression/scenery or enter normal boss-speed rankings. Older events lacking the Nemesis flag cannot safely be backfilled.
+
+Epic Loot independently enhances rarity colors, gear effects, bounty tracking and loot presentation. It is never required for SLS features or basic website operation. See [integration details](https://github.com/pendulumgames/ValheimSagas/blob/main/docs/OPTIONAL-MODS.md).
+
 ## Enable sagas
 
 On the **host**, set `[Lore] OpenRouterKey` or the host process's `OPENROUTER_API_KEY` environment variable. `EnableOpenRouter` must be true. An OpenRouter account/key is required, even for free routing; Sagas never accesses an existing browser account automatically.
@@ -56,6 +67,6 @@ Story prompts use relevant recorded events, career totals, bosses and credited t
 
 Back up `BepInEx/config/ValheimSagas` with the host stopped, including `sagas.db` and `personal-lore.key` if present. The key file is required to decrypt saved personal OpenRouter credentials. Do not share backups, configs or tokens publicly. Uninstalling the plugin does not delete recorded history.
 
-**0.3.7 is a tested preview release.** Automated tests use labeled synthetic fixtures; real credentialed OpenRouter generation, two-client multiplayer acceptance and Linux hosting still require testing. Unresolved attackers and uncertain loot provenance stay unattributed rather than being guessed. Fight durations are observed telemetry, and carried gold is a snapshot, not a lifetime earnings counter.
+**0.3.8 is a tested preview release.** Automated tests use labeled synthetic fixtures; real credentialed OpenRouter generation, two-client multiplayer acceptance and Linux hosting still require testing. Unresolved attackers and uncertain loot provenance stay unattributed rather than being guessed. Fight durations are observed telemetry, and carried gold is a snapshot, not a lifetime earnings counter.
 
 Licensed under MIT; see the included third-party notices. Valheim belongs to Iron Gate AB. This is an independent community mod.
