@@ -2,9 +2,9 @@
 
 **Every Viking has a story.**
 
-Your adventures, remembered: a standalone Valheim mod with a server-hosted website, a living 2D atlas, character armories, leaderboards and optional AI-written sagas. No ValheimWebMap dependency.
+Your adventures, remembered: a standalone Valheim mod with a server-hosted website, a living 2D atlas, character armories, leaderboards and optional AI-written sagas.
 
-![Character armory with saved portrait, equipment and SLS Nemesis score](https://raw.githubusercontent.com/pendulumgames/ValheimSagas/main/docs/screenshots/character.png)
+![Viking profile with saved portrait, equipment, Nemesis score and compact Appearance control](https://raw.githubusercontent.com/pendulumgames/ValheimSagas/main/docs/screenshots/character.png)
 
 ## Explore your fellowship
 
