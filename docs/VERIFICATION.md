@@ -1,3 +1,13 @@
+# 0.3.14 portrait optimization verification
+
+Verified September 20, 2026. Build passed with zero errors and two existing MSB3277 warnings. Full suites passed: 2,484 Core assertions, 80 lore checks, 21,964 terrain checks, 1,520 portrait/pixel/scheduling checks, and 166 installed-assembly metadata checks. Final plugin build also passed after preserving the simplified-portrait status.
+
+New checks cover appearance debounce, capture cooldown, ten-minute fallback, failure retry, reset, alpha-aware bounded downsampling, and the installed appearance fields/EncodeArrayToPNG signature. Existing body/alpha/frame and render-state restoration tests still pass. Native rendering and background native PNG output are not executed by these synthetic tests; in-game image orientation, visual quality and measured frame-time savings remain to be checked.
+
+The installed ImageConversionModule was inspected directly. Unity documents [EncodeArrayToPNG as thread-safe](https://docs.unity.com/en-us/engine/6000.3/script-reference/unityengine/imageconversion/encodearraytopng). Only detached managed pixel arrays and primitive metadata enter the worker; the Texture2D and camera stay on the main thread. The NativeArray encoder and asynchronous GPU readback are not used.
+
+An unchanged character's safety-refresh interval increases from one to ten minutes (roughly 90% fewer scheduled refreshes), not a measured 90% reduction in frame time. Each remaining capture logs main-thread stages and background processing separately. See IN-GAME-TESTS.md for acceptance steps. No live-server update or provider requests.
+
 # 0.3.13 periodic-stall candidate verification
 
 Verified September 20, 2026. Local 0.3.10 logs exposed recurring main-thread work despite no Steam send-limit errors. This release addresses those paths; no in-game frame-time improvement has yet been verified.

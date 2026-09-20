@@ -36,6 +36,15 @@ internal static class RuntimeArtPixels {
    black[i]=Encode(r/alpha,linearLight);black[i+1]=Encode(g/alpha,linearLight);black[i+2]=Encode(b/alpha,linearLight);black[i+3]=(byte)Math.Round(alpha*255);
   }
  }
+ internal static byte[] ResizePortrait(byte[] source,int width,int height,int outputWidth,int outputHeight){
+  if(width<1||height<1||outputWidth<1||outputHeight<1||outputWidth>width||outputHeight>height||(long)width*height*4!=source.Length)throw new ArgumentException("Invalid portrait dimensions.");
+  var result=new byte[checked(outputWidth*outputHeight*4)];
+  for(int y=0;y<outputHeight;y++)for(int x=0;x<outputWidth;x++){
+   int x0=x*width/outputWidth,x1=(x+1)*width/outputWidth,y0=y*height/outputHeight,y1=(y+1)*height/outputHeight;long alpha=0,r=0,g=0,b=0;
+   for(int sy=y0;sy<y1;sy++)for(int sx=x0;sx<x1;sx++){int i=(sy*width+sx)*4;long a=source[i+3];alpha+=a;r+=source[i]*a;g+=source[i+1]*a;b+=source[i+2]*a;}
+   int dest=(y*outputWidth+x)*4;result[dest+3]=(byte)(alpha/((x1-x0)*(y1-y0)));if(alpha>0){result[dest]=(byte)(r/alpha);result[dest+1]=(byte)(g/alpha);result[dest+2]=(byte)(b/alpha);}
+  }return result;
+ }
  static double Decode(byte value,bool linearLight)=>linearLight?LinearBytes[value]:value/255.0;
  static byte Encode(double value,bool linearLight){double x=Math.Max(0,Math.Min(1,value));if(linearLight)x=x<=.0031308?12.92*x:1.055*Math.Pow(x,1/2.4)-.055;return (byte)Math.Round(x*255);}
  // Returns a square crop in normalized viewport coordinates, preserving the

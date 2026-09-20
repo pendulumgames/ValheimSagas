@@ -65,3 +65,9 @@ Launch Gale Test and confirm `Loading [Valheim Sagas 0.3.13]`. Play for at least
 Inspect `Sagas slow stage: world update`, `equipment snapshot`, `SLS capture slice`, `portrait capture`, `Sagas uploads paused` and `k_EResultLimitExceeded`. Timing warnings are sampled at most once per minute per stage, not a complete frame-time profile. A rare portrait capture warning is separate from recurring three-second work. Verify profile images still refresh after equipment changes.
 
 Repeat with host and clients upgraded on the dedicated server before declaring the original multiplayer incident resolved. Synthetic slice tests and an isolated installed-Mono probe are not an in-game performance result.
+
+## 0.3.14 portrait retest
+
+Confirm 0.3.14 in the startup log. Stand/play with unchanged gear for several minutes: there should be no minute-by-minute portrait renders. Change weapon, shield, armor, hair or cosmetics; after the outfit settles (and any capture/upload cooldown), verify a new correctly oriented portrait with body, transparency and weapon effects. Old imagery should remain visible during processing. An unchanged character has a ten-minute fallback refresh.
+
+Compare `Sagas portrait timings` preparation, visibility/framing, final render/readback and background matte/encode values with the previous approximately 223 ms combined capture. Background timings do not block the Unity update. Check rapid swaps and disabling profile sharing during processing: an old job must not publish a stale or private portrait. Check logout/rejoin and world changes. No asynchronous GPU readback or frame-spread rendering is used.

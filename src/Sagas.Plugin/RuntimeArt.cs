@@ -3,6 +3,12 @@ using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
+using System.Diagnostics;
+using System.Reflection;
+using System.Linq;
+using HarmonyLib;
+using Debug=UnityEngine.Debug;
 using UnityEngine;
 
 namespace ValheimSagas;
@@ -23,11 +29,23 @@ internal sealed class RuntimeArt {
  readonly Queue<int> iconOrder=new Queue<int>();
  Image? portrait;
  long portraitPlayer;
- float nextPortrait;
+ readonly PortraitRefresh refresh=new PortraitRefresh();
+ Task<PortraitResult>? processing;string processingSignature="";long processingPlayer;int generation,processingGeneration;bool forceSimplified,processingSimplified;
+ sealed class PortraitResult {internal Image Image=null!;internal double MatteMs,EncodeMs;}
+ static readonly FieldInfo[] appearanceFields=new[]{"m_modelIndex","m_skinColor","m_hairColor","m_beardItem","m_hairItem","m_leftItem","m_rightItem","m_chestItem","m_legItem","m_helmetItem","m_shoulderItem","m_utilityItem","m_trinketItem","m_leftBackItem","m_rightBackItem"}.Select(n=>AccessTools.Field(typeof(VisEquipment),n)).Where(f=>f!=null).ToArray();
+ static string Appearance(Player player){
+  var text=new StringBuilder();var visual=player.GetComponentInChildren<VisEquipment>();
+  if(visual)foreach(var field in appearanceFields)text.Append(field.Name).Append('=').Append(field.GetValue(visual)).Append(';');
+  foreach(var item in player.GetInventory().GetEquippedItems().OrderBy(i=>i.m_shared.m_itemType).ThenBy(i=>i.m_shared.m_name)){
+   text.Append(item.m_dropPrefab?item.m_dropPrefab.name:item.m_shared.m_name).Append(':').Append(item.m_quality).Append(':').Append(item.m_variant).Append(';');
+   foreach(var pair in item.m_customData.OrderBy(p=>p.Key))text.Append(pair.Key).Append('=').Append(pair.Value).Append(';');
+  }return text.ToString();
+ }
+
  public string Status {get;private set;}="waiting-for-player";
  public RuntimeArt(Action<string,Exception> warning){warn=warning;}
  void CheckThread(){if(Thread.CurrentThread.ManagedThreadId!=thread)throw new InvalidOperationException("Runtime artwork requires Unity's main thread.");}
- public void Clear(){CheckThread();icons.Clear();iconOrder.Clear();portrait=null;portraitPlayer=0;nextPortrait=0;Status="waiting-for-player";}
+ public void Clear(){CheckThread();icons.Clear();iconOrder.Clear();portrait=null;portraitPlayer=0;generation++;refresh.Reset();forceSimplified=false;Status="waiting-for-player";}
 
  public Image? TryIcon(ItemDrop.ItemData item) {
   CheckThread();
@@ -56,11 +74,20 @@ internal sealed class RuntimeArt {
   CheckThread();
   if(!player){Status="waiting-for-player";return null;}
   if(SystemInfo.graphicsDeviceType==UnityEngine.Rendering.GraphicsDeviceType.Null){Status="no-graphics-device";return null;}
-  long id=player.GetPlayerID();
-  if(portraitPlayer==id&&!allowRefresh)return portrait;
-  if(portraitPlayer==id&&Time.realtimeSinceStartup<nextPortrait)return portrait;
-  if(portraitPlayer!=id)portrait=null;
-  portraitPlayer=id;nextPortrait=Time.realtimeSinceStartup+60f;Status="rendering";
+  long id=player.GetPlayerID();var now=Time.realtimeSinceStartup;
+  if(portraitPlayer!=id){portrait=null;portraitPlayer=id;generation++;refresh.Reset();forceSimplified=false;}
+  var signature=Appearance(player);var due=refresh.Due(signature,now);
+  if(processing!=null){
+   if(!processing.IsCompleted)return portrait;
+   var job=processing;processing=null;
+   if(processingGeneration==generation&&processingPlayer==id&&processingSignature==signature){
+    if(job.IsFaulted){forceSimplified=true;refresh.Failed(now);Status="processing-failed";warn("portrait processing",job.Exception!);}
+    else{var result=job.Result;portrait=result.Image;Status=processingSimplified?"simplified":"ready";forceSimplified=false;refresh.Completed(signature,now);Debug.Log("Sagas portrait timings: background matte="+result.MatteMs.ToString("F1")+" ms, encode/hash="+result.EncodeMs.ToString("F1")+" ms; ready "+portrait.Width+"x"+portrait.Height+", "+portrait.Png.Length+" bytes.");}
+   }else{_ = job.Exception;Status="appearance-changed";}
+   return portrait;
+  }
+  if(!allowRefresh||!due)return portrait;
+  refresh.Started(now);Status="rendering";var captureClock=Stopwatch.StartNew();double preparedMs=0,probeMs=0,readbackMs=0;
   GameObject? root=null;
   var renderers=new List<Renderer>();var fallbackMaterials=new List<Material>();
   var effectMeshes=new List<Mesh>();
@@ -152,10 +179,10 @@ internal sealed class RuntimeArt {
    fill.transform.rotation=Quaternion.LookRotation(facing*new Vector3(-.5f,0,-1));
    int equippedRendererCount=renderers.Count;
    CaptureEffects(player,root,camera,captureLayer,bounds,renderers,effectMeshes,diagnostics);
-   bool simplified=false,bodyVerified=false,framingChecked=false;
+   bool simplified=forceSimplified&&UseFallback(renderers,fallbackMaterials,equippedRendererCount),bodyVerified=false,framingChecked=false;preparedMs=captureClock.Elapsed.TotalMilliseconds;
    // The first target is only a cheap visibility/framing probe. Re-render the
    // final pose at real higher resolution rather than enlarging a small PNG.
-   foreach(int width in new[]{341,1024,768,512,341,256,192,128,96}) {
+   foreach(int width in new[]{341,1024}) {
     target=RenderTexture.GetTemporary(width,width*3/2,24,RenderTextureFormat.ARGB32,RenderTextureReadWrite.sRGB);
     // Pooled textures can allocate lazily; IsCreated before the first bind is
     // not a failure. Explicitly request creation before checking availability.
@@ -180,24 +207,23 @@ internal sealed class RuntimeArt {
      camera.targetTexture=null;RenderTexture.active=previous;RenderTexture.ReleaseTemporary(target);target=null;
      continue;
     }
-    Image? result;
-    try{result=EncodePortrait(camera,target,bodyVerified);}
-    catch(EmptyPortraitException) when(!simplified){
-     warn("character portrait original shader",new InvalidOperationException("Original material capture contained no visible pixels; retrying with a simplified texture material. layer="+captureLayer+" size="+bounds.size+" renderers="+renderers.Count+" "+diagnostics));
-     if(!UseFallback(renderers,fallbackMaterials,equippedRendererCount)){Status="capture-empty";throw;}
-     simplified=true;VerifyBody(camera,target,renderers,capturedBody);result=EncodePortrait(camera,target,bodyVerified);
-    }
-    camera.targetTexture=null;RenderTexture.active=previous;RenderTexture.ReleaseTemporary(target);target=null;
-    if(result!=null){portrait=result;Status=simplified?"simplified":"ready";nextPortrait=Time.realtimeSinceStartup+(simplified?30f:60f);Debug.Log("Valheim Sagas portrait: "+Status+", body verified, neutral studio lighting, background-difference alpha, "+result.Width+"x"+result.Height+", "+result.Png.Length+" bytes, "+renderers.Count+" equipped meshes, size="+bounds.size+", layer="+captureLayer+". "+diagnostics);return result;}
+    probeMs=captureClock.Elapsed.TotalMilliseconds-preparedMs;
+    var readClock=Stopwatch.StartNew();var buffers=ReadPortraitBuffers(camera,target);readbackMs=readClock.Elapsed.TotalMilliseconds;
+    int imageWidth=target.width,imageHeight=target.height;bool linear=QualitySettings.activeColorSpace==ColorSpace.Linear;var format=buffers.Format;
+    processingSignature=signature;processingPlayer=id;processingGeneration=generation;processingSimplified=simplified;
+    processing=Task.Run(()=>ProcessPortrait(buffers.Black,buffers.White,imageWidth,imageHeight,format,linear));
+    Status="processing";return portrait;
+
    }
    Status="image-too-large";warn("character portrait",new InvalidOperationException("Portrait exceeds the bounded portrait upload size after downscaling."));
    return portrait;
-  }catch(Exception ex){if(Status=="rendering")Status=ex is EmptyPortraitException?"capture-empty":"capture-failed";warn("character portrait",new InvalidOperationException("Portrait status="+Status+". "+diagnostics,ex));return portrait;}
+  }catch(Exception ex){if(Status=="rendering")Status=ex is EmptyPortraitException?"capture-empty":"capture-failed";refresh.Failed(Time.realtimeSinceStartup);warn("character portrait",new InvalidOperationException("Portrait status="+Status+". "+diagnostics,ex));return portrait;}
   finally {
    RenderTexture.active=previous;if(target)RenderTexture.ReleaseTemporary(target);
    if(root){root.SetActive(false);UnityEngine.Object.Destroy(root);}
    foreach(var material in fallbackMaterials)UnityEngine.Object.Destroy(material);
    foreach(var mesh in effectMeshes)UnityEngine.Object.Destroy(mesh);
+   Debug.Log("Sagas portrait timings: main-thread preparation="+preparedMs.ToString("F1")+" ms, visibility/framing="+probeMs.ToString("F1")+" ms, final render/readback="+readbackMs.ToString("F1")+" ms, total="+captureClock.Elapsed.TotalMilliseconds.ToString("F1")+" ms.");
   }
  }
 
@@ -333,14 +359,26 @@ internal sealed class RuntimeArt {
    texture.LoadRawTextureData(black);
   }finally{camera.backgroundColor=oldColor;}
  }
- static Image? EncodePortrait(Camera camera,RenderTexture target,bool bodyVerified){
-  var texture=new Texture2D(target.width,target.height,TextureFormat.RGBA32,false){hideFlags=HideFlags.HideAndDontSave};
+ sealed class PortraitBuffers {internal byte[] Black=null!,White=null!;internal UnityEngine.Experimental.Rendering.GraphicsFormat Format;}
+ static PortraitBuffers ReadPortraitBuffers(Camera camera,RenderTexture target){
+  var texture=new Texture2D(target.width,target.height,TextureFormat.RGBA32,false){hideFlags=HideFlags.HideAndDontSave};var oldColor=camera.backgroundColor;
   try{
-   ReadPortraitMatte(camera,target,texture);var pixels=texture.GetRawTextureData();
-   if(!RuntimeArtPixels.CanPublishPortrait(bodyVerified,pixels))throw new EmptyPortraitException("Portrait has no verified visible body or sufficient geometry after alpha reconstruction ("+RuntimeArtPixels.CountVisible(pixels)+" of"+(pixels.Length/4)+" pixels).");
-   var bytes=ImageConversion.EncodeToPNG(texture);if(bytes.Length>SagaService.MaximumPortraitBytes)return null;
-   using(var hash=SHA256.Create())return new Image{Id=BitConverter.ToString(hash.ComputeHash(bytes)).Replace("-","").ToLowerInvariant(),Kind="portrait",Png=bytes,Width=target.width,Height=target.height};
-  }finally{UnityEngine.Object.Destroy(texture);}
+   camera.backgroundColor=new Color(0,0,0,0);PortraitLighting.Render(camera);RenderTexture.active=target;texture.ReadPixels(new Rect(0,0,target.width,target.height),0,0,false);var black=texture.GetRawTextureData();
+   camera.backgroundColor=new Color(1,1,1,0);PortraitLighting.Render(camera);RenderTexture.active=target;texture.ReadPixels(new Rect(0,0,target.width,target.height),0,0,false);var white=texture.GetRawTextureData();
+   return new PortraitBuffers{Black=black,White=white,Format=texture.graphicsFormat};
+  }finally{camera.backgroundColor=oldColor;UnityEngine.Object.Destroy(texture);}
+ }
+ // Detached byte arrays only. EncodeArrayToPNG is documented thread-safe; no Texture2D/native-array access here.
+ static PortraitResult ProcessPortrait(byte[] black,byte[] white,int width,int height,UnityEngine.Experimental.Rendering.GraphicsFormat format,bool linear){
+  var clock=Stopwatch.StartNew();RuntimeArtPixels.ReconstructMatte(black,white,linear);
+  if(!RuntimeArtPixels.CanPublishPortrait(true,black))throw new EmptyPortraitException("Processed portrait has insufficient visible geometry.");
+  var matteMs=clock.Elapsed.TotalMilliseconds;clock.Restart();
+  foreach(var size in new[]{width,768,512,341,256,192,128,96}){
+   if(size>width)continue;var h=size*3/2;var pixels=size==width?black:RuntimeArtPixels.ResizePortrait(black,width,height,size,h);
+   var bytes=ImageConversion.EncodeArrayToPNG(pixels,format,(uint)size,(uint)h);
+   if(bytes.Length>SagaService.MaximumPortraitBytes)continue;
+   using var hash=SHA256.Create();return new PortraitResult{Image=new Image{Id=BitConverter.ToString(hash.ComputeHash(bytes)).Replace("-","").ToLowerInvariant(),Kind="portrait",Png=bytes,Width=size,Height=h},MatteMs=matteMs,EncodeMs=clock.Elapsed.TotalMilliseconds};
+  }throw new InvalidOperationException("Portrait exceeds upload size bound.");
  }
 
  static Image? Encode(RenderTexture source,string kind) {

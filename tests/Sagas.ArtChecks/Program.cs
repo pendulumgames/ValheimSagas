@@ -1,6 +1,17 @@
 using ValheimSagas;
 using System.Numerics;
 int checks=0;void Check(bool value,string label){if(!value)throw new Exception(label);checks++;}
+var policy=new PortraitRefresh();
+Check(!policy.Due("armor-a",0)&&!policy.Due("armor-a",1),"First appearance settles before capture");
+Check(policy.Due("armor-a",2),"Settled initial appearance captures");policy.Started(2);policy.Completed("armor-a",3);
+for(int second=4;second<603;second++)Check(!policy.Due("armor-a",second),"Unchanged appearance has no minute-by-minute refresh");
+Check(policy.Due("armor-a",603),"Ten-minute fallback refreshes modded appearance");policy.Started(603);policy.Completed("armor-a",604);
+Check(!policy.Due("armor-b",605)&&!policy.Due("armor-c",606)&&!policy.Due("armor-c",608),"Rapid gear swaps debounce and obey capture cooldown");Check(policy.Due("armor-c",613),"Latest settled outfit captured after cooldown");policy.Started(613);policy.Failed(614);Check(!policy.Due("armor-c",673)&&policy.Due("armor-c",674),"Failure retries are bounded");
+policy.Reset();Check(!policy.Due("new-world",700)&&policy.Due("new-world",702),"Privacy/world reset forgets previous appearance");
+var sample=new byte[]{255,0,0,255,0,255,0,0,255,0,0,255,0,0,255,0};
+var small=RuntimeArtPixels.ResizePortrait(sample,2,2,1,1);Check(small.SequenceEqual(new byte[]{255,0,0,127}),"Oversize downsample preserves foreground color without transparent fringes");
+Check(RuntimeArtPixels.ResizePortrait(sample,2,2,2,2).Where((v,i)=>sample[i+3-i%4]>0).SequenceEqual(sample.Where((v,i)=>sample[i+3-i%4]>0)),"Same-size fallback preserves visible pixels");
+try{RuntimeArtPixels.ResizePortrait(sample,2,2,3,3);Check(false,"Upscaling rejected");}catch(ArgumentException){Check(true,"Fallback never upscales");}
 // Synthetic reconstruction of observed failure: all98304pixels were(9,14,17,0).
 var rgba=new byte[256*384*4];for(int i=0;i<rgba.Length;i+=4){rgba[i]=9;rgba[i+1]=14;rgba[i+2]=17;}
 Check(!RuntimeArtPixels.HasVisibleContent(rgba),"observed transparent clear-only portrait is rejected");

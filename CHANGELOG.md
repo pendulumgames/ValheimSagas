@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.14
+
+- Refresh portraits after settled equipment/cosmetic changes, with a two-second debounce, ten-second capture cooldown and ten-minute safety refresh instead of rebuilding every minute. Failed captures retry no faster than once per minute.
+- Move final-resolution transparency reconstruction, size-limit fallback, PNG encoding and hashing to a single background job using detached pixel arrays and Unity's thread-safe array encoder. Keep rendering/readback synchronous on the game thread; no async GPU readback or multi-frame render preparation.
+- Retain the last good portrait during processing; reject outdated results after appearance, character, world or consent changes. Preserve normal 1024x1536 output and body visibility checks.
+- Log preparation, visibility/framing, final render/readback and background processing timings separately. In-game appearance, orientation and frame-time confirmation remain required.
+
+
 ## 0.3.13
 
 - Address periodic game-thread stalls: cache Epic Loot and SLS reflection metadata instead of repeatedly searching assemblies and members. Runtime item effects, rarity colors and settings are still read fresh.
