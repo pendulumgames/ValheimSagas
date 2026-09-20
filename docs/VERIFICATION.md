@@ -1,3 +1,13 @@
+# 0.3.13 periodic-stall candidate verification
+
+Verified September 20, 2026. Local 0.3.10 logs exposed recurring main-thread work despite no Steam send-limit errors. This release addresses those paths; no in-game frame-time improvement has yet been verified.
+
+- Plugin builds against installed game/BepInEx references: zero errors, two existing MSB3277 warnings. Passed 2,484 Core assertions, 80 lore checks, 21,964 terrain checks, 911 portrait checks and 150 installed-assembly metadata checks.
+- Shared production SLS capture code tested with 40,000 synthetic zones, bounded batches, changed levels/palettes, detached results, absent zones, collection invalidation and the size limit. .NET run: 313 slices, slowest 1.04 ms. These timings are not a guarantee of in-game performance.
+- The same capture tests ran under the installed Unity Mono runtime without launching Valheim: 321 assertions, 314 slices, slowest 6.65 ms including first-use warmup. Reproduce with `dotnet build tests/Sagas.IncidentChecks/Sagas.MonoIncident.csproj -c Release` then `python scripts/mono-probe.py tests/Sagas.IncidentChecks/bin/Release/netstandard2.1/Sagas.MonoIncident.dll --method RunSlsCapture`.
+- Existing website acceptance remains unchanged from 0.3.12. No paid provider calls, live-server deployment, game-save edits or mod-site publication.
+- Follow docs/IN-GAME-TESTS.md for local and dedicated-server retesting. Portrait capture is now timed separately; once-per-minute warning suppression is not a complete frame profiler.
+
 # 0.3.12 Appearance and Saga Profiles verification
 
 Verified September 20, 2026 against installed assemblies and an isolated synthetic DevHost; no in-game session or real OpenRouter request.

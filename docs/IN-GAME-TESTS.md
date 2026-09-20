@@ -57,3 +57,11 @@ Compilation, metadata, synthetic browsers and isolated Mono do not constitute th
 ## 0.3.10 host-funded preset acceptance
 
 Use an operator-controlled OpenRouter key/preset with chosen monetary controls. Set Model to `@preset/your-saga-preset`, AllowPaidModels=true and a small DailyBudget; restart the host. Trigger consenting adventures for two players using Host default and verify generated personal chapters plus a server chapter, actual returned model provenance and shared daily usage. Change preset model/provider/pricing in OpenRouter and check that subsequent requests follow it; existing chapters must remain unchanged. Disable AllowPaidModels and confirm a paid-only preset cannot charge (generation remains pending if no free route qualifies). No operator credential or paid call is part of the automated checks.
+
+## 0.3.13 periodic-stall retest
+
+Launch Gale Test and confirm `Loading [Valheim Sagas 0.3.13]`. Play for at least 10 minutes, move into unexplored terrain, swap hotbar/gear and check the website's map, SLS colors/levels, Nemesis score and item rarity/effects. Include a period with the website closed. Compare felt three-second hitches and logs against the September 20 local 0.3.10 baseline: 89 slow world-update reports (168-434 ms) and recurring SLS/equipment reports, without Steam send-limit errors.
+
+Inspect `Sagas slow stage: world update`, `equipment snapshot`, `SLS capture slice`, `portrait capture`, `Sagas uploads paused` and `k_EResultLimitExceeded`. Timing warnings are sampled at most once per minute per stage, not a complete frame-time profile. A rare portrait capture warning is separate from recurring three-second work. Verify profile images still refresh after equipment changes.
+
+Repeat with host and clients upgraded on the dedicated server before declaring the original multiplayer incident resolved. Synthetic slice tests and an isolated installed-Mono probe are not an in-game performance result.

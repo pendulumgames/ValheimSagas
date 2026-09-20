@@ -14,7 +14,7 @@ using Newtonsoft.Json;
 using UnityEngine;
 namespace ValheimSagas;
 
-[BepInPlugin("org.valheimsagas.collector", "Valheim Sagas", "0.3.12")]
+[BepInPlugin("org.valheimsagas.collector", "Valheim Sagas", "0.3.13")]
 [BepInDependency("randyknapp.mods.epicloot", BepInDependency.DependencyFlags.SoftDependency)]
 [BepInDependency("MidnightsFX.StarLevelSystem", BepInDependency.DependencyFlags.SoftDependency)]
 public sealed partial class SagasPlugin : BaseUnityPlugin {
@@ -70,12 +70,13 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
   harmony=new Harmony("org.valheimsagas.collector"); harmony.PatchAll(typeof(SagasPlugin).Assembly);
   Logger.LogInfo("Valheim Sagas loaded; telemetry hooks installed. No external map dependency.");
  }
- void StopService(){if(service==null)return;foreach(var id in online.Values.Distinct())service.SetOffline(activeWorld,id);if(lastLocalId!="")service.SetOffline(activeWorld,lastLocalId);lastLocalId="";service.Dispose();service=null;}
+ void StopService(){slsCapture?.Dispose();slsCapture=null;if(service==null)return;foreach(var id in online.Values.Distinct())service.SetOffline(activeWorld,id);if(lastLocalId!="")service.SetOffline(activeWorld,lastLocalId);lastLocalId="";service.Dispose();service=null;}
  void OnDestroy() { GuardLogin(ClearLoginClipboard); RuntimeTerrain.Clear(); outbox?.Finish(pending.Values.ToArray());StopService(); harmony?.UnpatchSelf(); Instance=null; }
  void Update() {
   GuardLogin(UpdateLogin);
   while(committed.TryDequeue(out var action)) {try{action();}catch{}}
   if(Time.unscaledTime>=nextTick){nextTick=Time.unscaledTime+3;RunStage("world update",Tick);}
+  RunStage("SLS capture slice",RefreshSls);
   if(Time.unscaledTime>=nextUpload){nextUpload=Time.unscaledTime+.1f;RunStage("paced uploads",PumpUploads);}
  }
  void Warn(string stage,Exception e) {if(nextWarning.TryGetValue(stage,out var next)&&Time.unscaledTime<next)return;nextWarning[stage]=Time.unscaledTime+60;Logger.LogWarning("Sagas "+stage+" failed (repeated errors suppressed for 60 seconds): "+e);}
@@ -93,7 +94,7 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
   if(ZNet.instance.IsServer() && service==null) {
    service=new SagaService(new SagaOptions{DataDirectory=data.Value,WebDirectory=Path.Combine(Path.GetDirectoryName(Info.Location)!,"web"),ListenPrefix=host.Value?prefix.Value:"",ViewerToken=token.Value,RequireViewerToken=requireToken.Value,World=World,WorldName=ZNet.instance.GetWorldName(),ServerName=WebsiteServerName(),ServerAddress=serverAddress.Value,SlsInstalled=SlsAdapter.Installed,LoreEnabled=lore.Value,LoreModel=model.Value,LoreAllowPaid=allowPaidLore.Value,LoreUseAccountPricing=true,LoreDailyBudget=Math.Max(0,daily.Value),LoreCooldownMinutes=Math.Max(1,cooldown.Value),LoreMilestoneEvents=Math.Max(1,milestones.Value),RetentionDays=Math.Max(0,retention.Value),StatisticsRetentionDays=statisticsRetention.Value<=0?0:Math.Max(retention.Value,statisticsRetention.Value),Log=message=>Logger.LogWarning(message),OpenRouterKey=Environment.GetEnvironmentVariable("OPENROUTER_API_KEY")??key.Value}); service.Start();foreach(var stored in service.Store.Players(World))knownCharacters.Add(stored.PlayerId);
   }
-  RunStage("SLS world snapshot",RefreshSls);
+
   foreach(var peer in ZNet.instance.GetPeers()) if(peer.IsReady() && registered.Add(peer.m_rpc)) {
    var captured=peer;
    RegisterLogin(peer);
@@ -201,7 +202,7 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
  string QueueArt(RuntimeArt.Image? image){if(image==null)return "";if(image.Kind=="portrait")foreach(var old in pendingMedia.Where(x=>x.Value.Media?.Kind=="portrait"&&x.Value.Media.Id!=image.Id).Select(x=>x.Key).ToArray()){sentMedia.Remove(pendingMedia[old].Media!.Id);pendingMedia.Remove(old);}if((!sentMedia.TryGetValue(image.Id,out var lastSent)||Time.unscaledTime-lastSent>120)&&pendingMedia.Count<64){var packet=new Packet{AckId="media:"+image.Id,Media=new MediaUpload{World=World,PlayerId=lastLocalId,Id=image.Id,Kind=image.Kind,Png=image.Png}};pendingMedia[packet.AckId]=packet;if(sentMedia.Count>=256)sentMedia.Remove(sentMedia.OrderBy(x=>x.Value).First().Key);sentMedia[image.Id]=Time.unscaledTime;}return image.Id;}
  PlayerSnapshot Snapshot(Player p) {
   if(!shareProfile.Value){pendingMedia.Clear();sentMedia.Clear();artwork?.Clear();}lastLocalId=Identity(p.GetPlayerID());knownCharacters.Add(lastLocalId);var pos=p.transform.position;var s=new PlayerSnapshot{World=World,PlayerId=Identity(p.GetPlayerID()),Name=p.GetPlayerName(),Online=true,ShareProfile=shareProfile.Value,ShareMap=shareMap.Value,SharePosition=sharePosition.Value&&ZNet.instance.IsReferencePositionPublic(),X=pos.x,Z=pos.z};
-  foreach(var item in p.GetInventory().GetEquippedItems()){var gear=Gear.Read(item);EquippedState.Apply(gear,item,p);if(shareProfile.Value)gear.IconId=QueueArt(artwork?.TryIcon(item));s.Gear.Add(gear);} if(shareProfile.Value){s.PortraitId=QueueArt(artwork?.TryPortrait(p,!pendingMedia.Values.Any(x=>x.Media?.Kind=="portrait")));s.PortraitStatus=artwork?.Status??"waiting-for-player";}s.Hotbar=shareProfile.Value?HotbarCapture.Read(p,item=>QueueArt(artwork?.TryIcon(item))):new List<GearItem>();s.EffectiveResistances=RuntimeArt.EffectiveResistances(p);
+  foreach(var item in p.GetInventory().GetEquippedItems()){var gear=Gear.Read(item);EquippedState.Apply(gear,item,p);if(shareProfile.Value)gear.IconId=QueueArt(artwork?.TryIcon(item));s.Gear.Add(gear);} if(shareProfile.Value){RunStage("portrait capture",()=>s.PortraitId=QueueArt(artwork?.TryPortrait(p,!pendingMedia.Values.Any(x=>x.Media?.Kind=="portrait"))));s.PortraitStatus=artwork?.Status??"waiting-for-player";}s.Hotbar=shareProfile.Value?HotbarCapture.Read(p,item=>QueueArt(artwork?.TryIcon(item))):new List<GearItem>();s.EffectiveResistances=RuntimeArt.EffectiveResistances(p);
   s.EffectiveStats["Armor"]=p.GetBodyArmor();s.EffectiveStats["Health"]=p.GetHealth();s.EffectiveStats["Max health"]=p.GetMaxHealth();s.EffectiveStats["Max stamina"]=p.GetMaxStamina();s.EffectiveStats["Max eitr"]=p.GetMaxEitr();
   if(shareProfile.Value){s.EpicLootInstalled=EpicProgress.Installed;s.Gold=EpicProgress.CarriedGold(p);}
   return s;

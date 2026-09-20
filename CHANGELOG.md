@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.13
+
+- Address periodic game-thread stalls: cache Epic Loot and SLS reflection metadata instead of repeatedly searching assemblies and members. Runtime item effects, rarity colors and settings are still read fresh.
+- Capture SLS zones incrementally (up to 128 zones per frame with a 2 ms target), publishing only complete detached snapshots. Run snapshot validation/copying on a bounded background task; Unity/mod reads stay on the main thread.
+- Add separate portrait timing warnings to distinguish occasional image capture from equipment work. Preserve upload backpressure and pacing.
+- This is a performance fix candidate; a new in-game and dedicated-server playtest is still required.
+
+
 ## 0.3.12
 
 - Group page layout and owner-only Viking scenery in a compact Appearance popover, with clear personal-view versus public-profile labels. Keep the small trigger beside profile tabs on mobile and use a clean scenery selector with a compact save action.

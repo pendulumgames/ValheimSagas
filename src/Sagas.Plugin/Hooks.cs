@@ -9,23 +9,30 @@ using HarmonyLib;
 using UnityEngine;
 namespace ValheimSagas;
 internal static class Gear {
- static MethodInfo? magicGetter;
+ // Resolve optional types once, including the absent-mod case. Never scan assemblies per item.
+ static readonly Type? ExtensionsType=AccessTools.TypeByName("EpicLoot.ItemDataExtensions");
+ static readonly Type? EpicType=AccessTools.TypeByName("EpicLoot.EpicLoot");
+ static readonly MethodInfo? magicGetter=ExtensionsType?.GetMethod("GetMagicItem",new[]{typeof(ItemDrop.ItemData)});
+ sealed class MagicApi {
+  internal FieldInfo? Rarity,Effects;internal MethodInfo? GetEffects,Text,Color;
+  internal MagicApi(Type t){Rarity=AccessTools.Field(t,"Rarity");Effects=AccessTools.Field(t,"Effects");GetEffects=t.GetMethod("GetEffects",new[]{typeof(string),typeof(bool)});Text=t.GetMethods().FirstOrDefault(m=>m.Name=="GetEffectText"&&m.GetParameters().Length==4);if(Rarity!=null)Color=EpicType?.GetMethod("GetRarityColor",new[]{Rarity.FieldType});}
+ }
+ static readonly Dictionary<Type,MagicApi> magicApis=new Dictionary<Type,MagicApi>();
+ static readonly Dictionary<Type,(PropertyInfo? Type,FieldInfo? Value)> effectApis=new Dictionary<Type,(PropertyInfo?,FieldInfo?)>();
+ static readonly FieldInfo[] damageFields=typeof(HitData.DamageTypes).GetFields(BindingFlags.Public|BindingFlags.Instance).Where(f=>f.FieldType==typeof(float)).ToArray();
  internal static void Magic(ItemDrop.ItemData item,out string rarity,out string rarityColor,out List<string> effects) {
   rarity="";rarityColor="";effects=new List<string>();
   try {
-   magicGetter ??= AccessTools.TypeByName("EpicLoot.ItemDataExtensions")?.GetMethod("GetMagicItem",new[]{typeof(ItemDrop.ItemData)});
    var magic=magicGetter?.Invoke(null,new object[]{item});if(magic==null)return;
-   rarity=AccessTools.Field(magic.GetType(),"Rarity")?.GetValue(magic)?.ToString()??"";
-   var getEffects=magic.GetType().GetMethod("GetEffects",new[]{typeof(string),typeof(bool)});
-   var all=getEffects?.Invoke(magic,new object?[]{null,true}) as IEnumerable ?? AccessTools.Field(magic.GetType(),"Effects")?.GetValue(magic) as IEnumerable;
-   var textMethod=magic.GetType().GetMethods().FirstOrDefault(m=>m.Name=="GetEffectText" && m.GetParameters().Length==4);
-   var rarityValue=AccessTools.Field(magic.GetType(),"Rarity").GetValue(magic);
-   // Read Epic Loot's resolved runtime configuration, including named and custom hex colors.
-   try { var colorMethod=AccessTools.TypeByName("EpicLoot.EpicLoot")?.GetMethod("GetRarityColor",new[]{rarityValue.GetType()});
-    rarityColor=RarityColors.Normalize(colorMethod?.Invoke(null,new[]{rarityValue}) as string);
-   } catch { /* Optional palette failures must not hide effects or item data. */ }
+   var type=magic.GetType();if(!magicApis.TryGetValue(type,out var api))magicApis[type]=api=new MagicApi(type);
+   var rarityValue=api.Rarity?.GetValue(magic);rarity=rarityValue?.ToString()??"";
+   var all=api.GetEffects?.Invoke(magic,new object?[]{null,true}) as IEnumerable ?? api.Effects?.GetValue(magic) as IEnumerable;
+   var textMethod=api.Text;
+   try { rarityColor=RarityColors.Normalize(api.Color?.Invoke(null,new[]{rarityValue}) as string); }
+   catch { /* Optional palette failures must not hide effects or item data. */ }
    if(all!=null)foreach(var effect in all){
-    string value=AccessTools.Property(effect.GetType(),"EffectType").GetValue(effect)+": "+AccessTools.Field(effect.GetType(),"EffectValue").GetValue(effect);
+    var effectType=effect.GetType();if(!effectApis.TryGetValue(effectType,out var effectApi))effectApis[effectType]=effectApi=(AccessTools.Property(effectType,"EffectType"),AccessTools.Field(effectType,"EffectValue"));
+    string value=effectApi.Type?.GetValue(effect)+": "+effectApi.Value?.GetValue(effect);
     if(textMethod!=null)value=textMethod.Invoke(null,new[]{effect,rarityValue,(object)false,null})?.ToString()??value;
     value=Regex.Replace(SagasPlugin.Localize(value),"<[^>]*>","");value=new string(value.Select(c=>char.IsControl(c)?' ':c).ToArray());if(effects.Count<64)effects.Add(value.Length>500?value.Substring(0,500):value);
    }
@@ -40,7 +47,7 @@ internal static class Gear {
   if(i.m_shared.m_setStatusEffect)g.Effects.Add("Set "+i.m_shared.m_setName+" ("+i.m_shared.m_setSize+" pieces): "+SagasPlugin.Localize(i.m_shared.m_setStatusEffect.m_name));
   return g;
  }
- static void Damage(Dictionary<string,float> values,HitData.DamageTypes d){ foreach(var f in typeof(HitData.DamageTypes).GetFields(BindingFlags.Public|BindingFlags.Instance))if(f.FieldType==typeof(float)){var n=(float)f.GetValue(d);if(n!=0)values["Damage "+f.Name.Replace("m_","")]=n;} }
+ static void Damage(Dictionary<string,float> values,HitData.DamageTypes d){ foreach(var f in damageFields){var n=(float)f.GetValue(d);if(n!=0)values["Damage "+f.Name.Replace("m_","")]=n;} }
 }
 internal static class Hooks {
  const string Origin="sagas.origin", Source="sagas.source";
