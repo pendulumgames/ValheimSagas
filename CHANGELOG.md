@@ -2,6 +2,8 @@
 
 ## 0.3.9
 
+- Clarify the existing MIT license, Pendulumgames attribution and third-party content boundaries in the public READMEs and packaged notices.
+
 - Use the configured Valheim server name when the website DisplayName override is blank; retain the world name as a fallback.
 - Document dedicated-host wildcard listeners (`http://*:PORT/`), allocated TCP ports, advertised game addresses, and troubleshooting for missing player markers.
 

@@ -100,4 +100,8 @@ Back up `BepInEx/config/ValheimSagas` with the host stopped, including `sagas.db
 
 **0.3.8 is a tested preview release.** Automated tests use labeled synthetic fixtures; real credentialed OpenRouter generation, two-client multiplayer acceptance and Linux hosting still require testing. Unresolved attackers and uncertain loot provenance stay unattributed rather than being guessed. Fight durations are observed telemetry, and carried gold is a snapshot, not a lifetime earnings counter.
 
-Licensed under MIT; see the included third-party notices. Valheim belongs to Iron Gate AB. This is an independent community mod.
+## License
+
+Valheim Sagas is released under the [MIT License](https://github.com/pendulumgames/ValheimSagas/blob/main/LICENSE), copyright 2026 Pendulumgames and Valheim Sagas contributors. The license is included in every distribution.
+
+Third-party dependencies retain their own copyrights and license terms; see [third-party notices](https://github.com/pendulumgames/ValheimSagas/blob/main/THIRD-PARTY-NOTICES.md). The Sagas license does not grant rights to Valheim assets or other third-party content shown in runtime captures or screenshots. Valheim belongs to Iron Gate AB. This is an independent community mod.
