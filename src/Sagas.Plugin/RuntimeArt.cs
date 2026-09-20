@@ -52,14 +52,15 @@ internal sealed class RuntimeArt {
   }catch(Exception ex){warn("item artwork",ex);return null;}
  }
 
- public Image? TryPortrait(Player player) {
+ public Image? TryPortrait(Player player,bool allowRefresh=true) {
   CheckThread();
   if(!player){Status="waiting-for-player";return null;}
   if(SystemInfo.graphicsDeviceType==UnityEngine.Rendering.GraphicsDeviceType.Null){Status="no-graphics-device";return null;}
   long id=player.GetPlayerID();
+  if(portraitPlayer==id&&!allowRefresh)return portrait;
   if(portraitPlayer==id&&Time.realtimeSinceStartup<nextPortrait)return portrait;
   if(portraitPlayer!=id)portrait=null;
-  portraitPlayer=id;nextPortrait=Time.realtimeSinceStartup+10f;Status="rendering";
+  portraitPlayer=id;nextPortrait=Time.realtimeSinceStartup+60f;Status="rendering";
   GameObject? root=null;
   var renderers=new List<Renderer>();var fallbackMaterials=new List<Material>();
   var effectMeshes=new List<Mesh>();

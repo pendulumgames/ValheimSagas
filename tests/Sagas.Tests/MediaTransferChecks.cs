@@ -38,8 +38,8 @@ static class MediaTransferChecks {
   var bad=MediaTransfer.Slice(media,1);bad.Data[0]^=1;receiver.Accept("viking",media.World,bad,1);foreach(var c in chunks.Skip(2))result=receiver.Accept("viking",media.World,c,2);
   check(result==null&&receiver.PendingCount==0,"Corrupted complete upload is discarded before persistence");
   for(int i=0;i<MediaTransfer.MaximumTransfers+3;i++)receiver.Accept("owner"+i,media.World,chunks[0],0);
-  check(receiver.PendingCount==MediaTransfer.MaximumTransfers,"Global incomplete transfer memory is bounded to 16MiB");receiver.Expire(120);
-  foreach(var c in chunks)result=receiver.Accept("viking",media.World,c,121);check(result!=null,"Retry after expiry or restart can reconstruct complete image");
+  check(receiver.PendingCount==MediaTransfer.MaximumTransfers,"Global incomplete transfer memory is bounded to 16MiB");receiver.Expire(MediaTransfer.ExpirySeconds);
+  foreach(var c in chunks)result=receiver.Accept("viking",media.World,c,MediaTransfer.ExpirySeconds+1);check(result!=null,"Retry after expiry or restart can reconstruct complete image");
   var probe=new System.Net.Sockets.TcpListener(IPAddress.Loopback,0);probe.Start();var port=((IPEndPoint)probe.LocalEndpoint).Port;probe.Stop();
   var options=new SagaOptions{DataDirectory=Path.Combine(root,"large-media"),World=media.World,ListenPrefix=$"http://127.0.0.1:{port}/",RequireViewerToken=false};
   var player=new PlayerSnapshot{World=media.World,PlayerId=media.PlayerId,Name="Synthetic high resolution portrait",ShareProfile=true,PortraitId=media.Id,Online=false};

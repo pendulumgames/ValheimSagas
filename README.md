@@ -29,9 +29,40 @@ Screenshots show an isolated copy of recorded playtest data, with display names 
 2. Start a world. A dedicated server is optional: a normal hosted or solo world starts the website on that computer. The website stops when the host closes the world/game.
 3. On the host computer, open **http://127.0.0.1:8877/**. New configurations allow public viewing without a viewer token. This does not expose a public internet port: the default binding remains loopback.
 4. Settings are in `BepInEx/config/org.valheimsagas.collector.cfg`. Existing saved settings are preserved on upgrade. Restart the host after changing server settings.
-5. For remote website access, configure an HTTPS reverse proxy to the loopback service. Remote access is a host setup step; installation does not configure your firewall or publish the site.
+5. For a dedicated host, use its allocated website TCP port and the wildcard listener described below. Visitors open `http://SERVER-IP:PORT/`. An HTTPS reverse proxy is optional for a domain and encrypted access; no separate website installation is required.
 
 All participating players need Sagas for full telemetry, portraits and exploration. Epic Loot and Star Level System are optional. Game/Unity assemblies and runtime game assets are not bundled. Biome backgrounds are bundled as responsive WebP images for offline use; unused original PNG artwork is excluded from releases.
+
+## Dedicated servers: IP and allocated port
+
+Stop the server and edit the existing `[Server]` entries in `BepInEx/config/org.valheimsagas.collector.cfg`. For a hosting panel that allocates port **19908**:
+
+```ini
+[Server]
+EnableWebsite = true
+ListenPrefix = http://*:19908/
+RequireViewerToken = false
+DisplayName =
+AdvertisedAddress =
+```
+
+Restart the server, then open **`http://YOUR-SERVER-IP:19908/`**. Replace `19908` with your allocated website port. Keep the `http://` and trailing `/`; the wildcard `*` belongs in the configuration, not the browser address. `127.0.0.1` only accepts local requests and will not make the website accessible to remote players. The host must allow **TCP** on the chosen port; keep the Valheim game/query ports unchanged. You do not need to create a panel reverse proxy for direct IP access.
+
+With `DisplayName` blank, 0.3.9 reads the host's configured Valheim server name, falling back to its world name. Set `DisplayName = Your Fellowship` to override it. Set `AdvertisedAddress = YOUR-SERVER-IP:GAME-PORT` if you want the website to display the address players use to join Valheim. This display-only field does not configure the website listener; the game and website ports are usually different. Neither your public IP nor a panel hostname is discovered automatically. Restart after changing these settings.
+
+Public viewing is enabled by `RequireViewerToken = false`; existing configurations are preserved on upgrade. For personal login and OpenRouter key submission over the internet, use an HTTPS reverse proxy so credentials are encrypted in transit.
+
+### Missing players or stale map positions
+
+A congested game connection can delay player snapshots, exploration and portraits even while the website itself opens normally. Upgrade the host **and every Sagas client** to 0.3.9 and restart their connections. A server name comes from host configuration, so a wrong name is a separate issue from delayed player uploads. If all website data is blank, check the website/API error and server logs too.
+
+For a live marker, the player needs Sagas installed, `[Privacy] SharePosition = true`, and **Visible to other players** enabled on Valheim's in-game map. The website's **Online Vikings** layer must be enabled and its player selection must include that player. Offline positions require the separate **Offline - last known** layer. Terrain additionally requires `ShareMap = true`. Upload pacing cannot override these privacy settings.
+
+## Multiplayer upload pacing (0.3.9)
+
+Upgrade **both the host and every participating client**, then restart their Valheim processes. Version 0.3.9 addresses a reported three-second multiplayer stall with Steam `k_EResultLimitExceeded` log spam: background transfers now yield to the game send queue, use separate byte allowances and wait 30 seconds before retrying unacknowledged data. Older clients still send bursts, so updating only the host is insufficient.
+
+Maps import gradually and a first high-resolution portrait can take several minutes on a busy connection. Existing saved portraits remain visible while a replacement uploads. The collector logs `Sagas uploads paused` when the game queue is busy and `Sagas slow stage` for work exceeding 50 ms, with repeated warnings limited to once per minute. These diagnostics contain timings/queue sizes, not credentials or coordinates. The multiplayer incident still requires an operator retest; automated transport checks are not in-game verification.
 
 ## Privacy and personal login
 

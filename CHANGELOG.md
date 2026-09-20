@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.9
+
+- Use the configured Valheim server name when the website DisplayName override is blank; retain the world name as a fallback.
+- Document dedicated-host wildcard listeners (`http://*:PORT/`), allocated TCP ports, advertised game addresses, and troubleshooting for missing player markers.
+
+- Pace client telemetry with separate byte allowances and a shared packet interval; pause uploads when Valheim's socket send queue is busy.
+- Send one terrain tile per packet, keep at most two map batches pending, and remove immediate duplicate map sends. Retry unacknowledged events/maps/media after 30 seconds.
+- Preserve portraits during upload, capture at most once per minute, and allow longer assembly time for deliberately paced high-resolution transfers.
+- Log slow collector stages and network backpressure at most once per minute per stage. Dedicated-server multiplayer validation is still required for the reported Steam send-limit incident.
+
 ## 0.3.8
 
 - Add optional host SLS zone outlines using its live bounds, levels, palette, transparency and fog setting; show zone levels above 1 on hover/tap.

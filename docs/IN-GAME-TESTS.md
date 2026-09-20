@@ -42,3 +42,13 @@ Before public release, the earlier multiplayer ownership/telemetry, Linux hostin
 5. If lore is enabled, inspect a subsequent chapter's ledger for qualified score/Nemesis evidence. Test independent isolated profiles with SLS only, Epic Loot only and neither. Base pages, telemetry, maps and vanilla tooltips should remain usable.
 
 Compilation, metadata, synthetic browsers and isolated Mono do not constitute these in-game checks.
+
+
+## 0.3.9 Steam send-limit regression
+
+1. Stop the dedicated server and close every participating game client before replacing plugin files with 0.3.9. Preserve config and the Sagas database; do not delete saves. Updating only the server cannot throttle older clients.
+2. Restart and connect one updated client with map/profile sharing enabled. Leave the website closed for five minutes while moving, fighting and changing equipment. Watch all participants for periodic stalls and `Failed to send data k_EResultLimitExceeded` spam.
+3. Open the website and verify gradual map import, named position updates, kill/loot counts, item icons and eventual portrait completion. Open the website from a second browser; confirm this does not reintroduce gameplay stalls.
+4. Repeat with two updated clients joining together and sharing existing exploration/high-resolution portraits. Record whether all clients remain responsive. A congested connection may log `Sagas uploads paused`; it should resume without losing pending events when the queue drains.
+5. Disconnect/reconnect one client and verify deduplicated kills/loot, durable event retry and portrait completion. Confirm privacy switches stop queued map/art uploads.
+6. If stalls or send-limit spam continue, stop the test and compare with Sagas disabled on clients and host. Supply client BepInEx logs and the host console log covering the same interval, identifying versions and which process emitted each message. Redact keys/tokens. Do not keep a congested live session running to gather more spam.

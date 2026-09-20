@@ -10,6 +10,7 @@ if(args.Contains("--personal-lore-only")){await PersonalLoreChecks.Run(root,Chec
 if(args.Contains("--player-login-only")){await PlayerLoginChecks.Run(root,Check);Console.WriteLine($"PASS {assertions} player login assertions.");Directory.Delete(root,true);return;}
 if(args.Contains("--profile-biomes-only")){await ProfileBiomeChecks.Run(root,Check);Console.WriteLine($"PASS {assertions} profile biome and static-route assertions.");Directory.Delete(root,true);return;}
 if(args.Contains("--media-only")){await MediaTransferChecks.Run(root,Check);Console.WriteLine($"PASS {assertions} high resolution media assertions.");Directory.Delete(root,true);return;}
+TelemetryBudgetChecks.Run(Check);
 SagaEvent Event(string id,string kind="kill",int amount=1,string provenance="")=>new(){Id=id,World="world",PlayerId="p1",PlayerName="Astrid",Utc=new DateTime(2026,9,17,10,0,0,DateTimeKind.Utc),Kind=kind,Name="Troll",Prefab="Troll",Amount=amount,Provenance=provenance,Stars=2,X=32,Z=32};
 var now=new DateTime(2026,9,17,12,0,0,DateTimeKind.Utc);
 foreach(var pair in new Dictionary<string,int>{{"30m",30},{"1h",60},{"6h",360},{"12h",720},{"1d",1440},{"3d",4320},{"7d",10080}}){var w=TimeWindow.Parse(pair.Key,null,null,now);Check(w.From==now.AddMinutes(-pair.Value),pair.Key+" duration");Check(w.Contains(w.From)&&w.Contains(now)&&!w.Contains(w.From.AddTicks(-1))&&!w.Contains(now.AddTicks(1)),pair.Key+" inclusive boundaries");}

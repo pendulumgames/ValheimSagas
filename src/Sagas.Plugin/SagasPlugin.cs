@@ -14,7 +14,7 @@ using Newtonsoft.Json;
 using UnityEngine;
 namespace ValheimSagas;
 
-[BepInPlugin("org.valheimsagas.collector", "Valheim Sagas", "0.3.8")]
+[BepInPlugin("org.valheimsagas.collector", "Valheim Sagas", "0.3.9")]
 [BepInDependency("randyknapp.mods.epicloot", BepInDependency.DependencyFlags.SoftDependency)]
 [BepInDependency("MidnightsFX.StarLevelSystem", BepInDependency.DependencyFlags.SoftDependency)]
 public sealed partial class SagasPlugin : BaseUnityPlugin {
@@ -42,8 +42,11 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
  const string RpcName="Sagas.V1", AckName="Sagas.Ack.V1";
  readonly MediaTransfer mediaTransfer=new MediaTransfer();
  readonly Dictionary<string,int> mediaCursors=new Dictionary<string,int>();
+ readonly TelemetryBudget telemetryBudget=new TelemetryBudget();
+ readonly Dictionary<string,float> retryAfter=new Dictionary<string,float>();
+ Packet? outboundProfile; float nextUpload; int uploadLane;
  void Awake() {
-  Instance=this; SetupLogin(); requireToken=Config.Bind("Server","RequireViewerToken",false,"True: private viewing requires ViewerToken. False: anyone who can reach the website may view shared data without a token. Does not change network binding or player sharing preferences."); artwork=new RuntimeArt(Warn); notifications=Config.Bind("Notifications","EnableLootNotifications",false,"Show Sagas rare earned-loot pickup messages. Does not change Valheim or Epic Loot notifications."); serverName=Config.Bind("Server","DisplayName","","Website server name; blank uses the hosted world name."); serverAddress=Config.Bind("Server","AdvertisedAddress","","Optional server IP/hostname and port displayed to website viewers. No automatic public-IP discovery.");
+  Instance=this; SetupLogin(); requireToken=Config.Bind("Server","RequireViewerToken",false,"True: private viewing requires ViewerToken. False: anyone who can reach the website may view shared data without a token. Does not change network binding or player sharing preferences."); artwork=new RuntimeArt(Warn); notifications=Config.Bind("Notifications","EnableLootNotifications",false,"Show Sagas rare earned-loot pickup messages. Does not change Valheim or Epic Loot notifications."); serverName=Config.Bind("Server","DisplayName","","Website server name override; blank uses the Valheim server name, then the world name."); serverAddress=Config.Bind("Server","AdvertisedAddress","","Optional server IP/hostname and port displayed to website viewers. No automatic public-IP discovery.");
   host=Config.Bind("Server","EnableWebsite",true,"Start the private HTTP service only when hosting a world.");
   data=Config.Bind("Server","DataDirectory",Path.Combine(Paths.ConfigPath,"ValheimSagas"),"Persistent database path; back up separately from world saves.");
   prefix=Config.Bind("Server","ListenPrefix","http://127.0.0.1:8877/","Loopback by default. Use HTTPS reverse proxy for remote access.");
@@ -71,16 +74,23 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
  void Update() {
   GuardLogin(UpdateLogin);
   while(committed.TryDequeue(out var action)) {try{action();}catch{}}
-  if(Time.unscaledTime<nextTick)return; nextTick=Time.unscaledTime+3;
-  RunStage("world update",Tick);
+  if(Time.unscaledTime>=nextTick){nextTick=Time.unscaledTime+3;RunStage("world update",Tick);}
+  if(Time.unscaledTime>=nextUpload){nextUpload=Time.unscaledTime+.1f;RunStage("paced uploads",PumpUploads);}
  }
  void Warn(string stage,Exception e) {if(nextWarning.TryGetValue(stage,out var next)&&Time.unscaledTime<next)return;nextWarning[stage]=Time.unscaledTime+60;Logger.LogWarning("Sagas "+stage+" failed (repeated errors suppressed for 60 seconds): "+e);}
- void RunStage(string stage,Action action) {try{action();}catch(Exception e){Warn(stage,e);}}
+ void RunStage(string stage,Action action) {var start=System.Diagnostics.Stopwatch.GetTimestamp();try{action();}catch(Exception e){Warn(stage,e);}finally{var ms=(System.Diagnostics.Stopwatch.GetTimestamp()-start)*1000d/System.Diagnostics.Stopwatch.Frequency;if(ms>=50&&(!nextWarning.TryGetValue("slow "+stage,out var next)||Time.unscaledTime>=next)){nextWarning["slow "+stage]=Time.unscaledTime+60;Logger.LogWarning("Sagas slow stage: "+stage+" took "+ms.ToString("F1",CultureInfo.InvariantCulture)+" ms (timing only; repeated warnings limited to once per minute).");}}}
+ string WebsiteServerName(){
+  if(!string.IsNullOrWhiteSpace(serverName.Value))return serverName.Value.Trim();
+  try{var configured=AccessTools.Field(typeof(ZNet),"m_ServerName")?.GetValue(null) as string;if(!string.IsNullOrWhiteSpace(configured))return configured.Trim();}
+  catch(Exception e){Warn("server display name",e);}
+  return ZNet.instance.GetWorldName()??"Valheim Sagas";
+ }
  void Tick() {
+  if(activeWorld!=World||!ZNet.instance||ZNet.instance.GetWorldUID()==0){telemetryBudget.Reset(Time.unscaledTime);retryAfter.Clear();outboundProfile=null;}
   if(!ZNet.instance || ZNet.instance.GetWorldUID()==0) { RuntimeTerrain.Clear(); outbox?.Finish(pending.Values.ToArray());outbox=null; StopService(); activeWorld="";registered.Clear();online.Clear();pending.Clear();mediaTransfer.Clear();mediaCursors.Clear();return; }
   if(activeWorld!=World) {outbox?.Finish(pending.Values.ToArray());StopService();service=null;activeWorld=World;nextSlsRefresh=0;mediaTransfer.Clear();mediaCursors.Clear();knownCharacters.Clear();registered.Clear();online.Clear();pending.Clear();sentCells.Clear();tileVersions.Clear();fullyMapped.Clear();RuntimeTerrain.Clear();pendingMedia.Clear();sentMedia.Clear();artwork?.Clear();mapCursor=0;importing=true;pendingMaps.Clear();journalId="";outbox=null;}
   if(ZNet.instance.IsServer() && service==null) {
-   service=new SagaService(new SagaOptions{DataDirectory=data.Value,WebDirectory=Path.Combine(Path.GetDirectoryName(Info.Location)!,"web"),ListenPrefix=host.Value?prefix.Value:"",ViewerToken=token.Value,RequireViewerToken=requireToken.Value,World=World,WorldName=ZNet.instance.GetWorldName(),ServerName=string.IsNullOrWhiteSpace(serverName.Value)?ZNet.instance.GetWorldName():serverName.Value,ServerAddress=serverAddress.Value,SlsInstalled=SlsAdapter.Installed,LoreEnabled=lore.Value,LoreModel=model.Value,LoreDailyBudget=Math.Max(0,daily.Value),LoreCooldownMinutes=Math.Max(1,cooldown.Value),LoreMilestoneEvents=Math.Max(1,milestones.Value),RetentionDays=Math.Max(0,retention.Value),StatisticsRetentionDays=statisticsRetention.Value<=0?0:Math.Max(retention.Value,statisticsRetention.Value),Log=message=>Logger.LogWarning(message),OpenRouterKey=Environment.GetEnvironmentVariable("OPENROUTER_API_KEY")??key.Value}); service.Start();foreach(var stored in service.Store.Players(World))knownCharacters.Add(stored.PlayerId);
+   service=new SagaService(new SagaOptions{DataDirectory=data.Value,WebDirectory=Path.Combine(Path.GetDirectoryName(Info.Location)!,"web"),ListenPrefix=host.Value?prefix.Value:"",ViewerToken=token.Value,RequireViewerToken=requireToken.Value,World=World,WorldName=ZNet.instance.GetWorldName(),ServerName=WebsiteServerName(),ServerAddress=serverAddress.Value,SlsInstalled=SlsAdapter.Installed,LoreEnabled=lore.Value,LoreModel=model.Value,LoreDailyBudget=Math.Max(0,daily.Value),LoreCooldownMinutes=Math.Max(1,cooldown.Value),LoreMilestoneEvents=Math.Max(1,milestones.Value),RetentionDays=Math.Max(0,retention.Value),StatisticsRetentionDays=statisticsRetention.Value<=0?0:Math.Max(retention.Value,statisticsRetention.Value),Log=message=>Logger.LogWarning(message),OpenRouterKey=Environment.GetEnvironmentVariable("OPENROUTER_API_KEY")??key.Value}); service.Start();foreach(var stored in service.Store.Players(World))knownCharacters.Add(stored.PlayerId);
   }
   RunStage("SLS world snapshot",RefreshSls);
   foreach(var peer in ZNet.instance.GetPeers()) if(peer.IsReady() && registered.Add(peer.m_rpc)) {
@@ -110,17 +120,37 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
    var positionKey=lastLocalId+":"+sharePosition.Value+":"+publicPosition;
    if(positionLogKey!=positionKey){positionLogKey=positionKey;Logger.LogInfo("Website position sharing: "+(!sharePosition.Value?"hidden by Sagas 'Allow website position sharing' permission.":!publicPosition?"hidden; enable 'Visible to other players' on Valheim's map to show your marker.":"enabled by Valheim's map visibility setting.")+" Coordinates are not written to this log.");}
    RunStage("local presence",()=>service?.TouchPresence(World,lastLocalId,player.GetPlayerName(),ZNet.instance.IsReferencePositionPublic()));
-   RunStage("equipment snapshot",()=>Send(new Packet{Player=Snapshot(player)}));
+   RunStage("equipment snapshot",()=>outboundProfile=new Packet{Player=Snapshot(player)});
    RunStage("exploration scan",()=>SyncMap(player));
   }
-  RunStage("event retry",()=>{var retry=pending.Values.ToArray();if(retry.Length>0){for(int i=0;i<Math.Min(24,retry.Length);i++)Send(new Packet{Event=retry[(retryCursor+i)%retry.Length]});retryCursor=(retryCursor+24)%retry.Length;}});
-  RunStage("exploration retry",()=>{foreach(var batch in pendingMaps.Values.Take(6).ToArray())Send(batch);});
-  RunStage("artwork retry",SendArtwork);
+  foreach(var key in retryAfter.Where(x=>x.Value<Time.unscaledTime-60).Select(x=>x.Key).ToArray())retryAfter.Remove(key);
   RunStage("outbox save",()=>outbox?.Save(pending.Values.ToArray()));
  }
- void Send(Packet packet) {
-  if(ZNet.instance.IsServer()){Apply(packet,0,null);return;}
-  var peer=ZNet.instance.GetServerPeer(); if(peer!=null && peer.IsReady()){var json=JsonConvert.SerializeObject(packet);if(json.Length<=128000)peer.m_rpc.Invoke(RpcName,json);else Warn("packet size",new InvalidOperationException("Sagas packet exceeded the bounded RPC size; upload not sent."));}
+ bool Send(Packet packet) {
+  if(!ZNet.instance||World!=activeWorld||ZNet.instance.GetWorldUID()==0)return false;
+  if(packet.Player!=null&&(packet.Player.ShareProfile!=shareProfile.Value||packet.Player.ShareMap!=shareMap.Value))return false;
+  var retryKey=packet.Event?.Id??packet.AckId;
+  if(retryKey!=""&&retryAfter.TryGetValue(retryKey,out var due)&&Time.unscaledTime<due)return false;
+  if(ZNet.instance.IsServer()){Apply(packet,0,null);if(retryKey!="")retryAfter[retryKey]=Time.unscaledTime+30;return true;}
+  var peer=ZNet.instance.GetServerPeer(); if(peer==null||!peer.IsReady())return false;
+  int queued=peer.m_socket.GetSendQueueSize();
+  if(queued>=TelemetryBudget.QueueThreshold){if(!nextWarning.TryGetValue("network pressure",out var next)||Time.unscaledTime>=next){nextWarning["network pressure"]=Time.unscaledTime+60;Logger.LogWarning("Sagas uploads paused: game connection has "+queued+" queued bytes. Gameplay traffic takes priority; telemetry remains pending.");}return false;}
+  int lane=packet.Exploration!=null?TelemetryBudget.Map:packet.Media!=null||packet.MediaChunk!=null?TelemetryBudget.Artwork:packet.Player!=null?TelemetryBudget.Profile:TelemetryBudget.Events;
+  var json=packet.Wire??(packet.Wire=JsonConvert.SerializeObject(packet));int bytes=Encoding.UTF8.GetByteCount(json)+128;
+  if(bytes>TelemetryBudget.MaximumPacketBytes){Warn("packet size",new InvalidOperationException("Sagas packet exceeded the bounded RPC size; upload not sent."));return false;}
+  if(!telemetryBudget.TrySpend(lane,bytes,Time.unscaledTime,queued))return false;
+  peer.m_rpc.Invoke(RpcName,json);if(retryKey!="")retryAfter[retryKey]=Time.unscaledTime+30;return true;
+ }
+ void PumpUploads(){
+  if(!ZNet.instance||World!=activeWorld||ZNet.instance.GetWorldUID()==0)return;
+  // Round-robin lanes, at most one RPC every250ms across all Sagas data.
+  for(int i=0;i<4;i++)switch((uploadLane+i)%4){
+   case 0:if(outboundProfile!=null&&Send(outboundProfile))outboundProfile=null;break;
+   case 1:var events=pending.Values.ToArray();if(events.Length>0){for(int n=0;n<Math.Min(8,events.Length);n++)if(Send(new Packet{Event=events[(retryCursor+n)%events.Length]}))break;retryCursor=(retryCursor+8)%events.Length;}break;
+   case 2:if(shareMap.Value){foreach(var batch in pendingMaps.Values)if(Send(batch))break;}else if(pendingMaps.Count>0){pendingMaps.Clear();tileVersions.Clear();fullyMapped.Clear();sentCells.Clear();}break;
+   case 3:if(shareProfile.Value)SendArtwork();else{pendingMedia.Clear();mediaCursors.Clear();}break;
+  }
+  uploadLane=(uploadLane+1)%4;
  }
  void SendArtwork() {
   mediaTransfer.Expire(Time.unscaledTime);
@@ -130,12 +160,18 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
   foreach(var packet in pendingMedia.Values.OrderBy(x=>x.Media?.Kind=="portrait"?1:0).ToArray()) {
    if(budget<=0)break;
    var media=packet.Media;if(media==null)continue;
-   if(ZNet.instance.IsServer()||!MediaTransfer.NeedsChunks(media)){Send(packet);budget--;continue;}
+   if(ZNet.instance.IsServer()||!MediaTransfer.NeedsChunks(media)){if(Send(packet))budget--;continue;}
    int cursor=mediaCursors.TryGetValue(packet.AckId,out var index)?index:0;
    int count=MediaTransfer.ChunkCount(media.Png.Length),send=Math.Min(budget,count);
    for(int i=0;i<send;i++){
-    Send(new Packet{Version=2,MediaChunk=MediaTransfer.Slice(media,cursor)});
+    // Do not allocate/base64-encode a64KiB chunk until its byte allowance is available.
+    var peer=ZNet.instance.GetServerPeer();if(peer==null)break;
+    int length=Math.Min(MediaTransfer.ChunkBytes,media.Png.Length-cursor*MediaTransfer.ChunkBytes);
+    if(!telemetryBudget.Ready(TelemetryBudget.Artwork,((length+2)/3)*4+1024,Time.unscaledTime,peer.m_socket.GetSendQueueSize()))break;
+    if(retryAfter.TryGetValue(packet.AckId,out var due)&&Time.unscaledTime<due)break;
+    if(!Send(new Packet{Version=2,MediaChunk=MediaTransfer.Slice(media,cursor)}))break;
     cursor=(cursor+1)%count;budget--;
+    if(cursor==0){retryAfter[packet.AckId]=Time.unscaledTime+30;break;}
    }
    mediaCursors[packet.AckId]=cursor;
   }
@@ -164,13 +200,13 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
  string QueueArt(RuntimeArt.Image? image){if(image==null)return "";if(image.Kind=="portrait")foreach(var old in pendingMedia.Where(x=>x.Value.Media?.Kind=="portrait"&&x.Value.Media.Id!=image.Id).Select(x=>x.Key).ToArray()){sentMedia.Remove(pendingMedia[old].Media!.Id);pendingMedia.Remove(old);}if((!sentMedia.TryGetValue(image.Id,out var lastSent)||Time.unscaledTime-lastSent>120)&&pendingMedia.Count<64){var packet=new Packet{AckId="media:"+image.Id,Media=new MediaUpload{World=World,PlayerId=lastLocalId,Id=image.Id,Kind=image.Kind,Png=image.Png}};pendingMedia[packet.AckId]=packet;if(sentMedia.Count>=256)sentMedia.Remove(sentMedia.OrderBy(x=>x.Value).First().Key);sentMedia[image.Id]=Time.unscaledTime;}return image.Id;}
  PlayerSnapshot Snapshot(Player p) {
   if(!shareProfile.Value){pendingMedia.Clear();sentMedia.Clear();artwork?.Clear();}lastLocalId=Identity(p.GetPlayerID());knownCharacters.Add(lastLocalId);var pos=p.transform.position;var s=new PlayerSnapshot{World=World,PlayerId=Identity(p.GetPlayerID()),Name=p.GetPlayerName(),Online=true,ShareProfile=shareProfile.Value,ShareMap=shareMap.Value,SharePosition=sharePosition.Value&&ZNet.instance.IsReferencePositionPublic(),X=pos.x,Z=pos.z};
-  foreach(var item in p.GetInventory().GetEquippedItems()){var gear=Gear.Read(item);EquippedState.Apply(gear,item,p);if(shareProfile.Value)gear.IconId=QueueArt(artwork?.TryIcon(item));s.Gear.Add(gear);} if(shareProfile.Value){s.PortraitId=QueueArt(artwork?.TryPortrait(p));s.PortraitStatus=artwork?.Status??"waiting-for-player";}s.Hotbar=shareProfile.Value?HotbarCapture.Read(p,item=>QueueArt(artwork?.TryIcon(item))):new List<GearItem>();s.EffectiveResistances=RuntimeArt.EffectiveResistances(p);
+  foreach(var item in p.GetInventory().GetEquippedItems()){var gear=Gear.Read(item);EquippedState.Apply(gear,item,p);if(shareProfile.Value)gear.IconId=QueueArt(artwork?.TryIcon(item));s.Gear.Add(gear);} if(shareProfile.Value){s.PortraitId=QueueArt(artwork?.TryPortrait(p,!pendingMedia.Values.Any(x=>x.Media?.Kind=="portrait")));s.PortraitStatus=artwork?.Status??"waiting-for-player";}s.Hotbar=shareProfile.Value?HotbarCapture.Read(p,item=>QueueArt(artwork?.TryIcon(item))):new List<GearItem>();s.EffectiveResistances=RuntimeArt.EffectiveResistances(p);
   s.EffectiveStats["Armor"]=p.GetBodyArmor();s.EffectiveStats["Health"]=p.GetHealth();s.EffectiveStats["Max health"]=p.GetMaxHealth();s.EffectiveStats["Max stamina"]=p.GetMaxStamina();s.EffectiveStats["Max eitr"]=p.GetMaxEitr();
   if(shareProfile.Value){s.EpicLootInstalled=EpicProgress.Installed;s.Gold=EpicProgress.CarriedGold(p);}
   return s;
  }
  void SyncMap(Player p) {
-  if(!shareMap.Value||!Minimap.instance||WorldGenerator.instance==null||pendingMaps.Count>=256)return;
+  if(!shareMap.Value||!Minimap.instance||WorldGenerator.instance==null||pendingMaps.Count>=2)return;
   var map=Minimap.instance;var bits=exploredField.GetValue(map) as BitArray;if(bits==null)return;
   // Every exported sample is personally known; shader capture never exports cartography-only terrain.
   var batch=new ExplorationBatch{World=World,PlayerId=Identity(p.GetPlayerID()),Imported=importing};
@@ -185,9 +221,9 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
   void AddCell(int cx,int cz) {
    if(payloadBytes>74000){full=true;return;}var keyCell=cx+":"+cz;if(fullyMapped.Contains(keyCell))return;var pixels=RuntimeTerrain.Capture(map,bits,cx,cz);if(pixels=="")return;var rgba=Convert.FromBase64String(pixels);using var tileHash=SHA256.Create();var signature=Convert.ToBase64String(tileHash.ComputeHash(rgba));if(tileVersions.TryGetValue(keyCell,out var previous)&&previous==signature)return;payloadBytes+=pixels.Length;if(payloadBytes>74000)full=true;tileVersions[keyCell]=signature;if(Enumerable.Range(0,rgba.Length/4).All(i=>rgba[i*4+3]==255))fullyMapped.Add(keyCell);
    var wx=(cx+.5f)*64;var wz=(cz+.5f)*64;
-   batch.Cells.Add(new MapCell{X=cx,Z=cz,Biome="Explored terrain",Height=0,TerrainPixels=pixels});sentCells.Add(keyCell);
+   batch.Cells.Add(new MapCell{X=cx,Z=cz,Biome="Explored terrain",Height=0,TerrainPixels=pixels});sentCells.Add(keyCell);full=true; // One terrain tile per paced packet.
   }
-  if(batch.Cells.Count>0){var packet=new Packet{Exploration=batch,AckId="map:"+Guid.NewGuid().ToString("N")};pendingMaps[packet.AckId]=packet;Send(packet);}
+  if(batch.Cells.Count>0){var packet=new Packet{Exploration=batch,AckId="map:"+Guid.NewGuid().ToString("N")};pendingMaps[packet.AckId]=packet;}
  }
- public sealed class Packet {public int Version=1;public string AckId="";public SagaEvent? Event;public PlayerSnapshot? Player;public ExplorationBatch? Exploration;public MediaUpload? Media;public MediaChunk? MediaChunk;}
+ public sealed class Packet {[JsonIgnore]internal string? Wire;public int Version=1;public string AckId="";public SagaEvent? Event;public PlayerSnapshot? Player;public ExplorationBatch? Exploration;public MediaUpload? Media;public MediaChunk? MediaChunk;}
 }
