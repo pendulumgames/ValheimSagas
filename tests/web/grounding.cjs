@@ -7,7 +7,7 @@ module.exports=async(page,output)=>{
   for(const viewport of [{width:390,height:844},{width:1440,height:1000},{width:2560,height:1440},{width:3440,height:1440}]){
     await page.setViewportSize(viewport);
     for(const mode of ['boxed','full','scroll']){
-      await page.locator('[data-backdrop="'+mode+'"]').click();
+      await page.locator('#appearance').evaluate(e=>e.open=true);await page.locator('[data-backdrop="'+mode+'"]').click();
       await page.evaluate(()=>scrollTo({top:0,behavior:'instant'}));
       for(const biome of biomes){
         const result=await page.evaluate(async biome=>{

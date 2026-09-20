@@ -111,7 +111,7 @@ Create the preset in the OpenRouter account that owns the key. **Manage model se
 
 New installations keep `Model = openrouter/free` and `AllowPaidModels = false`. With paid routing disabled, Sagas rejects paid direct models and imposes zero token-price limits on presets. Players can keep **Host default** without adding their own keys; personal paid overrides retain their separate personal key and explicit limits.
 
-After signing in, click your **profile icon -> Saga Settings**. Choose **Server storyteller** to use the host's setup, or **My own storyteller** to enter your own OpenRouter key and model/preset. Saved setups and request limits are under **Saved setups & advanced options**; up to eight setups are supported. A preset can select a model or an OpenRouter `@preset/name`. Paid routing requires the player's explicit checkbox, a per-million-token price ceiling and a daily attempt limit. The host key must still be configured. Personal keys are encrypted on the host and never returned to viewers, but the host administrator controls that machine: only entrust a key to a host you trust. HTTPS is required for remote browser key submission. Host-paid routing is described above.
+After signing in, click your **profile icon -> Saga Settings**. Choose **Server storyteller** to use the host's setup, or **My own storyteller** to enter your own OpenRouter key and model/preset. Create up to eight **Saga Profiles**, each with its own saved OpenRouter key and model/preset. Select a profile and save to switch both together. Request limits and profile/key removal are under **Advanced options**. A preset can select a model or an OpenRouter `@preset/name`. Paid routing requires the player's explicit checkbox, a per-million-token price ceiling and a daily attempt limit. The host key must still be configured. Personal keys are encrypted on the host and never returned to viewers, but the host administrator controls that machine: only entrust a key to a host you trust. HTTPS is required for remote browser key submission. Host-paid routing is described above.
 
 Story prompts use relevant recorded events, career totals, bosses and credited teammates, notable loot, current equipment/effects, resistances, bounties and shared exploration summaries. Context is bounded and respects sharing consent; it does not transmit raw account/world IDs, precise coordinates or API keys as story content. Fiction is labeled separately from facts. See [lore details](https://github.com/pendulumgames/ValheimSagas/blob/main/docs/LORE.md).
 
@@ -119,7 +119,7 @@ Story prompts use relevant recorded events, career totals, bosses and credited t
 
 Back up `BepInEx/config/ValheimSagas` with the host stopped, including `sagas.db` and `personal-lore.key` if present. The key file is required to decrypt saved personal OpenRouter credentials. Do not share backups, configs or tokens publicly. Uninstalling the plugin does not delete recorded history.
 
-**0.3.11 is a preview release verified with automated checks.** Automated tests use labeled synthetic fixtures; real credentialed OpenRouter generation, two-client multiplayer acceptance and Linux hosting still require testing. Unresolved attackers and uncertain loot provenance stay unattributed rather than being guessed. Fight durations are observed telemetry, and carried gold is a snapshot, not a lifetime earnings counter.
+**0.3.12 is a preview release verified with automated checks.** Automated tests use labeled synthetic fixtures; real credentialed OpenRouter generation, two-client multiplayer acceptance and Linux hosting still require testing. Unresolved attackers and uncertain loot provenance stay unattributed rather than being guessed. Fight durations are observed telemetry, and carried gold is a snapshot, not a lifetime earnings counter.
 
 ## License
 
@@ -147,3 +147,5 @@ dotnet run --project tests/Sagas.LoreTests -c Release
 ```
 
 For browser checks, start `dotnet run --project src/Sagas.DevHost -c Release`, then `npm ci --prefix tests/web` and `npm test --prefix tests/web`. DevHost uses prominently labeled synthetic data and an in-process simulated AI response; it never calls OpenRouter. See [browser checks](tests/web/README.md) and [runtime acceptance](docs/IN-GAME-TESTS.md).
+
+**Appearance:** On a Viking page, open Appearance to choose Boxed, Full Screen, or Full Screen Scroll for your own browser. When viewing your own Viking while logged in, the same popover lets you save unlocked scenery visible to everyone.

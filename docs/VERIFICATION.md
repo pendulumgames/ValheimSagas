@@ -1,3 +1,13 @@
+# 0.3.12 Appearance and Saga Profiles verification
+
+Verified September 20, 2026 against installed assemblies and an isolated synthetic DevHost; no in-game session or real OpenRouter request.
+
+- Plugin build: zero errors, two existing MSB3277 warnings. All 2,164 Core assertions, 80 lore checks, 21,964 terrain checks, 911 portrait checks and 150 installed-assembly metadata checks passed.
+- Profile credential tests cover independent keys, switching, renaming, removal isolation, no plaintext secrets in HTTP/database output, malformed requests and restart persistence. A focused run passed 28 assertions.
+- Full browser acceptance passed, including 96 grounding combinations, readable profile links, heat maps, login/scenery permissions, personal storyteller settings, account menu, optional-mod overlays and responsive layouts.
+- New Appearance checks at 1440, 390 and 320 pixels verify collapsed controls, layout switching, owner-only scenery persistence, other-player restrictions, Escape and no horizontal overflow. Mobile Appearance and Saga Profiles screenshots were visually reviewed.
+- Local package validation checks asset hashes and rejects malformed archives. No live profile/server installation or mod-site publication is part of this update.
+
 # 0.3.11 account and storyteller interface verification
 
 Verified September 20, 2026 using Edge and an isolated synthetic DevHost. This is website/browser verification, not an in-game session.

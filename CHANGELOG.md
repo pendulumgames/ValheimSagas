@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.12
+
+- Group page layout and owner-only Viking scenery in a compact Appearance popover, with clear personal-view versus public-profile labels.
+- Replace saved setups with Saga Profiles, each containing its own encrypted OpenRouter key and model/preset. Switching profiles switches credentials; deleting a profile removes its credential.
+- Keep paid opt-in, request limits, HTTPS key submission and server storyteller defaults.
+
+
 ## 0.3.11
 
 - Replace the signed-in Login button with a saved-portrait account icon and a compact Saga Settings / Log out menu. Preserve anonymous public browsing and shared-token read-only access.

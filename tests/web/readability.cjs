@@ -20,7 +20,7 @@ await page.setViewportSize({width:1440,height:1050});await page.locator('#charac
 assert.equal(await page.locator('#characterSearch').evaluate(e=>getComputedStyle(e).outlineOffset),'-3px');
 await page.evaluate(()=>{$('worldLabel').hidden=false;$('world').focus();});
 assert.equal(await page.locator('#world').evaluate(e=>getComputedStyle(e).outlineOffset),'-3px');
-await page.locator('[data-backdrop="full"]').click();
+await page.locator('#appearance').evaluate(e=>e.open=true);await page.locator('[data-backdrop="full"]').click();
 assert.notEqual(await page.locator('.profile-toolbar').evaluate(e=>getComputedStyle(e).backgroundImage),'none');
 console.log('PASS profile presence states, desktop/mobile item readability, no horizontal overflow, inset field focus and fullscreen text support.');
 }finally{await browser.close();}})().catch(e=>{console.error(e);process.exit(1)});

@@ -3,6 +3,6 @@
   "private": true,
   "version": "0.1.0",
   "description": "Isolated browser acceptance checks against the explicitly synthetic DevHost",
-  "scripts": { "test": "node acceptance.cjs && node profile-links.cjs && node heatmap.cjs && node readability.cjs && node login.cjs && node storyteller.cjs && node account.cjs && node sls.cjs && node sls-ui.cjs" },
+  "scripts": { "test": "node acceptance.cjs && node profile-links.cjs && node heatmap.cjs && node readability.cjs && node login.cjs && node storyteller.cjs && node account.cjs && node appearance.cjs && node sls.cjs && node sls-ui.cjs" },
   "devDependencies": { "playwright": "1.55.0" }
 }
