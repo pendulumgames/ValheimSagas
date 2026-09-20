@@ -32,3 +32,6 @@ Update the host and every Sagas client for 0.3.9 transport throttling. These aut
 
 
 For 0.3.10 host-funded saga presets, see [host setup](../../README.md#host-funded-models-and-openrouter-presets). Free is the default; AllowPaidModels explicitly enables spending, and paid host preset pricing is managed in OpenRouter. Automated fixtures do not spend credits.
+
+
+0.3.11 adds `account.cjs`: real local login/session/settings API with a clearly synthetic portrait response, desktop/390px/320px layouts, account menu keyboard/focus/outside dismissal, separate login/settings dialogs, host-default simplicity, missing-key feedback, failed-load save protection and secret clearing/logout. Screenshots are written under .dev/qa and are not game captures.

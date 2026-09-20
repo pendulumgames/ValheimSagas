@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.11
+
+- Replace the signed-in Login button with a saved-portrait account icon and a compact Saga Settings / Log out menu. Preserve anonymous public browsing and shared-token read-only access.
+- Separate token login from storyteller settings. Start with Server storyteller or My own storyteller, reveal personal key/model controls only when needed, and place saved setups/request limits under advanced options.
+- Preserve existing setups and spending controls, add clearer errors and keyboard/focus behavior, and clear unsaved secrets when dialogs close.
+
 ## 0.3.10
 
 - Add host AllowPaidModels opt-in for direct models and OpenRouter presets, funding default Viking and shared server sagas with the host key. Free routing remains the default.

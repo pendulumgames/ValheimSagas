@@ -70,6 +70,8 @@ Maps import gradually and a first high-resolution portrait can take several minu
 
 Map sharing defaults on for new configurations. Profile, portrait and position sharing remain configurable. Live position also follows Valheim's **Visible to other players** map setting. The atlas only receives permitted exploration; fog is not a client-side substitute for access control.
 
+The header shows **Login** when signed out. After login, it shows your saved Viking portrait (or an initial when no portrait is available). Click the icon for **Saga Settings** or **Log out**. Shared server tokens show a read-only account; Saga Settings explains how to switch to a personal login.
+
 While playing, press **Left Ctrl + F8** to copy a personal login token, then paste it into the website's **Login** dialog. This replaces the previous token for that character/world. **Left Ctrl + F9** revokes it. A personal login enables owner-only scenery and storyteller settings; the shared viewer token does not grant ownership. Tokens are stored in the browser tab session and sent in Authorization headers, never in profile URLs.
 
 Scenery progression follows recorded credit: Meadows initially; Eikthyr unlocks Black Forest, Elder unlocks Swamp, Bonemass unlocks Mountains, Moder unlocks Plains, Yagluth unlocks Mistlands, Queen unlocks Ashlands, and Fader unlocks Deep North. Tracking cannot reconstruct unrecorded boss kills from before installation.
@@ -109,7 +111,7 @@ Create the preset in the OpenRouter account that owns the key. **Manage model se
 
 New installations keep `Model = openrouter/free` and `AllowPaidModels = false`. With paid routing disabled, Sagas rejects paid direct models and imposes zero token-price limits on presets. Players can keep **Host default** without adding their own keys; personal paid overrides retain their separate personal key and explicit limits.
 
-Signed-in players may optionally save their own OpenRouter key and up to eight named storyteller presets in **Login**. A preset can select a model or an OpenRouter `@preset/name`. Paid routing requires the player's explicit checkbox, a per-million-token price ceiling and a daily attempt limit. The host key must still be configured. Personal keys are encrypted on the host and never returned to viewers, but the host administrator controls that machine: only entrust a key to a host you trust. HTTPS is required for remote browser key submission. Host-paid routing is described above.
+After signing in, click your **profile icon -> Saga Settings**. Choose **Server storyteller** to use the host's setup, or **My own storyteller** to enter your own OpenRouter key and model/preset. Saved setups and request limits are under **Saved setups & advanced options**; up to eight setups are supported. A preset can select a model or an OpenRouter `@preset/name`. Paid routing requires the player's explicit checkbox, a per-million-token price ceiling and a daily attempt limit. The host key must still be configured. Personal keys are encrypted on the host and never returned to viewers, but the host administrator controls that machine: only entrust a key to a host you trust. HTTPS is required for remote browser key submission. Host-paid routing is described above.
 
 Story prompts use relevant recorded events, career totals, bosses and credited teammates, notable loot, current equipment/effects, resistances, bounties and shared exploration summaries. Context is bounded and respects sharing consent; it does not transmit raw account/world IDs, precise coordinates or API keys as story content. Fiction is labeled separately from facts. See [lore details](https://github.com/pendulumgames/ValheimSagas/blob/main/docs/LORE.md).
 
@@ -117,7 +119,7 @@ Story prompts use relevant recorded events, career totals, bosses and credited t
 
 Back up `BepInEx/config/ValheimSagas` with the host stopped, including `sagas.db` and `personal-lore.key` if present. The key file is required to decrypt saved personal OpenRouter credentials. Do not share backups, configs or tokens publicly. Uninstalling the plugin does not delete recorded history.
 
-**0.3.10 is a preview release verified with automated checks.** Automated tests use labeled synthetic fixtures; real credentialed OpenRouter generation, two-client multiplayer acceptance and Linux hosting still require testing. Unresolved attackers and uncertain loot provenance stay unattributed rather than being guessed. Fight durations are observed telemetry, and carried gold is a snapshot, not a lifetime earnings counter.
+**0.3.11 is a preview release verified with automated checks.** Automated tests use labeled synthetic fixtures; real credentialed OpenRouter generation, two-client multiplayer acceptance and Linux hosting still require testing. Unresolved attackers and uncertain loot provenance stay unattributed rather than being guessed. Fight durations are observed telemetry, and carried gold is a snapshot, not a lifetime earnings counter.
 
 ## License
 

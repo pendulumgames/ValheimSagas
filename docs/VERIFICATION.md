@@ -1,4 +1,16 @@
-# 0.3.10 host-funded preset verification
+# 0.3.11 account and storyteller interface verification
+
+Verified September 20, 2026 using Edge and an isolated synthetic DevHost. This is website/browser verification, not an in-game session.
+
+- Plugin version build: zero errors, two existing MSB3277 warnings. Backend behavior/schema is unchanged from0.3.10; JavaScript syntax passes.
+- 63 new account checks at1440px,390px and320px: authenticated saved-head avatar, Login/icon states, account keyboard/focus/Escape/outside dismissal, separate dialogs, simple host default, personal mode/missing-key error, failed settings-load save protection, immediate unsaved-key cleanup and logout. A clearly synthetic portrait response is used.
+- Real local HTTP login tests: invalid token feedback, shared-token read-only access/personal login upgrade, scenery ownership and logout. Storyteller tests cover saved setups, paid opt-in validation, secret redaction, removal and mobile layout.
+- Existing full website acceptance,96biome grounding combinations, profile links,16heatmap regressions, readability,19SLS and8Nemesis UI checks passed. The full run stopped at an Escape cleanup race in the new test; after fixing synchronous cancel cleanup, account/login/storyteller tests and the remaining SLS/Nemesis suites were rerun and passed.
+- Visually reviewed desktop account menu/default settings and390px/320px settings screenshots in .dev/qa. Responsive dialogs stay within the viewport and scroll for longer personal settings.
+
+No credentials, private data or generated fixtures are bundled. No paid requests or live installation updates occurred. Core/lore/terrain/portrait tests below remain the evidence for unchanged0.3.10 backend code; they were not redundantly rerun for this website-only change.
+
+## Previous 0.3.10 verification
 
 Verified September 20, 2026 on Windows. No live OpenRouter generation, credentials, charges or multiplayer session were used.
 
