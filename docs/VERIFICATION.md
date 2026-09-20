@@ -6,6 +6,7 @@ Verified September 20, 2026 against installed assemblies and an isolated synthet
 - Profile credential tests cover independent keys, switching, renaming, removal isolation, no plaintext secrets in HTTP/database output, malformed requests and restart persistence. A focused run passed 28 assertions.
 - Full browser acceptance passed, including 96 grounding combinations, readable profile links, heat maps, login/scenery permissions, personal storyteller settings, account menu, optional-mod overlays and responsive layouts.
 - New Appearance checks at 1440, 390 and 320 pixels verify collapsed controls, layout switching, owner-only scenery persistence, other-player restrictions, Escape and no horizontal overflow. Mobile Appearance and Saga Profiles screenshots were visually reviewed.
+- Follow-up compact Appearance styling: appearance and login browser suites rerun successfully; 390/320px screenshots visually reviewed. Backend unchanged.
 - Local package validation checks asset hashes and rejects malformed archives. No live profile/server installation or mod-site publication is part of this update.
 
 # 0.3.11 account and storyteller interface verification

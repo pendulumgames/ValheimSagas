@@ -2,7 +2,7 @@
 
 ## 0.3.12
 
-- Group page layout and owner-only Viking scenery in a compact Appearance popover, with clear personal-view versus public-profile labels.
+- Group page layout and owner-only Viking scenery in a compact Appearance popover, with clear personal-view versus public-profile labels. Keep the small trigger beside profile tabs on mobile and use a clean scenery selector with a compact save action.
 - Replace saved setups with Saga Profiles, each containing its own encrypted OpenRouter key and model/preset. Switching profiles switches credentials; deleting a profile removes its credential.
 - Keep paid opt-in, request limits, HTTPS key submission and server storyteller defaults.
 
