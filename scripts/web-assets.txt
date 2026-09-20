@@ -2,13 +2,6 @@ index.html
 style.css
 app.js
 favicon.svg
-biomes/meadows.png
-biomes/black-forest.png
-biomes/swamp.png
-biomes/mountain.png
-biomes/plains.png
-biomes/mistlands.png
-biomes/ashlands.png
 biomes/grounded/meadows-1920.webp
 biomes/grounded/meadows-2560.webp
 biomes/grounded/meadows-3840.webp

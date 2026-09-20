@@ -31,7 +31,7 @@ Screenshots show an isolated copy of recorded playtest data, with display names 
 4. Settings are in `BepInEx/config/org.valheimsagas.collector.cfg`. Existing saved settings are preserved on upgrade. Restart the host after changing server settings.
 5. For remote website access, configure an HTTPS reverse proxy to the loopback service. Remote access is a host setup step; installation does not configure your firewall or publish the site.
 
-All participating players need Sagas for full telemetry, portraits and exploration. Epic Loot and Star Level System are optional. Game/Unity assemblies and runtime game assets are not bundled.
+All participating players need Sagas for full telemetry, portraits and exploration. Epic Loot and Star Level System are optional. Game/Unity assemblies and runtime game assets are not bundled. Biome backgrounds are bundled as responsive WebP images for offline use; unused original PNG artwork is excluded from releases.
 
 ## Privacy and personal login
 
