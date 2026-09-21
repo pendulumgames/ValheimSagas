@@ -64,6 +64,14 @@ Upgrade **both the host and every participating client** to the same current rel
 
 Maps import gradually and a first high-resolution portrait can take several minutes on a busy connection. Existing saved portraits remain visible while a replacement uploads. The collector logs `Sagas uploads paused` when the game queue is busy and `Sagas slow stage` for work exceeding 50 ms, with repeated warnings limited to once per minute. These diagnostics contain timings/queue sizes, not credentials or coordinates. The multiplayer incident still requires an operator retest; automated transport checks are not in-game verification.
 
+## Map controls and configuration ownership
+
+The full-width atlas opens with its controls tucked away. Use **Terrain**, **Vikings**, **Activity** or **Icons** to open one compact tray; close it to return to the whole map. Opening a tray preserves your map position and zoom. **Statistics & heat maps**, below the map, filters event totals, recent activity and heat layers by Viking and date. It does not filter live player positions or icon ownership. Explored terrain is independent unless you explicitly link it to statistics in the Terrain tray.
+
+In Shudnal ConfigurationManager, **S** marks host-owned `[Server]` and `[Lore]` settings; **C** marks personal privacy, notifications and website-login shortcuts. Host settings are read-only while connected to somebody else's server. They show this computer's local hosting configuration, not the remote host's values. The actual host reads its own config; credentials, tokens and paths are never sent to clients. Configure hosting at the main menu or on the host itself, and restart the hosted world after changes. Ownership descriptions remain available without the optional manager. Personal Saga Profiles are configured through website login, separately from the host's Lore settings.
+
+Both `[Server] RetentionDays` and `StatisticsRetentionDays` default to **0 (unlimited history)**. Existing saved values are preserved on upgrade. To remove a previously configured seven-day limit, explicitly change both values to `0` on the host. This preserves remaining records; it cannot restore already-pruned history.
+
 ## Privacy and personal login
 
 `[Server] RequireViewerToken = false` is the public-viewing default. Set it to `true` to require the shared `ViewerToken` for viewing. Public viewers still only receive data permitted by each player's sharing settings.
@@ -78,7 +86,7 @@ Mods using Valheim's regular map pins and runtime sprites are supported, includi
 
 Icons load separately from terrain and statistics; their runtime sprites are cached, never bundled as copied game assets. Scans examine at most 16 pins per frame, bounded to 2,048 exported pins per character. Changed snapshots upload in paced 32-pin batches; unchanged snapshots only resync every two minutes for recovery. First icons may take 15-30 seconds plus queued upload time to appear, and partially imported terrain can keep automatic locations fog-hidden longer. Pin edits/removals replace the prior set only after every part arrives. The last shared pins remain available offline.
 
-Choose **Sun & moon dial**, **Horizon**, or **None** under **Map icons & daylight**. The readout estimates real minutes/seconds until day or night using the host's world time, day length and time scale. It updates each second without reloading terrain, resyncs with the host, and reports pauses, time skips and overdue updates instead of continuing a misleading countdown. Browser preferences are saved locally; unavailable/stale clock data is labelled. No new mod dependency, external service or port is required. Install the matching update on the host and participating clients.
+Choose **Sun & moon dial**, **Horizon**, or **None** in the **Icons** map tray. The readout estimates real minutes/seconds until day or night using the host's world time, day length and time scale. It updates each second without reloading terrain, resyncs with the host, and reports pauses, time skips and overdue updates instead of continuing a misleading countdown. Browser preferences are saved locally; unavailable/stale clock data is labelled. No new mod dependency, external service or port is required. Install the matching update on the host and participating clients.
 
 Map sharing defaults on for new configurations. Profile, portrait and position sharing remain configurable. Live position also follows Valheim's **Visible to other players** map setting. The atlas only receives permitted exploration; fog is not a client-side substitute for access control.
 
@@ -131,7 +139,7 @@ Story prompts use relevant recorded events, career totals, bosses and credited t
 
 Back up `BepInEx/config/ValheimSagas` with the host stopped, including `sagas.db` and `personal-lore.key` if present. The key file is required to decrypt saved personal OpenRouter credentials. Do not share backups, configs or tokens publicly. Uninstalling the plugin does not delete recorded history.
 
-**0.3.19 is a preview release verified with automated checks.** It includes performance fixes for SLS/gear snapshots and staged, change-triggered portrait capture with asynchronous GPU readback and background image processing; fresh local and dedicated-server playtests must confirm frame-time improvements. Automated tests use labeled synthetic fixtures; real credentialed OpenRouter generation, two-client multiplayer acceptance and Linux hosting still require testing. Unresolved attackers and uncertain loot provenance stay unattributed rather than being guessed. Fight durations are observed telemetry, and carried gold is a snapshot, not a lifetime earnings counter.
+**0.3.20 is a preview release verified with automated checks.** It includes performance fixes for SLS/gear snapshots and staged, change-triggered portrait capture with asynchronous GPU readback and background image processing; fresh local and dedicated-server playtests must confirm frame-time improvements. Automated tests use labeled synthetic fixtures; real credentialed OpenRouter generation, two-client multiplayer acceptance and Linux hosting still require testing. Unresolved attackers and uncertain loot provenance stay unattributed rather than being guessed. Fight durations are observed telemetry, and carried gold is a snapshot, not a lifetime earnings counter.
 
 ## License
 

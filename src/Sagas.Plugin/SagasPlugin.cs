@@ -14,7 +14,8 @@ using Newtonsoft.Json;
 using UnityEngine;
 namespace ValheimSagas;
 
-[BepInPlugin("org.valheimsagas.collector", "Valheim Sagas", "0.3.19")]
+[BepInPlugin("org.valheimsagas.collector", "Valheim Sagas", "0.3.20")]
+[BepInDependency("_shudnal.ConfigurationManager", BepInDependency.DependencyFlags.SoftDependency)]
 [BepInDependency("randyknapp.mods.epicloot", BepInDependency.DependencyFlags.SoftDependency)]
 [BepInDependency("MidnightsFX.StarLevelSystem", BepInDependency.DependencyFlags.SoftDependency)]
 public sealed partial class SagasPlugin : BaseUnityPlugin {
@@ -46,28 +47,28 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
  readonly Dictionary<string,float> retryAfter=new Dictionary<string,float>();
  Packet? outboundProfile; float nextUpload; int uploadLane;
  void Awake() {
-  Instance=this; SetupMapDetails(); SetupLogin(); requireToken=Config.Bind("Server","RequireViewerToken",false,"True: private viewing requires ViewerToken. False: anyone who can reach the website may view shared data without a token. Does not change network binding or player sharing preferences."); artwork=new RuntimeArt(Warn); notifications=Config.Bind("Notifications","EnableLootNotifications",false,"Show Sagas rare earned-loot pickup messages. Does not change Valheim or Epic Loot notifications."); serverName=Config.Bind("Server","DisplayName","","Website server name override; blank uses the Valheim server name, then the world name."); serverAddress=Config.Bind("Server","AdvertisedAddress","","Optional server IP/hostname and port displayed to website viewers. No automatic public-IP discovery.");
-  host=Config.Bind("Server","EnableWebsite",true,"Start the private HTTP service only when hosting a world.");
-  data=Config.Bind("Server","DataDirectory",Path.Combine(Paths.ConfigPath,"ValheimSagas"),"Persistent database path; back up separately from world saves.");
-  prefix=Config.Bind("Server","ListenPrefix","http://127.0.0.1:8877/","Loopback by default. Use HTTPS reverse proxy for remote access.");
-  token=Config.Bind("Server","ViewerToken",Guid.NewGuid().ToString("N")+Guid.NewGuid().ToString("N"),"Private member credential; never synced to game clients.");
-  lore=Config.Bind("Lore","EnableOpenRouter",true,"Send selected narrative facts to OpenRouter. Free routing by default; paid models require AllowPaidModels. No coordinates or account IDs.");
-  key=Config.Bind("Lore","OpenRouterKey","","Server only. Prefer OPENROUTER_API_KEY environment variable.");
-  model=Config.Bind("Lore","Model","openrouter/free","OpenRouter model ID or @preset/name from the key owner account. Defaults to openrouter/free. Paid routes require AllowPaidModels. Manage pricing/provider limits in your OpenRouter preset or account.");
-  allowPaidLore=Config.Bind("Lore","AllowPaidModels",false,"Allow the host key to pay for personal and server sagas using Model. False enforces zero token prices, including presets. Restart host after changing.");
-  daily=Config.Bind("Lore","DailyBudget",20,"Maximum external requests per UTC day.");
-  cooldown=Config.Bind("Lore","CooldownMinutes",180,"Minimum chapter interval per character.");
-  milestones=Config.Bind("Lore","MilestoneEvents",20,"Ordinary event count before a chapter; notable events may qualify earlier.");
-  retention=Config.Bind("Server","RetentionDays",0,"Zero retains all detailed history. Positive values prune old events; dedup ledger remains.");
-  statisticsRetention=Config.Bind("Server","StatisticsRetentionDays",0,"Zero keeps exact statistical facts forever. Positive values must be at least RetentionDays; older facts are deleted, dedup lineage remains.");
-  shareProfile=Config.Bind("Privacy","ShareProfile",true,"Share statistics, gear and saga with website viewers.");
-  shareMap=Config.Bind("Privacy","ShareMap",true,"Share personal exploration with website viewers.");
+  Instance=this; SetupMapDetails(); SetupLogin(); requireToken=BindSetting("Server","RequireViewerToken",false,"True: private viewing requires ViewerToken. False: anyone who can reach the website may view shared data without a token. Does not change network binding or player sharing preferences."); artwork=new RuntimeArt(Warn); notifications=BindSetting("Notifications","EnableLootNotifications",false,"Show Sagas rare earned-loot pickup messages. Does not change Valheim or Epic Loot notifications."); serverName=BindSetting("Server","DisplayName","","Website server name override; blank uses the Valheim server name, then the world name."); serverAddress=BindSetting("Server","AdvertisedAddress","","Optional server IP/hostname and port displayed to website viewers. No automatic public-IP discovery.");
+  host=BindSetting("Server","EnableWebsite",true,"Start the private HTTP service only when hosting a world.");
+  data=BindSetting("Server","DataDirectory",Path.Combine(Paths.ConfigPath,"ValheimSagas"),"Persistent database path; back up separately from world saves.");
+  prefix=BindSetting("Server","ListenPrefix","http://127.0.0.1:8877/","Loopback by default. Use HTTPS reverse proxy for remote access.");
+  token=BindSetting("Server","ViewerToken",Guid.NewGuid().ToString("N")+Guid.NewGuid().ToString("N"),"Private member credential; never synced to game clients.");
+  lore=BindSetting("Lore","EnableOpenRouter",true,"Send selected narrative facts to OpenRouter. Free routing by default; paid models require AllowPaidModels. No coordinates or account IDs.");
+  key=BindSetting("Lore","OpenRouterKey","","Server only. Prefer OPENROUTER_API_KEY environment variable.");
+  model=BindSetting("Lore","Model","openrouter/free","OpenRouter model ID or @preset/name from the key owner account. Defaults to openrouter/free. Paid routes require AllowPaidModels. Manage pricing/provider limits in your OpenRouter preset or account.");
+  allowPaidLore=BindSetting("Lore","AllowPaidModels",false,"Allow the host key to pay for personal and server sagas using Model. False enforces zero token prices, including presets. Restart host after changing.");
+  daily=BindSetting("Lore","DailyBudget",20,"Maximum external requests per UTC day.");
+  cooldown=BindSetting("Lore","CooldownMinutes",180,"Minimum chapter interval per character.");
+  milestones=BindSetting("Lore","MilestoneEvents",20,"Ordinary event count before a chapter; notable events may qualify earlier.");
+  retention=BindSetting("Server","RetentionDays",0,"Zero retains all detailed history. Positive values prune old events; dedup ledger remains.");
+  statisticsRetention=BindSetting("Server","StatisticsRetentionDays",0,"Zero keeps exact statistical facts forever. Positive values must be at least RetentionDays; older facts are deleted, dedup lineage remains.");
+  shareProfile=BindSetting("Privacy","ShareProfile",true,"Share statistics, gear and saga with website viewers.");
+  shareMap=BindSetting("Privacy","ShareMap",true,"Share personal exploration with website viewers.");
   // Installed shudnal ConfigurationManager supports standard DisplayNameAttribute
   // and the Advanced tag. No runtime dependency on that optional manager.
-  sharePosition=Config.Bind("Privacy","SharePosition",true,new ConfigDescription(
+  sharePosition=BindSetting("Privacy","SharePosition",true,new ConfigDescription(
    "Website permission, normally left on. Use 'Visible to other players' on Valheim's map as your everyday position-sharing control. Turn this permission off only to hide your position from the website while still sharing it in-game. Existing choices are preserved.",
    null,"Advanced",new System.ComponentModel.DisplayNameAttribute("Allow website position sharing")));
-  harmony=new Harmony("org.valheimsagas.collector"); harmony.PatchAll(typeof(SagasPlugin).Assembly);
+  harmony=new Harmony("org.valheimsagas.collector"); harmony.PatchAll(typeof(SagasPlugin).Assembly); SetupConfigurationManager();
   Logger.LogInfo("Valheim Sagas loaded; telemetry hooks installed. No external map dependency.");
  }
  sealed class StartedService:IDisposable {internal SagaService Service=null!;internal string[] Characters=Array.Empty<string>();internal double Milliseconds;public void Dispose()=>Service.Dispose();}

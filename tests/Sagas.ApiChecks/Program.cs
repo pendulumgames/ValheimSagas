@@ -119,6 +119,12 @@ if(File.Exists(epic))Inspect(epic,r=>{
  Method(r,"EpicLoot.VisEquipment_Patch","RefreshPlayerFx","player");
  Method(r,"EpicLoot.VisEquipment_Patch","GetEquipFxName","equippedItem","mode");
 });
+Inspect(Path.Combine(plugins,"shudnal-ConfigurationManager","ConfigurationManager.dll"),r=>{
+ Property(r,Type(r,"ConfigurationManager.ConfigSettingEntry"),"Entry","BepInEx.Configuration.ConfigEntryBase");
+ Signature(r,"ConfigurationManager.ConfigSettingEntry","GetSynchronizationContent","ConfigurationManager.ConfigSynchronizationState","UnityEngine.Color");
+ Signature(r,"ConfigurationManager.ConfigSettingEntry","SetValue","Object");
+ Method(r,"ConfigurationManager.ConfigSettingEntry","InitializeDynamicAttributeSources","tags");
+});
 Console.WriteLine($"PASS {passed} installed-assembly metadata checks. No game code executed; this does not validate Harmony patch execution or gameplay.");
 
 sealed class MetadataTypeNames:ISignatureTypeProvider<string,object?> {

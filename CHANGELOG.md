@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.20
+
+- Make the atlas full width with compact Terrain, Vikings, Activity and Icons trays; retain map position/zoom while changing options, with keyboard close and mobile layouts.
+- Replace ambiguous adventure filters with an explicit Statistics & heat maps drawer and active scope summary. Terrain, live positions and icon ownership remain independent.
+- Label host-owned and personal settings in Shudnal ConfigurationManager. Lock local hosting controls during remote sessions; never synchronize host secrets. No new required mod or network feed.
+- Confirm both history-retention defaults are zero/unlimited; preserve existing configured retention values and document how to change them.
+
 ## 0.3.19
 
 - Increase game map icons from 28 to 36px; add optional matching Viking colors for pin rings, player markers and names, plus independent per-Viking icon checkboxes. Store world-specific server-owned colors once and choose separated new colors without recoloring existing players. Preserve all sharers on deduplicated game locations.

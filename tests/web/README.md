@@ -39,3 +39,6 @@ For 0.3.10 host-funded saga presets, see [host setup](../../README.md#host-funde
 The separate `node tests/web/map-details.cjs` check uses the real synthetic map-icons/clock endpoints, independent browser toggles, saved clock styles, safe pin names, filter/world context isolation and desktop/mobile layout. Fixture sprites use fallback symbols; native game sprite extraction still requires an in-game test. When the DevHost data directory differs from `.dev/fixture`, set `SAGAS_LOGIN_FIXTURE` to its `synthetic-logins.json` for the owner/account test runners.
 
 `viking-map.cjs` checks per-Viking icon ownership colors and persistent per-world filters, multiple owners on shared game pins, annotations above fog, larger icon hit targets, independent terrain/presence, countdown/clock-skew/pause/stale behavior and responsive layout. The tests use synthetic records and no game assets.
+
+
+The atlas opens with option trays closed. `atlas-controls.cjs` opens each public tray before the existing regression checks interact with its controls. `atlas-layout.cjs` verifies initial map-first state, exclusive trays, unchanged canvas geometry, keyboard dismissal/focus, Activity-to-filter navigation, applied player scope, independent terrain, and mobile width. Screenshots use explicitly synthetic terrain, not a game map.

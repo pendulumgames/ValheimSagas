@@ -1,3 +1,4 @@
+const {revealAtlas}=require('./atlas-controls.cjs');
 /* Requires: dotnet run --project src/Sagas.DevHost -c Release
    npm ci --prefix tests/web; npm test --prefix tests/web
    Uses installed Edge on Windows; set SAGAS_BROWSER_EXECUTABLE or install Playwright Chromium elsewhere.
@@ -61,27 +62,27 @@ fs.mkdirSync(output, { recursive: true });
   await page.locator('.masthead nav a[href="#world"]').click();
 
   for(const range of ['all','30m','1h','6h','12h','1d','3d','7d']) {
-   await page.locator('#range').selectOption(range);
+   await revealAtlas(page,'filters');await page.locator('#range').selectOption(range);
    const response=page.waitForResponse(r => r.url().includes('/api/state?')&&new URL(r.url()).searchParams.get('range')===range);
-   await page.locator('#filters button[type=submit]').click();
+   await revealAtlas(page,'filters');await page.locator('#filters button[type=submit]').click();
    const payload=await (await response).json();
    await page.waitForFunction(n=>document.querySelector('#kills').textContent===n,Number(payload.stats.kills).toLocaleString());
    assert.equal(payload.synthetic,true);
    assert.equal(await page.locator('#onlineCount').textContent(),'2','Presence independent of historical range');
   }
-  await page.locator('#players').selectOption('fixture-0');
-  await page.locator('#range').selectOption('all');
+  await revealAtlas(page,'filters');await page.locator('#players').selectOption('fixture-0');
+  await revealAtlas(page,'filters');await page.locator('#range').selectOption('all');
   const selected=page.waitForResponse(r=>r.url().includes('/api/state?')&&new URL(r.url()).searchParams.get('players')==='fixture-0');
-  await page.locator('#filters button[type=submit]').click();
+  await revealAtlas(page,'filters');await page.locator('#filters button[type=submit]').click();
   const selectedData=await (await selected).json();
   assert.equal(selectedData.stats.kills,30,'Single player exact kill count');
   await page.waitForFunction(()=>document.querySelector('#kills').textContent==='30');
   assert.equal(await page.locator('#explorers').inputValue(),'','Independent exploration selection');
   assert.equal(await page.locator('#kills').textContent(),'30','Overview has one coherent filtered total');
   await page.locator('.masthead nav a[href="#world"]').click();
-  await page.locator('#linkFilters').check();
+  await revealAtlas(page,'terrain');await page.locator('#linkFilters').check();
   assert.equal(await page.locator('#explorers').inputValue(),'fixture-0','Explicit filter linking');
-  await page.locator('#linkFilters').uncheck();
+  await revealAtlas(page,'terrain');await page.locator('#linkFilters').uncheck();
   const union=(await (await page.request.get(url+'api/map',{headers:{Authorization:'Bearer '+token}})).json()).cells.length;
   const personal=(await (await page.request.get(url+'api/map?players=fixture-0',{headers:{Authorization:'Bearer '+token}})).json()).cells.length;
   assert(union>personal,'Combined discovery is union of personal maps');
@@ -90,9 +91,9 @@ fs.mkdirSync(output, { recursive: true });
   const before=await page.locator('#mapScale').textContent();
   await page.locator('#zoomIn').click();
   assert.notEqual(await page.locator('#mapScale').textContent(),before,'Map zoom changes scale');
-  await page.evaluate(()=>zoom(0.000001));const cap=await page.evaluate(()=>({span:Math.min(view.width,view.height)/view.scale,x:view.x,z:view.z}));assert(Math.abs(cap.span-24000)<1,'Zoom-out cap covers a 12 km radius');assert.equal(cap.x,0,'Whole-world zoom centers east/west');assert.equal(cap.z,0,'Whole-world zoom centers north/south');await page.evaluate(()=>{view.x=1e9;view.z=-1e9;drawMap();});assert.equal(await page.evaluate(()=>Math.abs(view.x)+Math.abs(view.z)),0,'Cannot pan the whole world offscreen');await page.setViewportSize({width:900,height:800});await page.evaluate(()=>drawMap());assert(await page.evaluate(()=>Math.min(view.width,view.height)/view.scale<=24000.01),'Resize maintains zoom-out cap');await page.setViewportSize({width:1440,height:1050});
+  await page.evaluate(()=>zoom(0.000001));const cap=await page.evaluate(()=>({span:Math.min(view.width,view.height)/view.scale,x:view.x,z:view.z}));assert(Math.abs(cap.span-24000)<1,'Zoom-out cap covers a 12 km radius');assert.equal(cap.x,0,'Whole-world zoom centers east/west');assert.equal(cap.z,0,'Whole-world zoom centers north/south');await page.evaluate(()=>{view.x=1e9;view.z=-1e9;drawMap();});assert(await page.evaluate(()=>Math.abs(view.x)+Math.abs(view.z))<1e-6,'Cannot pan the whole world offscreen');await page.setViewportSize({width:900,height:800});await page.evaluate(()=>drawMap());assert(await page.evaluate(()=>Math.min(view.width,view.height)/view.scale<=24000.01),'Resize maintains zoom-out cap');await page.setViewportSize({width:1440,height:1050});
 await page.evaluate(()=>drawMap());
-  await page.locator('#locatePlayer').selectOption('fixture-0');await page.locator('#locateButton').click();const located=await page.evaluate(()=>({p:screen(-128,0),w:view.width,h:view.height}));assert(Math.abs(located.p[0]-located.w/2)<1&&Math.abs(located.p[1]-located.h/2)<1,'Locate player centers a consented position');await page.locator('#fitMap').click();
+  await revealAtlas(page,'vikings');await page.locator('#locatePlayer').selectOption('fixture-0');await revealAtlas(page,'vikings');await page.locator('#locateButton').click();const located=await page.evaluate(()=>({p:screen(-128,0),w:view.width,h:view.height}));assert(Math.abs(located.p[0]-located.w/2)<1&&Math.abs(located.p[1]-located.h/2)<1,'Locate player centers a consented position');await page.locator('#fitMap').click();
 
   await page.locator('#map').focus();await page.keyboard.press('ArrowRight');
   // Click an actual rendered marker, then follow its profile action.
@@ -106,7 +107,7 @@ await page.evaluate(()=>drawMap());
   const heatSources=await page.evaluate(()=>{const original=state.data.events;state.data.events=[{kind:'drop',x:0,z:0,amount:7},{kind:'collect',x:0,z:0,amount:7}];$('killLayer').checked=false;$('lootLayer').checked=true;$('lootSource').value='collect';const collected=visibleEvents().map(e=>e.kind);$('lootSource').value='drop';const dropped=visibleEvents().map(e=>e.kind);state.data.events=original;$('killLayer').checked=true;$('lootLayer').checked=false;$('lootSource').value='collect';return {collected,dropped,grouped:inspectEvents([{kind:'collect',name:'Sword',quality:3,rarity:'Rare',rarityColor:'#123456',amount:2},{kind:'collect',name:'Sword',quality:3,rarity:'Rare',rarityColor:'#123456',amount:3}])};});
   assert.deepEqual(heatSources.collected,['collect'],'Collection heat excludes matching drop');assert.deepEqual(heatSources.dropped,['drop'],'Drop heat excludes matching collection');assert(heatSources.grouped.includes('&times;5')&&heatSources.grouped.includes('Quality 3')&&heatSources.grouped.includes('#123456'),'Compact loot popup groups quantity, quality and runtime rarity');
 
-  await page.locator('#onlineMarkers').uncheck();assert.equal(await page.locator('#onlineMarkers').isChecked(),false);await page.locator('#onlineMarkers').check();
+  await revealAtlas(page,'vikings');await page.locator('#onlineMarkers').uncheck();assert.equal(await page.locator('#onlineMarkers').isChecked(),false);await revealAtlas(page,'vikings');await page.locator('#onlineMarkers').check();
 
   await page.locator('#mapInspect [data-profile]').click();
   await page.waitForFunction(()=>location.hash==='#profile/Astrid-Ashwalker');
@@ -140,15 +141,15 @@ await page.evaluate(()=>drawMap());
   await page.screenshot({path:path.join(output,'desktop-armory.png')});
   await page.keyboard.press('Escape');
   await page.locator('.masthead nav a[href="#world"]').click();
-  await page.locator('#range').selectOption('custom');
-  await page.locator('#from').fill('2026-01-02T10:00');
-  await page.locator('#to').fill('2026-01-01T10:00');
-  await page.locator('#filters button[type=submit]').click();
+  await revealAtlas(page,'filters');await page.locator('#range').selectOption('custom');
+  await revealAtlas(page,'filters');await page.locator('#from').fill('2026-01-02T10:00');
+  await revealAtlas(page,'filters');await page.locator('#to').fill('2026-01-01T10:00');
+  await revealAtlas(page,'filters');await page.locator('#filters button[type=submit]').click();
   assert((await page.locator('#connection').textContent()).includes('valid custom'),'Reject inverted dates');
-  await page.locator('#from').fill('2020-01-01T00:00');
-  await page.locator('#to').fill('2030-01-01T00:00');
+  await revealAtlas(page,'filters');await page.locator('#from').fill('2020-01-01T00:00');
+  await revealAtlas(page,'filters');await page.locator('#to').fill('2030-01-01T00:00');
   const custom=page.waitForResponse(r=>r.url().includes('range=custom'));
-  await page.locator('#filters button[type=submit]').click();
+  await revealAtlas(page,'filters');await page.locator('#filters button[type=submit]').click();
   assert.equal((await custom).status(),200,'Custom UTC-converted date request');
   // Escaping validation uses synthetic response interception, deliberately distinct from live fixture checks.
   await page.route('**/api/state?**',async route=>{
@@ -157,16 +158,16 @@ await page.evaluate(()=>drawMap());
    json.eventsTruncated=true;json.eventCount=9000;json.server={name:'Synthetic longhouse',address:'192.0.2.10:2456'};
    await route.fulfill({response,json});
   });
-  await page.locator('#filters button[type=submit]').click();
+  await revealAtlas(page,'filters');await page.locator('#filters button[type=submit]').click();
   await page.waitForFunction(()=>document.querySelector('#history').textContent.includes('5,000'));
   await page.waitForFunction(()=>document.querySelector('#serverName').textContent==='Synthetic longhouse');
   assert((await page.locator('#serverAddress').textContent()).includes('192.0.2.10:2456'),'Configured server address displayed');
   assert.equal(await page.evaluate(()=>window.sagasInjected),undefined,'Telemetry cannot execute markup');
   assert.equal(await page.locator('#online img').count(),0,'Names rendered as escaped text');
   await page.unrouteAll({behavior:'wait'});
-  await page.locator('#range').selectOption('all');
+  await revealAtlas(page,'filters');await page.locator('#range').selectOption('all');
   const restored=page.waitForResponse(r=>r.url().includes('/api/state?')&&new URL(r.url()).searchParams.get('range')==='all');
-  await page.locator('#filters button[type=submit]').click();
+  await revealAtlas(page,'filters');await page.locator('#filters button[type=submit]').click();
   await restored;
   await page.waitForFunction(()=>document.querySelector('#characterName').textContent==='Astrid Ashwalker');
   await page.setViewportSize({width:390,height:844});
@@ -234,18 +235,18 @@ await page.evaluate(()=>drawMap());
    json.health={storageError:'SyntheticStorageFailure',errorId:'fixture-health-011'};
    await route.fulfill({response,json});
   });
-  await page.locator('#filters button[type=submit]').click();
+  await revealAtlas(page,'filters');await page.locator('#filters button[type=submit]').click();
   await page.waitForFunction(()=>document.querySelector('#connection').textContent.includes('fixture-health-011'));
   assert(!(await page.locator('#connection').textContent()).includes('Connected'),'Unhealthy collector cannot claim connected success');
   await page.unrouteAll({behavior:'wait'});
   // Deliberate synthetic server failure must remain visible with a support reference.
   await page.route('**/api/state?**', route => route.fulfill({status:500,contentType:'application/json',body:JSON.stringify({error:'Recorded data is temporarily unavailable',errorId:'fixture-error-011'})}));
-  await page.locator('#filters button[type=submit]').click();
+  await revealAtlas(page,'filters');await page.locator('#filters button[type=submit]').click();
   await page.waitForFunction(()=>document.querySelector('#connection').textContent.includes('fixture-error-011'));
   assert((await page.locator('#connection').textContent()).includes('500'),'HTTP status visible');
   assert((await page.locator('#connection').textContent()).includes('last known'),'Stale data explicitly labelled');
   await page.unrouteAll({behavior:'wait'});
-  await page.locator('#filters button[type=submit]').click();
+  await revealAtlas(page,'filters');await page.locator('#filters button[type=submit]').click();
   await page.waitForFunction(()=>document.querySelector('#connection').textContent.includes('Connected'));
   // Isolated response adapter exercises public browser behavior against the same synthetic data.
   const publicPage=await browser.newPage();const publicRequests=[];
@@ -259,7 +260,7 @@ await page.evaluate(()=>drawMap());
 
   assert(publicRequests.filter(r=>r.url().includes('/api/state')).every(r=>!r.headers().authorization),'Public browser sends no bearer credential');
   assert.equal(await publicPage.evaluate(()=>sessionStorage.getItem('sagas.viewer')),null,'Public viewing does not store credentials');
-  await publicPage.evaluate(()=>location.hash='atlas');await publicPage.reload();await publicPage.waitForFunction(()=>!state.fit&&state.map.cells.length>0&&state.data?.players?.length>0);const refreshedMarkers=await publicPage.evaluate(()=>visibleMarkers().map(p=>({point:screen(p.x,p.z),width:view.width,height:view.height})));assert(refreshedMarkers.length>0&&refreshedMarkers.every(m=>m.point[0]>=0&&m.point[0]<=m.width&&m.point[1]>=0&&m.point[1]<=m.height),'Markers stay within initial fit after browser reload');await publicPage.locator('#offlineMarkers').check();await publicPage.evaluate(()=>refresh());assert.equal(await publicPage.locator('#offlineMarkers').isChecked(),true,'Polling preserves marker layer controls');await publicPage.locator('.masthead nav a[href="#server-saga"]').click();await publicPage.waitForFunction(()=>document.querySelector('#serverSagaChapters .chapter'));assert(publicRequests.filter(r=>r.url().includes('/api/server-saga')).every(r=>!r.headers().authorization),'Public server saga requires no browser credential');await publicPage.locator('.masthead nav a[href="#leaderboard"]').click();await publicPage.waitForFunction(()=>document.querySelector('#leaderboardResults').textContent.includes('Creature kills'));assert(publicRequests.filter(r=>r.url().includes('/api/leaderboard')).every(r=>!r.headers().authorization),'Public leaderboard uses no browser credential');
+  await publicPage.evaluate(()=>location.hash='atlas');await publicPage.reload();await publicPage.waitForFunction(()=>!state.fit&&state.map.cells.length>0&&state.data?.players?.length>0);const refreshedMarkers=await publicPage.evaluate(()=>visibleMarkers().map(p=>({point:screen(p.x,p.z),width:view.width,height:view.height})));assert(refreshedMarkers.length>0&&refreshedMarkers.every(m=>m.point[0]>=0&&m.point[0]<=m.width&&m.point[1]>=0&&m.point[1]<=m.height),'Markers stay within initial fit after browser reload');await revealAtlas(publicPage,'vikings');await publicPage.locator('#offlineMarkers').check();await publicPage.evaluate(()=>refresh());assert.equal(await publicPage.locator('#offlineMarkers').isChecked(),true,'Polling preserves marker layer controls');await publicPage.locator('.masthead nav a[href="#server-saga"]').click();await publicPage.waitForFunction(()=>document.querySelector('#serverSagaChapters .chapter'));assert(publicRequests.filter(r=>r.url().includes('/api/server-saga')).every(r=>!r.headers().authorization),'Public server saga requires no browser credential');await publicPage.locator('.masthead nav a[href="#leaderboard"]').click();await publicPage.waitForFunction(()=>document.querySelector('#leaderboardResults').textContent.includes('Creature kills'));assert(publicRequests.filter(r=>r.url().includes('/api/leaderboard')).every(r=>!r.headers().authorization),'Public leaderboard uses no browser credential');
 await publicPage.route('**/api/state?**',route=>route.fulfill({status:401,contentType:'application/json',body:JSON.stringify({error:'Token now required'})}));await publicPage.evaluate(()=>refresh());await publicPage.waitForFunction(()=>document.querySelector('#accessButton').textContent==='Login');assert.equal(await publicPage.locator('#accessButton').isEnabled(),true,'Public-to-private change restores login button');assert.equal(await publicPage.evaluate(()=>state.publicViewing),false,'401 stops unauthenticated public polling');await publicPage.unrouteAll({behavior:'wait'});await publicPage.close();
   // New browser session sees retained offline equipment; loaded art survives a host outage in memory.
   const offlinePage=await browser.newPage({viewport:{width:1440,height:900},hasTouch:true});await offlinePage.addInitScript(token=>sessionStorage.setItem('sagas.viewer',token),token);const offlineMedia=[];

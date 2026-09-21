@@ -1,3 +1,13 @@
+# 0.3.20 atlas layout and config ownership verification
+
+Verified September 21, 2026 against installed Valheim assemblies and Shudnal ConfigurationManager 1.1.21. Build: zero errors, two existing MSB3277 warnings. Full suites: 2,542 Core assertions, 80 lore, 22,017 terrain, 1,557 portrait/lifecycle and 212 installed-assembly metadata checks. Metadata includes the optional manager's Entry property, synchronization-label method, setter and dynamic attribute inspection entry point. Metadata checks do not execute the in-game UI patch.
+
+The complete synthetic browser suite passed, including 96 grounding combinations and existing authentication/profile/heat-map/SLS/icon/countdown regressions. New atlas checks cover default-closed controls, four exclusive trays, unchanged map geometry, Escape/focus return, mobile width and Activity-to-filter navigation with applied Viking names and independent terrain. Desktop/mobile screenshots were reviewed. A strict zero comparison in the existing whole-world pan test now allows a 1e-6 meter floating-point tolerance; the wider canvas produced a 1.8e-12 meter residual. No map physics or clamping code changed.
+
+Server/Lore values remain host-local. The optional UI adapter labels ownership and rejects edits in remote sessions; no credential/config serialization was added. Dynamic ReadOnly tags work with the inspected manager. In-game S/C rendering, transition between menu/host/remote client, and edit rejection still require playtesting. Confirm that privacy, notification and login-shortcut controls remain editable on clients. The mod retains no required dependency on ConfigurationManager, Epic Loot or SLS.
+
+Both retention defaults already equal zero in source. Existing saved retention choices are intentionally preserved. Package validation and isolated Gale Test installation are recorded in local STATUS.md; no live server or save was modified.
+
 # 0.3.17 startup attribution and SLS outline verification
 
 September 21, 2026: build passed against installed assemblies, zero errors/two existing MSB3277 warnings; 172 installed API metadata checks passed. Existing inspected SLS configuration/data/color types and Epic Loot item extension APIs reside in their registered mod assemblies. First-use broad assembly scans were replaced only for these cached metadata lookups; Harmony death/loot hook targets remain unchanged. This is a likely startup contributor, not a measured explanation of the full 143.4/88.2 ms residuals. New first-world/first-equipment phase logs also state that JIT before method entry is outside their measured body.
