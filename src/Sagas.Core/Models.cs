@@ -14,6 +14,7 @@ public sealed class PlayerSnapshot { public string MapColor {get;set;}=""; publi
  public float? NemesisScore {get;set;}
  public bool EpicLootInstalled {get;set;} public long? Gold {get;set;}
  public bool BackgroundUnlocked {get;set;} public string BackgroundPreference {get;set;} = "automatic";
+ public List<string> CompletedBossKeys {get;set;} = new List<string>();
  public int ProgressionTier {get;set;} public string ProgressionBoss {get;set;} = ""; public DateTime? LastAchievementUtc {get;set;}
  public string ProfileBiome {get;set;} = ""; public string ProfileBiomeEvidence {get;set;} = "";
  public string World {get;set;} = ""; public string PlayerId {get;set;} = ""; public string Name {get;set;} = ""; public bool Online {get;set;} public bool SharePosition {get;set;}

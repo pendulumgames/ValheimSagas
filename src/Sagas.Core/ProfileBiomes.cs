@@ -21,6 +21,7 @@ public sealed partial class SagaService {
    // Canonical receipts preserve earned progression even after statistical retention.
    var receipts=store.CompletedBossKeys(player.World,player.PlayerId);
    var boss=KnownBosses.Where(b=>receipts.Contains(b.Key)).OrderByDescending(b=>b.Order).FirstOrDefault();
+   player.CompletedBossKeys=player.ShareProfile?KnownBosses.Where(b=>receipts.Contains(b.Key)).OrderBy(b=>b.Order).Select(b=>b.Key).ToList():new List<string>();
    player.ProgressionTier=player.ShareProfile?boss.Order:0;
    player.ProgressionBoss=player.ShareProfile?(boss.Name??""):"";
    player.LastAchievementUtc=player.ShareProfile&&latest.TryGetValue(player.PlayerId,out var last)?(DateTime?)last:null;

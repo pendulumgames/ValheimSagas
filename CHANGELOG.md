@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.22
+
+- Fix duplicated portraits in Online Vikings and Recorded Vikings after the directory update.
+- Share one online/syncing/offline badge across World rosters, search cards and character profiles. Fix status disappearing when revisiting the same Viking through search by clearing the cached markup consistently.
+- Reorganize search cards around the character and an excerpt from their saved saga/biography, clearly labelled AI fiction. Show an honest empty state when no generated saga exists.
+- Add an eight-boss checklist and completion total from authoritative lifetime receipts; skipped bosses remain 0/1. No additional generation requests or polling endpoints.
+
 ## 0.3.21
 
 - Keep automatic game icons in their original colors. Color by Viking applies to personal pins, Viking markers and names.
