@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.25
+
+- Move default shortcuts away from Moments and Valheim function keys: Ctrl+Home opens the Steam website, Ctrl+Insert copies a personal login, Ctrl+End revokes it. One-time migration changes only the old default combinations; custom bindings are preserved.
+- Remove EnableLootNotifications. Earned enchanted/socketed pickup notices are always enabled, retaining provenance checks, deduplication, freshness and rate limits.
+- Show Epic Loot rarity/bounty panels only for shared profiles reporting Epic Loot; add Jewelcrafting equipped-gem and socket-capacity rankings and overview/profile highlights. These use latest loadouts, exclude hotbar duplicates and containers, and are not combat-power scores. SLS Nemesis panels remain host-capability gated.
+- Replace persistent pin crosshairs with a fading location halo. Small groups fan out with exact-position leader lines, double-click/zoom controls, automatic high-zoom separation and animated gathering on zoom-out. Neighboring icons reserve space; dense groups retain an accessible scrollable picker. Reduced-motion preference respected.
+- Cache the map background during brief pin animations; no extra game capture or network polling. Refresh the README atlas screenshot from an isolated playtest copy with colored personal pins and a fanned group.
+
 ## 0.3.24
 
 - Optional Smoothbrain Jewelcrafting support: socketed gear/hotbar tooltips, gem icons and configured power ranges, extra equipped ring/necklace slots, jewelry armor, item colors and portrait change detection. No hard mod dependency.

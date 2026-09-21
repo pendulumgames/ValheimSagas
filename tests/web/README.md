@@ -50,3 +50,5 @@ The atlas opens with option trays closed. `atlas-controls.cjs` opens each public
 `map-clusters.cjs` verifies atlas/roster document order, actual click-to-open clusters, dense and coincident pins, escaped keyboard/tap picker, exact-coordinate selection, layer filtering, collision-free badge centers and mobile width. Logs browser-only dense2048 timing; this is not a Unity/game timing test.
 
 `jewelcrafting.cjs` injects explicitly synthetic socketed gear into the local fixture, decodes a synthetic gem PNG, tests filled/empty slots and configured ranges, ring placement, mouse/keyboard/tap hotbar access, Epic Loot coexistence/palette priority, no-socket fallback, escaped text, distinct map socket loadouts and mobile width. No Jewelcrafting assets or real provider requests.
+
+`mod-awareness.cjs` verifies optional panels for vanilla, Epic Loot, Jewelcrafting and combined integrations. `map-clusters.cjs` additionally checks close-pin fan hit testing, actual double-click zoom, timed halo expiry, zoom-out gathering, adjacent fan separation and reduced motion.

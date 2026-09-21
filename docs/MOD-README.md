@@ -15,13 +15,13 @@ Your adventures, remembered: a standalone Valheim mod with a server-hosted websi
 - **Sagas:** persistent personal and server stories with a separate recorded-facts ledger. The host must configure OpenRouter first; no template stories are generated.
 - **Make it yours:** boxed, full-screen or full-screen scrolling scenery. Your personal login can select backgrounds up to your recorded boss progression; everyone sees the saved selection. New browsers default to full-screen scroll.
 
-![World Atlas with SLS zone boundaries, a last-known Viking marker and Nemesis tooltip](https://raw.githubusercontent.com/pendulumgames/ValheimSagas/main/docs/screenshots/atlas.png)
+![World Atlas with colored personal icons, a fanned pin group and a last-known Viking marker](https://raw.githubusercontent.com/pendulumgames/ValheimSagas/main/docs/screenshots/atlas.png)
 
 Statistics support all history, 30 minutes, 1/6/12 hours, 1/3/7 days and custom dates. Live presence and last-known equipment are independent of the selected time window. Drops, verified earned collections and unknown pickups remain distinct; repeat pickups and bonus loot rolls cannot create extra kills.
 
 ![Server rankings including optional Nemesis boss kills](https://raw.githubusercontent.com/pendulumgames/ValheimSagas/main/docs/screenshots/leaderboard.png)
 
-Screenshots show an isolated copy of recorded playtest data, with display names replaced for publication. The atlas includes a last-known player marker and the host's SLS boundaries clipped by exploration. The Nemesis leaderboard is shown honestly with no recorded victories yet. These are website captures, not evidence that every multiplayer integration has been verified.
+Screenshots show an isolated copy of recorded playtest data, with display names replaced for publication. The atlas shows saved playtest exploration, a last-known Viking marker, colored personal icons and a fanned group connected to its true locations. One Viking owns these pins, so they share that Viking's color. The Nemesis leaderboard is shown honestly with no recorded victories yet. These are website captures, not evidence that every multiplayer integration has been verified.
 
 ## Install and open
 
@@ -74,7 +74,7 @@ The boss leaderboard includes **Kall Fimbulbringer** as the eighth progression t
 
 The full-width atlas opens with its controls tucked away. Use **Terrain**, **Vikings**, **Activity** or **Icons** to open one compact tray; close it to return to the whole map. Opening a tray preserves your map position and zoom. **Statistics & heat maps**, below the map, filters event totals, recent activity and heat layers by Viking and date. It does not filter live player positions or icon ownership. Explored terrain is independent unless you explicitly link it to statistics in the Terrain tray.
 
-In Shudnal ConfigurationManager, **S** marks host-owned `[Server]` and `[Lore]` settings; **C** marks personal privacy, notifications and website-login shortcuts. Host settings are read-only while connected to somebody else's server. They show this computer's local hosting configuration, not the remote host's values. The actual host reads its own config; credentials, tokens and paths are never sent to clients. Configure hosting at the main menu or on the host itself, and restart the hosted world after changes. Ownership descriptions remain available without the optional manager. Personal Saga Profiles are configured through website login, separately from the host's Lore settings.
+In Shudnal ConfigurationManager, **S** marks host-owned `[Server]` and `[Lore]` settings; **C** marks personal privacy and website-login shortcuts. Host settings are read-only while connected to somebody else's server. They show this computer's local hosting configuration, not the remote host's values. The actual host reads its own config; credentials, tokens and paths are never sent to clients. Configure hosting at the main menu or on the host itself, and restart the hosted world after changes. Ownership descriptions remain available without the optional manager. Personal Saga Profiles are configured through website login, separately from the host's Lore settings.
 
 Both `[Server] RetentionDays` and `StatisticsRetentionDays` default to **0 (unlimited history)**. Existing saved values are preserved on upgrade. To remove a previously configured seven-day limit, explicitly change both values to `0` on the host. This preserves remaining records; it cannot restore already-pruned history.
 
@@ -98,7 +98,7 @@ Map sharing defaults on for new configurations. Profile, portrait and position s
 
 The header shows **Login** when signed out. After login, it shows your saved Viking portrait (or an initial when no portrait is available). Click the icon for **Saga Settings** or **Log out**. Shared server tokens show a read-only account; Saga Settings explains how to switch to a personal login.
 
-While playing, press **Left Ctrl + F8** to copy a personal login token, then paste it into the website's **Login** dialog. This replaces the previous token for that character/world. **Left Ctrl + F9** revokes it. A personal login enables owner-only scenery and storyteller settings; the shared viewer token does not grant ownership. Tokens are stored in the browser tab session and sent in Authorization headers, never in profile URLs.
+While playing, press **Left Ctrl + Insert** to copy a personal login token, then paste it into the website's **Login** dialog. This replaces the previous token for that character/world. **Left Ctrl + End** revokes it. A personal login enables owner-only scenery and storyteller settings; the shared viewer token does not grant ownership. Tokens are stored in the browser tab session and sent in Authorization headers, never in profile URLs.
 
 Scenery progression follows recorded credit: Meadows initially; Eikthyr unlocks Black Forest, Elder unlocks Swamp, Bonemass unlocks Mountains, Moder unlocks Plains, Yagluth unlocks Mistlands, Queen unlocks Ashlands, and Fader unlocks Deep North. Tracking cannot reconstruct unrecorded boss kills from before installation.
 
@@ -114,7 +114,7 @@ Epic Loot independently enhances rarity colors, gear effects, bounty tracking an
 
 **Jewelcrafting (Smoothbrain)** adds a separate socket section to equipment and hotbar tooltips: filled/empty slots, gem names, cached runtime gem icons and configured effect power ranges. Sagas also reads equipped extra ring/necklace slots and the mod's upgradeable jewelry armor. Socketed gear inherits Jewelcrafting's item color; an Epic Loot rarity color takes precedence when both are present, while both sets of metadata remain visible. Last-known socket information and icons remain available offline under profile-sharing permissions.
 
-Recorded socketed drops/collections and their map details retain gem names; generated sagas may use those recorded facts. Sagas' optional loot notifications also recognize earned socketed pickups, using the existing toggle/rate limits. Jewelcrafting's special creature equipment spawns use the same actual-drop provenance and deduplication path as other loot. Loose gems in ordinary creature drops are tracked by their game names; gem bags, fusion-box inventories, socket crafting/destruction history and synergy totals are not exported. Socket count is not invented as an Epic Loot rarity or added to its rarity rankings.
+Recorded socketed drops/collections and their map details retain gem names; generated sagas may use those recorded facts. Sagas loot notifications are always enabled for earned enchanted/socketed pickups, with duplicate protection and rate limits. Jewelcrafting's special creature equipment spawns use the same actual-drop provenance and deduplication path as other loot. Loose gems in ordinary creature drops are tracked by their game names; gem bags, fusion-box inventories, socket crafting/destruction history and synergy totals are not exported. Socket count is not invented as an Epic Loot rarity or added to its rarity rankings.
 
 Inspected against **Jewelcrafting 2.0.10**. Its public gem API exposes configured power ranges, not the seeded roll or effective combined total; tooltips label that distinction. No new effective-stat arithmetic is inferred. No Jewelcrafting DLL/assets are bundled and the website/Core never load it. Either mod, both mods, or neither may be used. Real in-game validation with this mod is still required; see [integration details](https://github.com/pendulumgames/ValheimSagas/blob/main/docs/OPTIONAL-MODS.md).
 
@@ -152,7 +152,7 @@ Story prompts use relevant recorded events, career totals, bosses and credited t
 
 Back up `BepInEx/config/ValheimSagas` with the host stopped, including `sagas.db` and `personal-lore.key` if present. The key file is required to decrypt saved personal OpenRouter credentials. Do not share backups, configs or tokens publicly. Uninstalling the plugin does not delete recorded history.
 
-**0.3.24 is a preview release verified with automated checks.** It includes performance fixes for SLS/gear snapshots and staged, change-triggered portrait capture with asynchronous GPU readback and background image processing; fresh local and dedicated-server playtests must confirm frame-time improvements. Automated tests use labeled synthetic fixtures; real credentialed OpenRouter generation, two-client multiplayer acceptance and Linux hosting still require testing. Unresolved attackers and uncertain loot provenance stay unattributed rather than being guessed. Fight durations are observed telemetry, and carried gold is a snapshot, not a lifetime earnings counter.
+**0.3.25 is a preview release verified with automated checks.** It includes performance fixes for SLS/gear snapshots and staged, change-triggered portrait capture with asynchronous GPU readback and background image processing; fresh local and dedicated-server playtests must confirm frame-time improvements. Automated tests use labeled synthetic fixtures; real credentialed OpenRouter generation, two-client multiplayer acceptance and Linux hosting still require testing. Unresolved attackers and uncertain loot provenance stay unattributed rather than being guessed. Fight durations are observed telemetry, and carried gold is a snapshot, not a lifetime earnings counter.
 
 ## License
 
@@ -164,12 +164,20 @@ Third-party dependencies retain their own copyrights and license terms; see [thi
 
 ### Open Sagas inside Valheim
 
-Press **Ctrl+F10** while playing to open the website in the Steam overlay. Enable Steam Overlay for Valheim and launch the game through Steam (including Gale's usual Steam launch). Change or disable `Website Login / OpenWebsite` in F1. This uses Steam's browser; it does not embed a new browser or pause multiplayer. Close the overlay with your Steam overlay shortcut (normally Shift+Tab).
+Press **Ctrl+Home** while playing to open the website in the Steam overlay. Enable Steam Overlay for Valheim and launch the game through Steam (including Gale's usual Steam launch). Change or disable `Website Login / OpenWebsite` in F1. This uses Steam's browser; it does not embed a new browser or pause multiplayer. Close the overlay with your Steam overlay shortcut (normally Shift+Tab).
 
 Local hosts automatically use their `ListenPrefix` address/port (wildcard HTTP bindings become loopback for this shortcut). For dedicated servers, set **`Server / WebsiteUrl`** to the reachable website address, such as `http://example.com:19908/` or your HTTPS reverse-proxy URL. Keep `ListenPrefix = http://*:19908/` for a wildcard listener when appropriate; the public URL setting does not change binding or open ports. `AdvertisedAddress` is the displayed game-server address and is not assumed to be the web address. A player may set `Website Login / WebsiteUrlOverride` instead. Use a plain HTTP(S) address without credentials, query or fragment. The host sends only that public URL, on an authenticated, rate-limited hotkey request. No background URL polling.
 
-Website login is separate in Steam's browser: use the Login button, and **Ctrl+F8** to copy your personal login when needed. The shortcut never includes a viewer token or key in the URL and does not automatically log you in. If Steam Overlay is unavailable, Sagas displays an explanation; your ordinary browser remains available. Actual overlay operation needs an in-game test on your installation.
+Website login is separate in Steam's browser: use the Login button, and **Ctrl+Insert** to copy your personal login when needed. The shortcut never includes a viewer token or key in the URL and does not automatically log you in. If Steam Overlay is unavailable, Sagas displays an explanation; your ordinary browser remains available. Actual overlay operation needs an in-game test on your installation.
 
 ### Map locations and page layout
 
 The atlas leads the World page, followed by Online Vikings and event statistics; Recorded Vikings is at the bottom. Nearby visible map icons become a numbered cluster. Click/tap a cluster to browse its locations, then choose a pin to center its exact coordinates, marked with a crosshair. Zooming separates pins where space permits; coincident pins stay accessible through the picker. The Icons tray's **Browse visible icons** also supports keyboard selection. Clusters respect the existing discovery, personal-sharing, owner and layer filters. Clustering runs in the browser over the separate cached icon feed; it adds no game capture or network traffic.
+
+### Map icons and optional-mod statistics
+
+Click a nearby-pin group to spread up to 12 icons and browse its locations. Double-click it, or use **Zoom into group**, to zoom closer. At high zoom, close pins fan out automatically when space permits; fine lines connect them to their real coordinates. Zoom out to gather them again. Larger or crowded groups keep a scrollable picker. Selecting an individual location briefly highlights its true position, then fades. Game icons retain their original colors; **Color by Viking** applies only to personal pins and Viking markers.
+
+Statistics use the latest shared profiles to detect Epic Loot and Jewelcrafting, including offline snapshots. Epic Loot adds rarity discoveries and bounty completions. Jewelcrafting adds equipped gems and total equipped socket capacity, including empty sockets. These loadout counts are independent of the time filter, exclude hotbar duplicates and containers, and do not measure combat power. SLS Nemesis statistics follow the host's installed/enabled integration. No optional mod is required.
+
+On first launch after this update, the original Ctrl+F8/F9/F10 defaults migrate to Ctrl+Insert/End/Home respectively; custom shortcuts are preserved. You can change them again in F1. Loot notifications no longer have a configuration toggle.

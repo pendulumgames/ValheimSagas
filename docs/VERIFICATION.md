@@ -180,3 +180,11 @@ Read installed Gale Jewelcrafting2.0.10 assemblies only. Full2584Core,80lore,220
 Entire browser chain passed. Added synthetic Jewelcrafting gear with keyboard/tap/hotbar tooltip access, runtime-media request/decode using a synthetic PNG, range disclaimers, null sockets, ring placement, JC color / Epic rarity color precedence, absent sockets, escaping, distinct map loadouts and mobile width. Desktop/mobile screenshots reviewed; fixture is clearly labelled and contains no copied JC assets.
 
 Pending real gameplay: Jewelcrafting-generated socketed creature drop and pickup; ring/necklace extra-slot and armor snapshots; socket replacement and portrait refresh; actual gem icon capture and offline persistence; Epic Loot/JC co-installation; two-client ownership and frame timing. Metadata inspection and fake-API tests do not execute Jewelcrafting Harmony hooks or GPU capture.
+
+### 0.3.25 ? map pin interactions and optional-mod statistics
+
+Full automated build: 2,586 Core assertions, 80 lore checks, 22,017 terrain checks, 1,557 portrait/lifecycle checks, 224 installed-assembly metadata checks, and 13 Jewelcrafting adapter checks passed. Plugin compilation: zero errors, two existing reference-unification warnings. Installed BepInEx KeyboardShortcut.Equals implementation inspected for exact-default migration.
+
+Complete browser suite passed. New checks cover no optional mods, Epic Loot, Jewelcrafting and all three integrations; near-coincident pins at maximum zoom; actual double-click; individually selectable fan icons; expiry of selection halo; gathering on zoom-out; neighboring-fan separation; reduced motion. Dense 2,048-pin clustering measured approximately 3.2ms in this synthetic browser run. Terrain and heat are cached during bounded pin animation frames, with no added polling.
+
+Updated atlas screenshot uses an isolated copy of the closed Test profile's saved data, with names aliased. Personal pins have one owner's color, game icons remain original, last-known position is labeled. No synthetic encounters or additional exploration were added. No new game runtime or dedicated-server acceptance is claimed; test the shortcut migration, always-on notifications, and updated map in both Gale profiles.

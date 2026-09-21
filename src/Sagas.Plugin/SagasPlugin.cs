@@ -14,7 +14,7 @@ using Newtonsoft.Json;
 using UnityEngine;
 namespace ValheimSagas;
 
-[BepInPlugin("org.valheimsagas.collector", "Valheim Sagas", "0.3.24")]
+[BepInPlugin("org.valheimsagas.collector", "Valheim Sagas", "0.3.25")]
 [BepInDependency("_shudnal.ConfigurationManager", BepInDependency.DependencyFlags.SoftDependency)]
 [BepInDependency("org.bepinex.plugins.jewelcrafting", BepInDependency.DependencyFlags.SoftDependency)]
 [BepInDependency("randyknapp.mods.epicloot", BepInDependency.DependencyFlags.SoftDependency)]
@@ -25,7 +25,7 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
  internal static string Identity(long id) { if(id==0)return ""; using var sha=SHA256.Create(); return BitConverter.ToString(sha.ComputeHash(Encoding.UTF8.GetBytes(World+":"+id))).Replace("-", "").ToLowerInvariant().Substring(0,24); }
  internal static string EventId(string kind,ZDOID zdo) {using var sha=SHA256.Create();return kind+":"+BitConverter.ToString(sha.ComputeHash(Encoding.UTF8.GetBytes(World+":"+zdo))).Replace("-", "").ToLowerInvariant();}
  internal static string Localize(string value) => Localization.instance == null ? value : Localization.instance.Localize(value);
- RuntimeArt? artwork; readonly Dictionary<string,Packet> pendingMedia=new Dictionary<string,Packet>(); readonly Dictionary<string,float> sentMedia=new Dictionary<string,float>(); readonly HashSet<string> fullyMapped=new HashSet<string>(); readonly Dictionary<string,string> tileVersions=new Dictionary<string,string>(); ConfigEntry<bool> notifications=null!; ConfigEntry<string> serverName=null!,serverAddress=null!;
+ RuntimeArt? artwork; readonly Dictionary<string,Packet> pendingMedia=new Dictionary<string,Packet>(); readonly Dictionary<string,float> sentMedia=new Dictionary<string,float>(); readonly HashSet<string> fullyMapped=new HashSet<string>(); readonly Dictionary<string,string> tileVersions=new Dictionary<string,string>(); ConfigEntry<string> serverName=null!,serverAddress=null!;
  SagaService? service; readonly AsyncResource<StartedService> serviceStartup=new AsyncResource<StartedService>(); float nextServiceStart; Harmony? harmony; Outbox? outbox;
  readonly Dictionary<string,Packet> pendingMaps=new Dictionary<string,Packet>();
  ConfigEntry<bool> requireToken=null!,host=null!, shareMap=null!, sharePosition=null!,shareProfile=null!;
@@ -48,7 +48,7 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
  readonly Dictionary<string,float> retryAfter=new Dictionary<string,float>();
  Packet? outboundProfile; float nextUpload; int uploadLane;
  void Awake() {
-  Instance=this; SetupMapDetails(); SetupLogin(); SetupWebsiteOverlay(); requireToken=BindSetting("Server","RequireViewerToken",false,"True: private viewing requires ViewerToken. False: anyone who can reach the website may view shared data without a token. Does not change network binding or player sharing preferences."); artwork=new RuntimeArt(Warn); notifications=BindSetting("Notifications","EnableLootNotifications",false,"Show Sagas rare earned-loot pickup messages. Does not change Valheim or Epic Loot notifications."); serverName=BindSetting("Server","DisplayName","","Website server name override; blank uses the Valheim server name, then the world name."); serverAddress=BindSetting("Server","AdvertisedAddress","","Optional server IP/hostname and port displayed to website viewers. No automatic public-IP discovery.");
+  Instance=this; SetupMapDetails(); SetupLogin(); SetupWebsiteOverlay(); requireToken=BindSetting("Server","RequireViewerToken",false,"True: private viewing requires ViewerToken. False: anyone who can reach the website may view shared data without a token. Does not change network binding or player sharing preferences."); artwork=new RuntimeArt(Warn); serverName=BindSetting("Server","DisplayName","","Website server name override; blank uses the Valheim server name, then the world name."); serverAddress=BindSetting("Server","AdvertisedAddress","","Optional server IP/hostname and port displayed to website viewers. No automatic public-IP discovery.");
   host=BindSetting("Server","EnableWebsite",true,"Start the private HTTP service only when hosting a world.");
   data=BindSetting("Server","DataDirectory",Path.Combine(Paths.ConfigPath,"ValheimSagas"),"Persistent database path; back up separately from world saves.");
   prefix=BindSetting("Server","ListenPrefix","http://127.0.0.1:8877/","Loopback by default. Use HTTPS reverse proxy for remote access.");
@@ -222,7 +222,7 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
    service.TryEvent(e,ok=>{if(ok)committed.Enqueue(()=>{if(rpc!=null)rpc.Invoke(AckName,e.Id);else pending.Remove(e.Id);});});
   }
  }
- internal void Record(SagaEvent e) { e.World=World;if(e.World==""||e.Id==""||!SagaService.ValidEvent(e))return;if(pending.Count<4096){if(!pending.ContainsKey(e.Id))SagasNotifications.Notify(e,notifications.Value,Identity(Player.m_localPlayer?Player.m_localPlayer.GetPlayerID():0));pending[e.Id]=e;}else Logger.LogWarning("Sagas outbox full (4096 events): new event not retained; check server connection/storage."); }
+ internal void Record(SagaEvent e) { e.World=World;if(e.World==""||e.Id==""||!SagaService.ValidEvent(e))return;if(pending.Count<4096){if(!pending.ContainsKey(e.Id))SagasNotifications.Notify(e,Identity(Player.m_localPlayer?Player.m_localPlayer.GetPlayerID():0));pending[e.Id]=e;}else Logger.LogWarning("Sagas outbox full (4096 events): new event not retained; check server connection/storage."); }
  string QueueArt(RuntimeArt.Image? image){if(image==null)return "";if(image.Kind=="portrait")foreach(var old in pendingMedia.Where(x=>x.Value.Media?.Kind=="portrait"&&x.Value.Media.Id!=image.Id).Select(x=>x.Key).ToArray()){sentMedia.Remove(pendingMedia[old].Media!.Id);pendingMedia.Remove(old);}if((!sentMedia.TryGetValue(image.Id,out var lastSent)||Time.unscaledTime-lastSent>120)&&pendingMedia.Count<64){var packet=new Packet{AckId="media:"+image.Id,Media=new MediaUpload{World=World,PlayerId=lastLocalId,Id=image.Id,Kind=image.Kind,Png=image.Png}};pendingMedia[packet.AckId]=packet;if(sentMedia.Count>=256)sentMedia.Remove(sentMedia.OrderBy(x=>x.Value).First().Key);sentMedia[image.Id]=Time.unscaledTime;}return image.Id;}
  PlayerSnapshot Snapshot(Player p) {
   using var timing=new StartupTrace(!profileTraceRecorded,"equipment",message=>Logger.LogInfo(message));profileTraceRecorded=true;
@@ -230,7 +230,7 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
   timing.Mark("identity and permissions");
   foreach(var item in JewelcraftingAdapter.Equipped(p)){var gear=Gear.Read(item);EquippedState.Apply(gear,item,p);if(shareProfile.Value){gear.IconId=QueueArt(artwork?.TryIcon(item));JewelcraftingAdapter.Icons(gear,i=>QueueArt(artwork?.TryIcon(i)));}s.Gear.Add(gear);} timing.Mark("equipped metadata");if(shareProfile.Value){RunStage("portrait capture",()=>s.PortraitId=QueueArt(artwork?.TryPortrait(p,!pendingMedia.Values.Any(x=>x.Media?.Kind=="portrait"))));s.PortraitStatus=artwork?.Status??"waiting-for-player";}timing.Mark("portrait scheduling");s.Hotbar=shareProfile.Value?HotbarCapture.Read(p,item=>QueueArt(artwork?.TryIcon(item))):new List<GearItem>();timing.Mark("hotbar metadata");s.EffectiveResistances=RuntimeArt.EffectiveResistances(p);timing.Mark("resistances");
   s.EffectiveStats["Armor"]=p.GetBodyArmor();s.EffectiveStats["Health"]=p.GetHealth();s.EffectiveStats["Max health"]=p.GetMaxHealth();s.EffectiveStats["Max stamina"]=p.GetMaxStamina();s.EffectiveStats["Max eitr"]=p.GetMaxEitr();
-  if(shareProfile.Value){s.EpicLootInstalled=EpicProgress.Installed;s.Gold=EpicProgress.CarriedGold(p);}
+  if(shareProfile.Value){s.EpicLootInstalled=EpicProgress.Installed;s.JewelcraftingInstalled=JewelcraftingAdapter.Installed;s.Gold=EpicProgress.CarriedGold(p);}
   timing.Mark("effective stats and gold");return s;
  }
  void SyncMap(Player p) {

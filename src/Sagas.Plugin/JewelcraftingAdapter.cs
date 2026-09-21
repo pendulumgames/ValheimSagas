@@ -11,6 +11,7 @@ namespace ValheimSagas;
 // Optional, read-only adapter for installed Jewelcrafting 2.0.10. Never loads the
 // mod DLL itself or scans assemblies, and never opens item-container inventories.
 internal static class JewelcraftingAdapter {
+ internal static bool Installed=>Api!=null;
  const string Guid="org.bepinex.plugins.jewelcrafting";
  static readonly Type? Api=OptionalTypes.InPlugin(Guid,"Jewelcrafting.API");
  static readonly MethodInfo? GetGems=Api?.GetMethod("GetGems",new[]{typeof(ItemDrop.ItemData)}),GetColor=Api?.GetMethod("GetSocketableItemColor",new[]{typeof(ItemDrop.ItemData)}),GetJewelry=Api?.GetMethod("GetEquippedJewelry",new[]{typeof(Player)});

@@ -14,7 +14,7 @@ public sealed class SagaEvent {
 }
 public sealed class PlayerSnapshot { public string MapColor {get;set;}=""; public bool SharePins {get;set;} public string ProfileSlug {get;set;} = ""; public List<GearItem> Hotbar {get;set;} = new List<GearItem>(); public string PortraitStatus {get;set;} = ""; public DateTime? PositionUtc {get;set;} public bool PositionLive {get;set;} public string PortraitId {get;set;} = ""; public Dictionary<string,string> EffectiveResistances {get;set;} = new Dictionary<string,string>();
  public float? NemesisScore {get;set;}
- public bool EpicLootInstalled {get;set;} public long? Gold {get;set;}
+ public bool JewelcraftingInstalled {get;set;} public bool EpicLootInstalled {get;set;} public long? Gold {get;set;}
  public bool BackgroundUnlocked {get;set;} public string BackgroundPreference {get;set;} = "automatic";
  public List<string> CompletedBossKeys {get;set;} = new List<string>();
  public int ProgressionTier {get;set;} public string ProgressionBoss {get;set;} = ""; public DateTime? LastAchievementUtc {get;set;}

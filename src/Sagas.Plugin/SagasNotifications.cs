@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
 namespace ValheimSagas;
-/// <summary>Opt-in local Sagas messages only; never patches or suppresses another mod's HUD.</summary>
+/// <summary>Local Sagas messages only; never patches or suppresses another mod's HUD.</summary>
 internal static class SagasNotifications {
  const int MaxSeen=4096;
  static readonly HashSet<string> Seen=new HashSet<string>(StringComparer.Ordinal);
@@ -12,14 +12,14 @@ internal static class SagasNotifications {
  static readonly Stopwatch Clock=Stopwatch.StartNew();
  static long nextAllowed;
  // Called on the Unity thread only, from initial Record, never from outbox replay/Send.
- internal static void Notify(SagaEvent e,bool enabled,string localPlayerId){
+ internal static void Notify(SagaEvent e,string localPlayerId){
   if(e.Kind!="collect"||string.IsNullOrEmpty(localPlayerId)||e.PlayerId!=localPlayerId||
    string.IsNullOrEmpty(e.Id)||string.IsNullOrEmpty(e.Provenance)||(string.IsNullOrEmpty(e.Rarity)&&e.Sockets.Count==0)||e.Amount<=0)return;
   var id=e.World+"|"+e.Id;
   if(!Seen.Add(id))return;
   Order.Enqueue(id);while(Order.Count>MaxSeen)Seen.Remove(Order.Dequeue());
-  // Disabled and rate-limited events remain seen: enabling notifications never replays a backlog.
-  if(!enabled||Clock.ElapsedMilliseconds<nextAllowed||!MessageHud.instance)return;
+  // Rate-limited events remain seen; replay never causes a notification backlog.
+  if(Clock.ElapsedMilliseconds<nextAllowed||!MessageHud.instance)return;
   if(e.Utc<DateTime.UtcNow.AddSeconds(-30)||e.Utc>DateTime.UtcNow.AddSeconds(2))return;
   nextAllowed=Clock.ElapsedMilliseconds+3000;
   var item=Plain(e.Name,100);if(item.Length==0)item="Rare treasure";

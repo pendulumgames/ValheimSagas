@@ -20,8 +20,8 @@ public sealed partial class SagasPlugin {
  }
  void ClearLoginClipboard(){if(clipboardCredential!=""&&GUIUtility.systemCopyBuffer==clipboardCredential)GUIUtility.systemCopyBuffer="";clipboardCredential="";}
  void SetupLogin(){
-  loginShortcut=BindSetting("Website Login","CopyLoginToken",new KeyboardShortcut(KeyCode.F8,KeyCode.LeftControl),"While playing, generate a personal website login and copy it to your clipboard. Replaces your previous token for this character/world. Never printed or saved locally.");
-  revokeShortcut=BindSetting("Website Login","RevokeLoginToken",new KeyboardShortcut(KeyCode.F9,KeyCode.LeftControl),"While playing, revoke your personal website login for this character/world.");
+  loginShortcut=BindSetting("Website Login","CopyLoginToken",new KeyboardShortcut(KeyCode.Insert,KeyCode.LeftControl),"While playing, generate a personal website login and copy it to your clipboard. Replaces your previous token for this character/world. Never printed or saved locally.");
+  revokeShortcut=BindSetting("Website Login","RevokeLoginToken",new KeyboardShortcut(KeyCode.End,KeyCode.LeftControl),"While playing, revoke your personal website login for this character/world.");
  }
  void LoginNotice(string message){if(Player.m_localPlayer)Player.m_localPlayer.Message(MessageHud.MessageType.Center,message);}
  void UpdateLogin(){

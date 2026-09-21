@@ -11,8 +11,17 @@ public sealed partial class SagasPlugin {
  const string WebsiteRequest="Sagas.Website.Request.V1",WebsiteResponse="Sagas.Website.Response.V1";
  string websiteNonce="",websiteWorld=""; float websiteDeadline,nextWebsiteOpen;
  readonly Dictionary<ZRpc,float> websiteRates=new Dictionary<ZRpc,float>();
+ sealed class HiddenShortcutMigration { public bool Browsable=false; }
+ void MigrateShortcutDefaults(){
+  var done=Config.Bind("Internal","ModernShortcutDefaults",false,new ConfigDescription("One-time migration of the original conflicting Sagas shortcuts; custom shortcuts are preserved.",null,new HiddenShortcutMigration()));
+  if(done.Value)return;
+  foreach(var pair in new[]{(loginShortcut,KeyCode.F8,KeyCode.Insert),(revokeShortcut,KeyCode.F9,KeyCode.End),(websiteShortcut,KeyCode.F10,KeyCode.Home)})
+   if(pair.Item1.Value.Equals(new KeyboardShortcut(pair.Item2,KeyCode.LeftControl)))pair.Item1.Value=new KeyboardShortcut(pair.Item3,KeyCode.LeftControl);
+  done.Value=true;
+ }
  void SetupWebsiteOverlay(){
-  websiteShortcut=BindSetting("Website Login","OpenWebsite",new KeyboardShortcut(KeyCode.F10,KeyCode.LeftControl),"Open Sagas in the Steam overlay. Requires Steam overlay enabled. KeyCode.None disables this shortcut.");
+  websiteShortcut=BindSetting("Website Login","OpenWebsite",new KeyboardShortcut(KeyCode.Home,KeyCode.LeftControl),"Open Sagas in the Steam overlay. Requires Steam overlay enabled. KeyCode.None disables this shortcut.");
+  MigrateShortcutDefaults();
   websiteOverride=BindSetting("Website Login","WebsiteUrlOverride","","Optional personal HTTP(S) website URL, used instead of the host URL. No credentials in URLs.");
   websiteUrl=BindSetting("Server","WebsiteUrl","","Public HTTP(S) Sagas website URL for the Steam shortcut, for example http://example.com:19908/. Use the web port, not the game port. Shared only when a player presses the shortcut; never include credentials. Required for remote clients.");
  }
