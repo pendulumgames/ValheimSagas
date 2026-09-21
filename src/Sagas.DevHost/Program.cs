@@ -17,7 +17,7 @@ for(int p=0;p<2;p++) {
 }
 // Clearly synthetic map pins and daylight exercise the independent atlas feeds.
 service.UpdatePins(new MapPins{World="synthetic-midgard",PlayerId="fixture-0",Revision="fixture-pins-v1",Pins=new(){new(){Name="Synthetic boss altar",Type="Boss",X=-400,Z=160},new(){Name="Synthetic trader",Type="None",X=300,Z=300},new(){Name="Synthetic personal camp",Type="Icon1",X=-200,Z=-300,Personal=true}}});
-service.UpdateClock(new WorldClock{World="synthetic-midgard",Day=42,Fraction=.4f});
+service.UpdateClock(WorldClock.Sample("synthetic-midgard",42,.4f,1200*42+450,1200,1,true,false));
 // A separate, clearly synthetic world keeps the original 60-kill browser fixtures stable.
 const string arena="synthetic-leaderboard";
 service.Store.WorldName(arena,"Synthetic proving grounds");

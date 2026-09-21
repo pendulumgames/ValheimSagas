@@ -59,7 +59,7 @@ internal sealed partial class RuntimeArt {
   if(requestedIcons.Count<MaximumIcons&&requestedIcons.Add(key))iconRequests.Enqueue((key,sprite));
   return null;}catch(Exception e){warn("item icon request",e);return null;}
  }
- public Image? TryMapIcon(Sprite sprite){CheckThread();if(!sprite||!sprite.texture)return null;int key=sprite.GetInstanceID();if(icons.TryGetValue(key,out var known))return known;if(requestedIcons.Count<MaximumIcons&&requestedIcons.Add(key))iconRequests.Enqueue((key,sprite));return null;}
+ public Image? TryMapIcon(Sprite? sprite){CheckThread();if(sprite==null||!sprite.texture)return null;int key=sprite.GetInstanceID();if(icons.TryGetValue(key,out var known))return known;if(requestedIcons.Count<MaximumIcons&&requestedIcons.Add(key))iconRequests.Enqueue((key,sprite));return null;}
  public void PumpIcons(bool permitted){
   CheckThread();if(!permitted){iconRequests.Clear();requestedIcons.Clear();return;}if(capture!=null||iconRequests.Count==0||lastIconFrame==Time.frameCount)return;lastIconFrame=Time.frameCount;
   var timer=Stopwatch.StartNew();var request=iconRequests.Dequeue();requestedIcons.Remove(request.Key);if(request.Sprite)CaptureIcon(request.Sprite);

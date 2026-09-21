@@ -14,7 +14,7 @@ using Newtonsoft.Json;
 using UnityEngine;
 namespace ValheimSagas;
 
-[BepInPlugin("org.valheimsagas.collector", "Valheim Sagas", "0.3.18")]
+[BepInPlugin("org.valheimsagas.collector", "Valheim Sagas", "0.3.19")]
 [BepInDependency("randyknapp.mods.epicloot", BepInDependency.DependencyFlags.SoftDependency)]
 [BepInDependency("MidnightsFX.StarLevelSystem", BepInDependency.DependencyFlags.SoftDependency)]
 public sealed partial class SagasPlugin : BaseUnityPlugin {
@@ -128,7 +128,7 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
    foreach(var old in online.Keys.Where(id=>!current.Contains(id)).ToArray()){service.SetOffline(World,online[old]);online.Remove(old);}
   }
   startupTrace.Mark("presence");
-  if(service!=null&&EnvMan.instance)service.UpdateClock(new WorldClock{World=World,Day=EnvMan.instance.GetDay(),Fraction=EnvMan.instance.GetDayFraction()});
+  if(service!=null&&EnvMan.instance)service.UpdateClock(WorldClock.Sample(World,EnvMan.instance.GetDay(),EnvMan.instance.GetDayFraction(),ZNet.instance.GetTimeSeconds(),EnvMan.instance.m_dayLengthSec,Time.timeScale,ZNet.instance.GetNrOfPlayers()>0,EnvMan.instance.IsTimeSkipping()));
   var player=Player.m_localPlayer;
   var nextJournal=player&&player.GetPlayerID()!=0?(ZNet.instance.IsServer()?"host-":"")+Identity(player.GetPlayerID()):ZNet.instance.IsServer()?"server":"";
   if(nextJournal!=""&&journalId!=nextJournal){outbox?.Finish(pending.Values.ToArray());if(journalId!="")pending.Clear();ResetMapDetails();sentCells.Clear();tileVersions.Clear();fullyMapped.Clear();RuntimeTerrain.Clear();pendingMedia.Clear();sentMedia.Clear();artwork?.Clear();pendingMaps.Clear();mapCursor=0;importing=true;journalId=nextJournal;RunStage("outbox startup",()=>{outbox=new Outbox(data.Value,World+"-"+journalId,message=>Logger.LogWarning(message));foreach(var e in outbox.Load().Where(e=>e.World==World&&SagaService.ValidEvent(e)).Take(4096))pending[e.Id]=e;});}

@@ -106,3 +106,15 @@ Install matching host/client versions. This checklist has **not** been completed
 3. Switch selected explorers and world; verify no previous-world pins flash. Turn off SharePlayerPins and then ShareMap: old personal/all pin coordinates and icon-image access must disappear respectively. Log out without revoking sharing and verify last pins remain.
 4. Compare both clock graphics with sunrise/daylight/dusk/night and sleep time skips. Confirm None hides the graphic and styles/layers persist after refresh. Verify on an actual headless dedicated host with two clients; lack of clock data must show unavailable instead of invented time.
 5. Inspect logs for map pin capture slice / icon timing warnings and Steam LimitExceeded/send pressure. Stress rapid pin edits, a heavily annotated map, portraits/equipment changes during import, reconnect and host restart during multipart pin uploads. Record main-thread cost and total frame times; automated checks do not prove hitch-free behavior.
+
+
+## 0.3.19 colors, mod pins and real-time clock
+
+These changes are not yet in-game verified. Keep matching versions on host and clients.
+
+1. Enable Color by Viking. Check larger original game sprites inside colored rings; player marker/name colors match each Viking's legend. Reconnect, rename and restart the host: assigned colors must remain fixed. Have a new Viking join and confirm existing colors do not move.
+2. With two clients sharing the same discovered boss/location, check a segmented ring and both names. Hide either Viking under Icons by Viking: the other's shared location remains. Hide all/show all, reload, and change worlds. This selection must not change live positions, terrain or heat-map filters.
+3. Enable SharePlayerPins on a client and place an annotation on undiscovered ground. It must appear above fog with no terrain revealed, including its original sprite. Disable sharing and confirm coordinates/media disappear. Automatic locations, including Epic Loot bounties/treasure pins, must remain absent outside personal exploration.
+4. Check Epic Loot800/801 pins when installed; try a sprite-backed custom pin from another mod. Unknown saved custom pins require personal consent. Mods drawing their own texture overlay do not automatically become pins. No mods installed should still work normally.
+5. Compare the real-time day/night countdown with a stopwatch, a configured nonstandard day length, sleeping and a paused/empty host. Stale updates must stop extrapolation. The browser's local clock/timezone should not affect estimates. Other mods replacing clock math outside EnvMan/ZNet/Time.timeScale require separate compatibility validation.
+6. Watch existing pin slice, icon capture and upload-pressure timing logs. Color assignment runs once per Viking on the storage worker; toggles, rings and one-second countdown do not add game-thread work or map uploads.

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.19
+
+- Increase game map icons from 28 to 36px; add optional matching Viking colors for pin rings, player markers and names, plus independent per-Viking icon checkboxes. Store world-specific server-owned colors once and choose separated new colors without recoloring existing players. Preserve all sharers on deduplicated game locations.
+- Shared personal annotations now appear above fog, including undiscovered coordinates, only with ShareMap and SharePlayerPins consent. Automatic game/mod locations remain personally exploration-gated.
+- Include sprite-backed custom Minimap pin types, including inspected Epic Loot bounty/treasure pins. Unknown saved custom pins require personal consent; separate drawing overlays need adapters.
+- Replace static phase text with real-time estimates until day/night, honoring host day length/time scale and showing paused, skipping or overdue states. One-second browser countdown does not reload the map.
+
+
 ## 0.3.18
 
 - Add separately loaded discovered game pins and opt-in personal map pins, runtime game sprites, browser layer toggles and hover/tap/keyboard-list inspection. Enforce owner sharing and personal fog on the server; exclude copied cartography pins. Preserve offline pins, deduplicate shared game locations, atomically replace multipart snapshots and retry lost acknowledgements.

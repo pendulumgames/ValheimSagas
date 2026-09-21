@@ -19,8 +19,9 @@ static class MapDetailsHttpChecks {
   string url="api/media/"+id+"?world=w&player=v";check((await client.GetByteArrayAsync(url)).SequenceEqual(bytes),"Runtime map sprite served independently of profile sharing");
   pins.Revision="personal";pins.Pins[0].Personal=true;s.UpdatePins(pins);s.Flush();check((await client.GetAsync(url)).StatusCode==HttpStatusCode.NotFound,"Unconsented personal sprite not downloadable by guessing its ID");
   p.SharePins=true;s.UpdatePlayer(p);s.Flush();check((await client.GetAsync(url)).IsSuccessStatusCode,"Consented personal sprite can load");
+  pins.Revision="outside-personal";pins.Pins[0].X=1000;s.UpdatePins(pins);s.Flush();check((await client.GetAsync(url)).IsSuccessStatusCode,"Consented personal icon is downloadable outside exploration without exposing terrain");
   p.ShareMap=false;s.UpdatePlayer(p);s.Flush();check((await client.GetAsync(url)).StatusCode==HttpStatusCode.NotFound,"Map privacy revocation removes sprite access");
-  p.ShareMap=true;s.UpdatePlayer(p);pins.Revision="fog";pins.Pins[0].X=1000;s.UpdatePins(pins);s.Flush();check((await client.GetAsync(url)).StatusCode==HttpStatusCode.NotFound,"Fog-hidden sprite reference does not grant media access");
+  p.ShareMap=true;s.UpdatePlayer(p);pins.Revision="fog";pins.Pins[0].Personal=false;pins.Pins[0].X=1000;s.UpdatePins(pins);s.Flush();check((await client.GetAsync(url)).StatusCode==HttpStatusCode.NotFound,"Fog-hidden sprite reference does not grant media access");
   pins.Revision="wrong-kind";pins.Pins[0].X=2;s.UpdatePins(pins);s.UploadMedia(new(){World="w",PlayerId="v",Id=id,Kind="portrait",Png=bytes});s.Flush();check((await client.GetAsync(url)).StatusCode==HttpStatusCode.NotFound,"Pin reference cannot turn a private portrait into public map artwork");
  }
 }

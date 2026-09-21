@@ -24,7 +24,10 @@ void Property(MetadataReader r,TypeDefinition type,string property,string expect
 Inspect(Path.Combine(game,"assembly_utils.dll"),r=>Signature(r,"Utils","RoundToInt","Single"));
 Inspect(Path.Combine(game,"assembly_valheim.dll"),r=>{
  TypedField(r,"Minimap","m_pins","System.Collections.Generic.List`1<PinData>");TypedField(r,"Minimap","m_textureSize","Int32");TypedField(r,"Minimap","m_pixelSize","Single");TypedField(r,"Minimap","m_explored","System.Collections.BitArray");
- Signature(r,"EnvMan","GetDay");Signature(r,"EnvMan","GetDayFraction");
+ Signature(r,"EnvMan","GetDay");Signature(r,"EnvMan","GetDayFraction");Signature(r,"EnvMan","IsTimeSkipping");TypedField(r,"EnvMan","m_dayLengthSec","Int64");Signature(r,"ZNet","GetNrOfPlayers");
+ var pinType=Type(r,"Minimap").GetNestedTypes().Select(r.GetTypeDefinition).Single(t=>r.GetString(t.Name)=="PinType");
+ var names=new[]{"Icon0","Icon1","Icon2","Icon3","Death","Bed","Icon4","Shout","None","Boss","Player","RandomEvent","Ping","EventArea","Hildir1","Hildir2","Hildir3","Memorial"};
+ for(int n=0;n<names.Length;n++){var field=pinType.GetFields().Select(r.GetFieldDefinition).Single(f=>r.GetString(f.Name)==names[n]);var value=r.GetBlobReader(r.GetConstant(field.GetDefaultValue()).Value).ReadInt32();if(value!=n)throw new Exception("Pin classification value changed: "+names[n]);passed++;}
  var pin=Type(r,"Minimap").GetNestedTypes().Select(r.GetTypeDefinition).Single(t=>r.GetString(t.Name)=="PinData");
  foreach(var name in new[]{"m_name","m_type","m_icon","m_pos","m_save","m_ownerID","m_shouldDelete","m_checked"}){if(!pin.GetFields().Select(r.GetFieldDefinition).Any(f=>r.GetString(f.Name)==name))throw new Exception("Pin API missing "+name);passed++;}
 });

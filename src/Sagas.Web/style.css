@@ -150,3 +150,7 @@ body.scenic-profile .character-heading .epithets span{background:#17282ee6;color
 @media(max-width:600px){.world-clock{width:90px;right:8px;top:8px;padding:4px 6px 7px}.world-clock[data-style=horizon]{width:148px}.clock-phase{font-size:10px}}
 
 .map-frame>.compass{left:16px;right:auto;top:16px}
+
+.pin-owner-filter{padding:6px 0}.pin-owner-actions{display:flex;gap:6px;margin:9px 0}.pin-owner-actions button{font-size:11px;padding:5px 10px}#pinOwners{max-height:185px;overflow:auto}#pinOwners .check{display:flex;gap:8px;align-items:center;padding:5px 0;margin:0}#pinOwners .check span{overflow-wrap:anywhere}.viking-color-swatch{display:inline-block;width:10px;height:10px;flex:0 0 10px;border-radius:50%;background:var(--viking-color);box-shadow:0 0 0 2px #07141c,0 0 0 3px #ffffff25}
+
+@media(max-width:600px){.world-clock[data-style=dial]{width:106px}.world-clock[data-style=dial] svg{width:78px;margin:auto}.clock-phase{font-size:10px}}
