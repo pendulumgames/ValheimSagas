@@ -76,7 +76,7 @@ static class LeaderboardChecks {
    check((await http.GetAsync("api/leaderboard?range=all")).StatusCode==HttpStatusCode.Unauthorized,"Leaderboard HTTP requires private token");
    http.DefaultRequestHeaders.Authorization=new AuthenticationHeaderValue("Bearer","leaderboard-test-token-at-least-24");
    var response=await http.GetAsync("api/leaderboard?range=all");var body=await response.Content.ReadAsStringAsync();
-   check(response.IsSuccessStatusCode&&JObject.Parse(body)["bosses"]!.Count()==8&&!body.Contains("Hidden name"),"Authenticated HTTP leaderboard serializes complete privacy-filtered contract");
+   check(response.IsSuccessStatusCode&&JObject.Parse(body)["bosses"]!.Count()==9&&!body.Contains("Hidden name"),"Authenticated HTTP leaderboard serializes complete privacy-filtered contract");
    check((await http.GetAsync("api/leaderboard?range=bogus")).StatusCode==HttpStatusCode.BadRequest,"Leaderboard invalid range returns HTTP400");
    check((await http.PostAsync("api/leaderboard",new StringContent("{}"))).StatusCode==HttpStatusCode.MethodNotAllowed,"Leaderboard endpoint is read-only");
   }

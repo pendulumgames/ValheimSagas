@@ -118,3 +118,10 @@ These changes are not yet in-game verified. Keep matching versions on host and c
 4. Check Epic Loot800/801 pins when installed; try a sprite-backed custom pin from another mod. Unknown saved custom pins require personal consent. Mods drawing their own texture overlay do not automatically become pins. No mods installed should still work normally.
 5. Compare the real-time day/night countdown with a stopwatch, a configured nonstandard day length, sleeping and a paused/empty host. Stale updates must stop extrapolation. The browser's local clock/timezone should not affect estimates. Other mods replacing clock math outside EnvMan/ZNet/Time.timeScale require separate compatibility validation.
 6. Watch existing pin slice, icon capture and upload-pressure timing logs. Color assignment runs once per Viking on the storage worker; toggles, rings and one-second countdown do not add game-thread work or map uploads.
+
+
+## 0.3.21 Viking directory and North boss
+
+- Open Vikings as a public/shared viewer and with a personal login: both should show search. Check three progression/recent-victory recommendations, saved head portraits, name search and keyboard/tap links. Return via Vikings; confirm it does not automatically select the account owner. Open a direct character URL and confirm the character still opens.
+- Toggle Color by Viking: personal pin rings and live marker/name colors change; game icons remain unchanged. Verify on explored terrain with game and personal layers both enabled.
+- In an isolated test world, verify a real Kall encounter produces only a final-phase boss leaderboard victory, with distinct final-phase contributors and no early-phase progression. Its full-fight speed must remain unranked. Check Deep North scenery after victory and after restart. This test has not yet been performed; do not interpret synthetic events as gameplay verification.

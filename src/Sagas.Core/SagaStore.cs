@@ -25,7 +25,7 @@ public sealed partial class SagaStore : IDisposable {
   db.GetCollection("profileLinks").EnsureIndex("slug",true);
   db.GetCollection("bossReceipts").EnsureIndex("owner");
   db.GetCollection("playerLogins").EnsureIndex("hash",true);
-  if(meta.FindById("bossReceiptsMigration")==null){foreach(var row in db.GetCollection("events").FindAll().Concat(db.GetCollection("statistics").FindAll()))RecordBossReceipt(Read<SagaEvent>(row));meta.Upsert(new BsonDocument{{"_id","bossReceiptsMigration"},{"value",1}});}
+  if(meta.FindById("bossReceiptsMigrationV2")==null){foreach(var row in db.GetCollection("events").FindAll().Concat(db.GetCollection("statistics").FindAll()))RecordBossReceipt(Read<SagaEvent>(row));meta.Upsert(new BsonDocument{{"_id","bossReceiptsMigrationV2"},{"value",1}});}
   // Migrate existing profiles and reserve stable server-wide readable links.
   // No connection is online after a process restart.
   foreach(var d in db.GetCollection("players").FindAll().ToArray()) {var p=Read<PlayerSnapshot>(d);AssignProfileSlug(p);AssignMapColor(p);p.Online=false;d["json"]=JsonConvert.SerializeObject(p);db.GetCollection("players").Update(d);}

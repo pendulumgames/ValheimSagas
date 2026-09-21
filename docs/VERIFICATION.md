@@ -1,3 +1,13 @@
+# 0.3.21 Viking directory and Deep North verification
+
+September 21, 2026: build passed with zero errors and two existing MSB3277 warnings. Full suites passed: 2,552 Core assertions, 80 lore, 22,017 terrain, 1,557 portrait/lifecycle and 212 installed metadata checks. Ten new backend assertions cover final-phase boss identity, distinct/private team credit, earlier-phase exclusion, rejecting phase duration as full-fight timing, final backdrop bounds, server-derived achievement metadata independent of analytics filters, privacy clearing, retention/restart, and backfilling a pre-upgrade retained final death.
+
+Read-only inspection of the installed SoftRef manifest and c4210710 bundle found FrozenKing, FrozenKing_p2 and FrozenKing_p3, with 10,000/7,000/30,000 health. Final prefab uses enemy_frozenking_p3 and defeated_frozenking_p3. Installed resources.assets English localization confirms Kall Fimbulbringer. No game assets or extracted data are shipped.
+
+The complete synthetic browser suite passed. New directory checks cover signed/shared access landing, three featured profiles ordered by progression then retained boss date, private exclusions, search/empty states, keyboard navigation, direct links, mobile bounds, head portrait decoding and initials fallback. Pixel checks confirm automatic game icons are identical with Viking colors on/off while personal icons gain rings. Desktop/mobile visuals were reviewed with explicitly synthetic head portraits. Existing tests now choose a directory card before exercising character controls. The leaderboard HTTP fixture now expects eight known bosses plus its one synthetic mod boss.
+
+No in-game Deep North encounter was performed. Only final-phase participants are credited for Kall; full multi-phase team and timer aggregation remains unimplemented, so his phase timer is not ranked as a full fight. Retained phase1/2 kills remain ordinary recorded history, but are excluded from boss leaderboards/progression. New receipt migration cannot recover already-pruned final deaths. Dedicated multiplayer validation remains pending.
+
 # 0.3.20 atlas layout and config ownership verification
 
 Verified September 21, 2026 against installed Valheim assemblies and Shudnal ConfigurationManager 1.1.21. Build: zero errors, two existing MSB3277 warnings. Full suites: 2,542 Core assertions, 80 lore, 22,017 terrain, 1,557 portrait/lifecycle and 212 installed-assembly metadata checks. Metadata includes the optional manager's Entry property, synchronization-label method, setter and dynamic attribute inspection entry point. Metadata checks do not execute the in-game UI patch.

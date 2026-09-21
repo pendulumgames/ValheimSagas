@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.21
+
+- Keep automatic game icons in their original colors. Color by Viking applies to personal pins, Viking markers and names.
+- Make Vikings a search directory for everyone, with three featured profiles ranked by recorded progression and recent boss victories. Add saved head portraits, achievement/presence cards, keyboard navigation and avatar previews in header search.
+- Add Kall Fimbulbringer to boss progression and leaderboards using the installed final-phase prefab. Exclude early phases from boss wins; omit phase-only times from fastest full-fight rankings. Backfill retained final-phase progression on upgrade and keep the Deep North backdrop after victory.
+
 ## 0.3.20
 
 - Make the atlas full width with compact Terrain, Vikings, Activity and Icons trays; retain map position/zoom while changing options, with keyboard close and mobile layouts.

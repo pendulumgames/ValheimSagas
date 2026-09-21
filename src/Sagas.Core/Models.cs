@@ -14,6 +14,7 @@ public sealed class PlayerSnapshot { public string MapColor {get;set;}=""; publi
  public float? NemesisScore {get;set;}
  public bool EpicLootInstalled {get;set;} public long? Gold {get;set;}
  public bool BackgroundUnlocked {get;set;} public string BackgroundPreference {get;set;} = "automatic";
+ public int ProgressionTier {get;set;} public string ProgressionBoss {get;set;} = ""; public DateTime? LastAchievementUtc {get;set;}
  public string ProfileBiome {get;set;} = ""; public string ProfileBiomeEvidence {get;set;} = "";
  public string World {get;set;} = ""; public string PlayerId {get;set;} = ""; public string Name {get;set;} = ""; public bool Online {get;set;} public bool SharePosition {get;set;}
  public DateTime Utc {get;set;} = DateTime.UtcNow; public DateTime? LastSeenUtc {get;set;} public bool ShareMap {get;set;} public bool ShareProfile {get;set;} = true; public float? X {get;set;} public float? Z {get;set;} public List<GearItem> Gear {get;set;} = new List<GearItem>();

@@ -42,3 +42,5 @@ The separate `node tests/web/map-details.cjs` check uses the real synthetic map-
 
 
 The atlas opens with option trays closed. `atlas-controls.cjs` opens each public tray before the existing regression checks interact with its controls. `atlas-layout.cjs` verifies initial map-first state, exclusive trays, unchanged canvas geometry, keyboard dismissal/focus, Activity-to-filter navigation, applied player scope, independent terrain, and mobile width. Screenshots use explicitly synthetic terrain, not a game map.
+
+`viking-directory.cjs` checks owner-independent search landing, three progression/recent-victory recommendations, private-profile exclusion, saved-head media decoding using synthetic portrait pixels, keyboard and direct profile navigation, empty/mobile states, and pixel-identical game icons when Viking colors are toggled. Personal pins must still gain their color ring.

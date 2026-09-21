@@ -17,7 +17,7 @@ public sealed partial class SagaStore {
  void RecordBossReceipt(SagaEvent e){
   if(e.Kind!="kill"||!e.Boss||e.NemesisBoss)return;
   var prefab=e.Prefab.EndsWith("(Clone)",StringComparison.Ordinal)?e.Prefab.Substring(0,e.Prefab.Length-7).Trim():e.Prefab;
-  var boss=new[]{"Eikthyr","gd_king","Bonemass","Dragon","GoblinKing","SeekerQueen","Fader"}.FirstOrDefault(x=>x.Equals(prefab,StringComparison.OrdinalIgnoreCase));if(boss==null)return;
+  var boss=BossCatalog.Bosses.Select(b=>b.Key).FirstOrDefault(x=>x.Equals(prefab,StringComparison.OrdinalIgnoreCase));if(boss==null)return;
   foreach(var id in e.Contributors.Concat(new[]{e.PlayerId}).Where(x=>!string.IsNullOrEmpty(x)).Distinct(StringComparer.Ordinal))
    db.GetCollection("bossReceipts").Upsert(new BsonDocument{{"_id",Key(e.World,id,boss)},{"owner",Key(e.World,id)},{"boss",boss}});
  }
@@ -53,7 +53,7 @@ public sealed partial class SagaService {
   world=identity?.World??world;
   var player=identity!=null?store.Players(world).FirstOrDefault(p=>p.PlayerId==identity.PlayerId):null;
   var count=player==null?0:CompletedBosses(world,player.PlayerId);
-  return new{world=identity?.World,playerId=player?.PlayerId,name=player?.Name,backgroundUnlocked=player!=null&&player.ShareProfile,backgroundPreference=player==null?"automatic":store.BackgroundPreference(world,player.PlayerId),completedBosses=count,progressionTier=player==null?0:BackgroundProgress(world,player.PlayerId),allowedBackgrounds=player==null||!player.ShareProfile?Array.Empty<string>():AllowedBackgrounds(world,player.PlayerId),requiredBosses=7};
+  return new{world=identity?.World,playerId=player?.PlayerId,name=player?.Name,backgroundUnlocked=player!=null&&player.ShareProfile,backgroundPreference=player==null?"automatic":store.BackgroundPreference(world,player.PlayerId),completedBosses=count,progressionTier=player==null?0:BackgroundProgress(world,player.PlayerId),allowedBackgrounds=player==null||!player.ShareProfile?Array.Empty<string>():AllowedBackgrounds(world,player.PlayerId),requiredBosses=BossCatalog.Bosses.Length};
  }
  sealed class BackgroundRequest {public string World {get;set;}="";public string Biome {get;set;}="";}
  async Task SaveBackground(HttpListenerContext c,PlayerLoginIdentity? identity){
