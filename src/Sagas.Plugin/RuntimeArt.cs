@@ -27,6 +27,7 @@ internal sealed partial class RuntimeArt {
  readonly int thread=Thread.CurrentThread.ManagedThreadId;
  readonly Action<string,Exception> warn;
  readonly Dictionary<int,Image> icons=new Dictionary<int,Image>();
+ static int lastIconFrame=-1;
  readonly Queue<int> iconOrder=new Queue<int>();
  readonly Queue<(int Key,Sprite Sprite)> iconRequests=new Queue<(int,Sprite)>();readonly HashSet<int> requestedIcons=new HashSet<int>();double iconBatchMaximum;
  Image? portrait;
@@ -45,6 +46,7 @@ internal sealed partial class RuntimeArt {
   }return text.ToString();
  }
 
+ internal bool CaptureBusy=>capture!=null;
  public string Status {get;private set;}="waiting-for-player";
  public RuntimeArt(Action<string,Exception> warning){warn=warning;}
  void CheckThread(){if(Thread.CurrentThread.ManagedThreadId!=thread)throw new InvalidOperationException("Runtime artwork requires Unity's main thread.");}
@@ -57,8 +59,9 @@ internal sealed partial class RuntimeArt {
   if(requestedIcons.Count<MaximumIcons&&requestedIcons.Add(key))iconRequests.Enqueue((key,sprite));
   return null;}catch(Exception e){warn("item icon request",e);return null;}
  }
+ public Image? TryMapIcon(Sprite sprite){CheckThread();if(!sprite||!sprite.texture)return null;int key=sprite.GetInstanceID();if(icons.TryGetValue(key,out var known))return known;if(requestedIcons.Count<MaximumIcons&&requestedIcons.Add(key))iconRequests.Enqueue((key,sprite));return null;}
  public void PumpIcons(bool permitted){
-  CheckThread();if(!permitted){iconRequests.Clear();requestedIcons.Clear();return;}if(capture!=null||iconRequests.Count==0)return;
+  CheckThread();if(!permitted){iconRequests.Clear();requestedIcons.Clear();return;}if(capture!=null||iconRequests.Count==0||lastIconFrame==Time.frameCount)return;lastIconFrame=Time.frameCount;
   var timer=Stopwatch.StartNew();var request=iconRequests.Dequeue();requestedIcons.Remove(request.Key);if(request.Sprite)CaptureIcon(request.Sprite);
   iconBatchMaximum=Math.Max(iconBatchMaximum,timer.Elapsed.TotalMilliseconds);
   if(iconRequests.Count==0){Debug.Log("Sagas icon queue drained: max one-icon main-thread work="+iconBatchMaximum.ToString("F1")+" ms.");iconBatchMaximum=0;}

@@ -21,6 +21,13 @@ void Property(MetadataReader r,TypeDefinition type,string property,string expect
  var definition=type.GetProperties().Select(r.GetPropertyDefinition).Single(p=>r.GetString(p.Name)==property);
  if(definition.DecodeSignature(new MetadataTypeNames(),(object?)null).ReturnType!=expected)throw new Exception($"Reflected property type changed: {property}");passed++;
 }
+Inspect(Path.Combine(game,"assembly_utils.dll"),r=>Signature(r,"Utils","RoundToInt","Single"));
+Inspect(Path.Combine(game,"assembly_valheim.dll"),r=>{
+ TypedField(r,"Minimap","m_pins","System.Collections.Generic.List`1<PinData>");TypedField(r,"Minimap","m_textureSize","Int32");TypedField(r,"Minimap","m_pixelSize","Single");TypedField(r,"Minimap","m_explored","System.Collections.BitArray");
+ Signature(r,"EnvMan","GetDay");Signature(r,"EnvMan","GetDayFraction");
+ var pin=Type(r,"Minimap").GetNestedTypes().Select(r.GetTypeDefinition).Single(t=>r.GetString(t.Name)=="PinData");
+ foreach(var name in new[]{"m_name","m_type","m_icon","m_pos","m_save","m_ownerID","m_shouldDelete","m_checked"}){if(!pin.GetFields().Select(r.GetFieldDefinition).Any(f=>r.GetString(f.Name)==name))throw new Exception("Pin API missing "+name);passed++;}
+});
 Inspect(Path.Combine(game,"assembly_valheim.dll"),r=>{
  foreach(var m in new[]{"OnDeath","ApplyDamage","GetLevel","GetHealth","IsBoss"})Method(r,"Character",m);Method(r,"Character","ApplyDamage","hit");Field(r,"Character","m_lastHit");
  Method(r,"Player","OnDeath");Method(r,"Player","GetPlayerID");Method(r,"Inventory","GetBoundItems");Method(r,"Humanoid","GetCurrentWeapon");Method(r,"CharacterDrop","OnDeath");Method(r,"CharacterDrop","DropItems");Method(r,"Humanoid","Pickup","go");

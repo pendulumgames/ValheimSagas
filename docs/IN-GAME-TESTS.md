@@ -76,7 +76,7 @@ Compare `Sagas portrait timings` preparation, visibility/framing, final render/r
 ## 0.3.15 staged portrait acceptance
 
 1. Run Gale Test and host the isolated test world. Open the website; check the full body, upright orientation, feet/framing, neutral lighting and equipped weapon effects after capture finishes. A short delay is expected while preparation, readback and upload complete.
-2. Leave appearance unchanged for at least ten minutes. No periodic portrait capture should start. Swap weapons several times rapidly, then settle; expect a replacement after debounce and at least ten seconds between capture starts. Compare `Sagas staged portrait` maximum main-thread work/frame with the previous 48–110 ms synchronous captures. Background encode time is not a main-thread stall measurement.
+2. Leave appearance unchanged for at least ten minutes. No periodic portrait capture should start. Swap weapons several times rapidly, then settle; expect a replacement after debounce and at least ten seconds between capture starts. Compare `Sagas staged portrait` maximum main-thread work/frame with the previous 48â€“110 ms synchronous captures. Background encode time is not a main-thread stall measurement.
 3. Change gear while seated on the ground or in a chair. Keep the saved portrait until standing and settled. Repeat on a fresh profile without a saved image (placeholder until eligible), and while attached to a bed. A seated pose must not be published.
 4. During preparation, change gear again, log out/change worlds, or revoke profile sharing. No outdated image should be published. Restore sharing and verify recovery; revocation must still deny media access. Confirm saved artwork survives logout and host restart.
 5. On a graphics backend without asynchronous readback, expect `async-readback-unavailable` and retained artwork, not a blocking fallback. Capture failures retry no faster than once per minute. Report graphics backend and complete logs if images are empty, inverted or stuck.
@@ -95,3 +95,14 @@ Compare `Sagas portrait timings` preparation, visibility/framing, final render/r
 ## 0.3.17 startup attribution and subtle zones
 
 Fully restart Gale Test. Compare initial world/equipment warnings with143.4/88.2ms from0.3.16 and review `Sagas startup detail` phase breakdowns. Confirm Epic Loot rarity/effects, SLS zones and Nemesis still work. First-use JIT before method entry is not in the phase totals. Hard-refresh the website: zone outlines should be subtle20% maximum, lower host opacity still honored, identical boundaries no darker, and fog/hover unchanged. Do not change the in-game SLS opacity for this test.
+
+
+## 0.3.18 map pins and world clock acceptance
+
+Install matching host/client versions. This checklist has **not** been completed in game.
+
+1. With ShareMap enabled and SharePlayerPins left off, compare the browser to personally explored in-game boss/location/bed/death icons. Undiscovered locations and pins behind personal fog must remain absent, including direct API responses. Imported terrain can arrive later than pins. Wait through initial terrain/pin upload.
+2. Enable SharePlayerPins on one client. Add, rename, check and remove a personal pin. Enable Player-added icons in the browser. Confirm updates within roughly 15-30 seconds plus network queue time, independent browser game/personal toggles, compact hover/tap details and keyboard-accessible Browse visible icons. Check a cartography pin owned by a different player stays unexported.
+3. Switch selected explorers and world; verify no previous-world pins flash. Turn off SharePlayerPins and then ShareMap: old personal/all pin coordinates and icon-image access must disappear respectively. Log out without revoking sharing and verify last pins remain.
+4. Compare both clock graphics with sunrise/daylight/dusk/night and sleep time skips. Confirm None hides the graphic and styles/layers persist after refresh. Verify on an actual headless dedicated host with two clients; lack of clock data must show unavailable instead of invented time.
+5. Inspect logs for map pin capture slice / icon timing warnings and Steam LimitExceeded/send pressure. Stress rapid pin edits, a heavily annotated map, portraits/equipment changes during import, reconnect and host restart during multipart pin uploads. Record main-thread cost and total frame times; automated checks do not prove hitch-free behavior.

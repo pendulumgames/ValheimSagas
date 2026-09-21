@@ -10,7 +10,7 @@ public sealed class SagaEvent {
  public string Rarity {get;set;} = ""; public string RarityColor {get;set;} = ""; public string ItemType {get;set;} = ""; public List<string> Effects {get;set;} = new List<string>(); public string Source {get;set;} = "unknown"; public string Provenance {get;set;} = "";
  public float? X {get;set;} public float? Z {get;set;} public bool DetailsExpired {get;set;} public List<string> Contributors {get;set;} = new List<string>();
 }
-public sealed class PlayerSnapshot { public string ProfileSlug {get;set;} = ""; public List<GearItem> Hotbar {get;set;} = new List<GearItem>(); public string PortraitStatus {get;set;} = ""; public DateTime? PositionUtc {get;set;} public bool PositionLive {get;set;} public string PortraitId {get;set;} = ""; public Dictionary<string,string> EffectiveResistances {get;set;} = new Dictionary<string,string>();
+public sealed class PlayerSnapshot { public bool SharePins {get;set;} public string ProfileSlug {get;set;} = ""; public List<GearItem> Hotbar {get;set;} = new List<GearItem>(); public string PortraitStatus {get;set;} = ""; public DateTime? PositionUtc {get;set;} public bool PositionLive {get;set;} public string PortraitId {get;set;} = ""; public Dictionary<string,string> EffectiveResistances {get;set;} = new Dictionary<string,string>();
  public float? NemesisScore {get;set;}
  public bool EpicLootInstalled {get;set;} public long? Gold {get;set;}
  public bool BackgroundUnlocked {get;set;} public string BackgroundPreference {get;set;} = "automatic";

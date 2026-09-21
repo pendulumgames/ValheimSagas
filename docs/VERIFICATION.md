@@ -114,3 +114,14 @@ Verified September 19, 2026 on Windows. Automated fixtures are synthetic unless 
 README screenshots show an isolated copy of recorded playtest data with display names replaced. Proprietary runtime assets are not shipped separately. The package excludes configs, credentials, databases, game DLLs, extracted textures and development fixtures.
 
 Still required: operator-controlled credentialed OpenRouter/preset execution, two-client multiplayer acceptance and Linux hosting. No in-game verification of 0.3.8 is claimed. See IN-GAME-TESTS.md for exact scenarios.
+
+
+## 0.3.18 map icons and daylight (September 21, 2026)
+
+Installed assembly inspection confirms Minimap.PinData fields, m_pins, personal exploration storage/coordinate conversion, and EnvMan.GetDay/GetDayFraction (including the game's rescaled smoothed day/night phase). No world-location discovery scan or game asset distribution.
+
+Full automated run: 2507 Core assertions, 80 lore, 22017 terrain, 1557 portrait/lifecycle and 187 installed metadata checks. Final focused map suite: 31 assertions including independent HTTP endpoints, private-host auth, map-only sprite visibility and media-kind isolation, personal consent, opaque/transparent fog, selected owners/world isolation, offline persistence, empty/deleted snapshots, out-of-order multipart atomicity and lost-ACK recovery. The initial new fog fixture set the wrong alpha pixel; corrected before passing. A simultaneous focused build hit a test executable lock; rerunning after the full suite completed passed. Final compilation: 0 errors, 2 existing MSB3277 assembly-resolution warnings.
+
+Website: full synthetic acceptance/96 grounding combinations, readable profile links, 16 heatmap checks, readability, owner login/storyteller, 63 account checks, Appearance, 23 SLS checks and 8 Nemesis checks passed. New 19-check real HTTP/browser suite covers independent layers, host clock, both graphics/None, saved preferences, escaped names, explorer changes, stale world context and 390px mobile overflow; desktop/mobile captures visually reviewed in .dev/map0318-*.png. Initial remaining account runners needed SAGAS_LOGIN_FIXTURE pointed at isolated fixture0318; rerun with that path passed.
+
+Runtime sprite capture, actual pin classification/positions, clock behavior on a dedicated host and game-frame cost remain **unverified in game**. First pin/icon availability depends on personal terrain import and upload pacing. Cap 2048 pins and 128 unique map sprite hashes per client session; dynamic pings/shouts/player icons are excluded because presence has its own layer. No actual game/save/config/live-server edits during tests. Package/install results recorded in local STATUS.md.

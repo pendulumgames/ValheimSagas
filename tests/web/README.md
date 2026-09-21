@@ -35,3 +35,5 @@ For 0.3.10 host-funded saga presets, see [host setup](../../README.md#host-funde
 
 
 0.3.11 adds `account.cjs`: real local login/session/settings API with a clearly synthetic portrait response, desktop/390px/320px layouts, account menu keyboard/focus/outside dismissal, separate login/settings dialogs, host-default simplicity, missing-key feedback, failed-load save protection and secret clearing/logout. Screenshots are written under .dev/qa and are not game captures.
+
+The separate `node tests/web/map-details.cjs` check uses the real synthetic map-icons/clock endpoints, independent browser toggles, saved clock styles, safe pin names, filter/world context isolation and desktop/mobile layout. Fixture sprites use fallback symbols; native game sprite extraction still requires an in-game test. When the DevHost data directory differs from `.dev/fixture`, set `SAGAS_LOGIN_FIXTURE` to its `synthetic-logins.json` for the owner/account test runners.

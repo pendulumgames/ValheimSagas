@@ -7,7 +7,7 @@ service.Start();
 var names=new[]{"Astrid Ashwalker","Bjorn of the Pines"};var now=DateTime.UtcNow;
 for(int p=0;p<2;p++) {
  var id="fixture-"+p;var gear=new List<GearItem>{new GearItem{Slot="Chest",Name="Wolf armor chest",Type="Chest",Quality=3,Rarity="Rare",Durability=810,MaxDurability=1200,BaseStats=new(){{"Armor",20}},Stats=new(){{"Armor",24},{"Movement modifier",-0.05f}},Effects=new(){"Synthetic example: frost resistance; conditional effect not aggregated"}},new GearItem{Slot="RightHand",Name="Silver sword",Type="OneHandedWeapon",Quality=2,Rarity="Epic",Durability=158,MaxDurability=225,BaseStats=new(){{"Slash",75},{"Spirit",30}},Stats=new(){{"Slash",81},{"Spirit",35}},Effects=new(){"Synthetic example: +10% attack speed"}}};
- service.UpdatePlayer(new PlayerSnapshot{World="synthetic-midgard",PlayerId=id,Name=names[p],Online=true,ShareMap=true,SharePosition=true,X=p*512-128,Z=p*200, Gear=gear,EffectiveStats=new(){{"Armor",64},{"Max health (food-dependent)",145},{"Max stamina (food-dependent)",170}}});
+ service.UpdatePlayer(new PlayerSnapshot{World="synthetic-midgard",PlayerId=id,Name=names[p],Online=true,ShareMap=true,SharePins=true,SharePosition=true,X=p*512-128,Z=p*200, Gear=gear,EffectiveStats=new(){{"Armor",64},{"Max health (food-dependent)",145},{"Max stamina (food-dependent)",170}}});
  var cells=new List<MapCell>();for(int x=-18+p*12;x<12+p*12;x++)for(int z=-15;z<15;z++)if(x*x+z*z<900)cells.Add(new MapCell{X=x,Z=z,Biome=x<-8?"Ocean":z>7?"Mountain":x>10?"Swamp":x>2?"BlackForest":"Meadows",Height=z>7?130:30});
  service.Explore(new ExplorationBatch{World="synthetic-midgard",PlayerId=id,Imported=true,Cells=cells});
  for(int i=0;i<30;i++) {var utc=now.AddMinutes(-i*79-p*7);string eid=$"fixture-{p}-{i}";service.TryEvent(new SagaEvent{Id=eid,World="synthetic-midgard",PlayerId=id,PlayerName=names[p],Utc=utc,Kind="kill",Prefab=i%3==0?"Draugr":"Greydwarf",Name=i%3==0?"Draugr":"Greydwarf",Stars=i%5,Source="synthetic",Biome=i%3==0?"Swamp":"BlackForest",X=i*28-300+p*100,Z=i*13-200});
@@ -15,6 +15,9 @@ for(int p=0;p<2;p++) {
   service.TryEvent(new SagaEvent{Id=eid+"-collect",Provenance=eid+"-drop",World="synthetic-midgard",PlayerId=id,PlayerName=names[p],Utc=utc.AddSeconds(2),Kind="collect",Prefab="Resin",Name="Resin",Amount=3,Source="synthetic",X=i*28-300+p*100,Z=i*13-200});
  }
 }
+// Clearly synthetic map pins and daylight exercise the independent atlas feeds.
+service.UpdatePins(new MapPins{World="synthetic-midgard",PlayerId="fixture-0",Revision="fixture-pins-v1",Pins=new(){new(){Name="Synthetic boss altar",Type="Boss",X=-400,Z=160},new(){Name="Synthetic trader",Type="None",X=300,Z=300},new(){Name="Synthetic personal camp",Type="Icon1",X=-200,Z=-300,Personal=true}}});
+service.UpdateClock(new WorldClock{World="synthetic-midgard",Day=42,Fraction=.4f});
 // A separate, clearly synthetic world keeps the original 60-kill browser fixtures stable.
 const string arena="synthetic-leaderboard";
 service.Store.WorldName(arena,"Synthetic proving grounds");

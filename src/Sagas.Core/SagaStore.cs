@@ -17,7 +17,7 @@ public sealed partial class SagaStore : IDisposable {
   meta.Upsert(new BsonDocument{{"_id","schema"},{"value",1}});
   var start=meta.FindById("tracking"); TrackingSince=start==null?DateTime.UtcNow:start["utc"].AsDateTime.ToUniversalTime();
   if(start==null)meta.Insert(new BsonDocument{{"_id","tracking"},{"utc",TrackingSince}});
-  foreach(var c in new[]{"events","statistics","players","cells","chapters","serverchapters","media"})db.GetCollection(c).EnsureIndex("world");
+  foreach(var c in new[]{"events","statistics","players","cells","chapters","serverchapters","media","mapPins"})db.GetCollection(c).EnsureIndex("world");
   db.GetCollection("statistics").EnsureIndex("utc");db.GetCollection("statistics").EnsureIndex("player");
   db.GetCollection("events").EnsureIndex("utc");db.GetCollection("events").EnsureIndex("player");
   db.GetCollection("cells").EnsureIndex("player");

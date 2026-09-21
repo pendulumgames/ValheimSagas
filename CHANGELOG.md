@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.18
+
+- Add separately loaded discovered game pins and opt-in personal map pins, runtime game sprites, browser layer toggles and hover/tap/keyboard-list inspection. Enforce owner sharing and personal fog on the server; exclude copied cartography pins. Preserve offline pins, deduplicate shared game locations, atomically replace multipart snapshots and retry lost acknowledgements.
+- Bound pin scanning to 16 entries per frame, encode snapshots off-thread, share existing upload budgets and capture at most one item/map icon per frame across both queues. No proprietary map artwork is bundled.
+- Add two original host-synchronized daylight graphics (sun/moon dial and horizon) and None, with persistent per-browser preferences and stale/unavailable states.
+- New automated privacy, persistence, multipart, HTTP, API and browser checks. Real in-game pins, icon appearance and frame-time impact still require playtesting.
+
 ## 0.3.17
 
 - Reduce website SLS zone outlines to at most 20% opacity, respecting lower host values. Composite the layer once so shared/overlapping boundaries do not become darker; preserve level colors, hover/tap details and fog rules. In-game SLS settings are unchanged.
