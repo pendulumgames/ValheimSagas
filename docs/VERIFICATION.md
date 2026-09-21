@@ -1,3 +1,11 @@
+# 0.3.17 startup attribution and SLS outline verification
+
+September 21, 2026: build passed against installed assemblies, zero errors/two existing MSB3277 warnings; 172 installed API metadata checks passed. Existing inspected SLS configuration/data/color types and Epic Loot item extension APIs reside in their registered mod assemblies. First-use broad assembly scans were replaced only for these cached metadata lookups; Harmony death/loot hook targets remain unchanged. This is a likely startup contributor, not a measured explanation of the full 143.4/88.2 ms residuals. New first-world/first-equipment phase logs also state that JIT before method entry is outside their measured body.
+
+Website JS syntax, 23 SLS canvas/fog/hover/absence checks and 16 heatmap checks passed. Added pixel checks for 20% alpha, duplicate-outline opacity, lower host opacity and zero opacity. Desktop1600 and mobile390 previews used an isolated recorded-data copy with aliases; before/after screenshots reviewed under `.dev/zones0317-*.png`. Host setting was50%; website now caps20% without modifying the config. No backend/schema change or fresh full Core rerun needed. Package checks and Gale Test installation are recorded locally in STATUS.md.
+
+Next fresh launch: compare initial world/equipment warnings and `Sagas startup detail` phases, ensure SLS zone/Nemesis data and Epic Loot rarity/effects still populate, and check map opacity/fog/hover. No in-game0.3.17 performance result, dedicated acceptance or provider request is claimed.
+
 # 0.3.16 startup work verification
 
 Verified September 21, 2026. Final plugin build passed against installed Valheim/Unity/BepInEx assemblies (zero errors, two existing MSB3277 warnings). Full suites: 2,486 Core assertions, 80 lore, 22,017 terrain, 1,556 portrait/lifecycle and 172 installed metadata checks; final focused portrait/lifecycle rerun passed 1,557 after adding retirement-error recovery. Website JavaScript syntax passed; website UI is unchanged. Local logs: `.dev/startup0316-tests.log`, `.dev/startup0316-finalbuild.log`.

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.17
+
+- Reduce website SLS zone outlines to at most 20% opacity, respecting lower host values. Composite the layer once so shared/overlapping boundaries do not become darker; preserve level colors, hover/tap details and fog rules. In-game SLS settings are unchanged.
+- Resolve initial SLS and Epic Loot metadata inside each registered plugin assembly instead of searching all loaded assemblies. Add limited world/equipment startup phase logs to distinguish remaining initialization costs; real startup timing gains still require a fresh playtest.
+
 ## 0.3.16
 
 - Construct host storage and website services on a worker. Keep local telemetry pending until adoption; retire abandoned startup and drain active storage off-thread before reopening the database.

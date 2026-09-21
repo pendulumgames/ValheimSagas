@@ -12,9 +12,9 @@ namespace ValheimSagas;
 internal static class SlsAdapter {
  const string Guid="MidnightsFX.StarLevelSystem";
  internal static bool Installed=>Chainloader.PluginInfos.ContainsKey(Guid);
- static readonly Type? ConfigType=AccessTools.TypeByName("StarLevelSystem.common.ValConfig");
- static readonly Type? DataType=AccessTools.TypeByName("StarLevelSystem.Data.ZoneScaleSystemData");
- static readonly Type? ColorType=AccessTools.TypeByName("StarLevelSystem.modules.Colorization");
+ static readonly Type? ConfigType=OptionalTypes.InPlugin("MidnightsFX.StarLevelSystem","StarLevelSystem.common.ValConfig");
+ static readonly Type? DataType=OptionalTypes.InPlugin("MidnightsFX.StarLevelSystem","StarLevelSystem.Data.ZoneScaleSystemData");
+ static readonly Type? ColorType=OptionalTypes.InPlugin("MidnightsFX.StarLevelSystem","StarLevelSystem.modules.Colorization");
  static readonly Dictionary<(Type,string),FieldInfo?> fields=new Dictionary<(Type,string),FieldInfo?>();
  static readonly Dictionary<Type,PropertyInfo?> values=new Dictionary<Type,PropertyInfo?>();
  static object? Field(Type? type,string name){if(type==null)return null;var key=(type,name);if(!fields.TryGetValue(key,out var field))fields[key]=field=AccessTools.Field(type,name);return field?.GetValue(null);}

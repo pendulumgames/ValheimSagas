@@ -10,8 +10,8 @@ using UnityEngine;
 namespace ValheimSagas;
 internal static class Gear {
  // Resolve optional types once, including the absent-mod case. Never scan assemblies per item.
- static readonly Type? ExtensionsType=AccessTools.TypeByName("EpicLoot.ItemDataExtensions");
- static readonly Type? EpicType=AccessTools.TypeByName("EpicLoot.EpicLoot");
+ static readonly Type? ExtensionsType=OptionalTypes.InPlugin("randyknapp.mods.epicloot","EpicLoot.ItemDataExtensions");
+ static readonly Type? EpicType=OptionalTypes.InPlugin("randyknapp.mods.epicloot","EpicLoot.EpicLoot");
  static readonly MethodInfo? magicGetter=ExtensionsType?.GetMethod("GetMagicItem",new[]{typeof(ItemDrop.ItemData)});
  sealed class MagicApi {
   internal FieldInfo? Rarity,Effects;internal MethodInfo? GetEffects,Text,Color;

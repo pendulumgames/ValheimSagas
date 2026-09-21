@@ -14,7 +14,7 @@ using Newtonsoft.Json;
 using UnityEngine;
 namespace ValheimSagas;
 
-[BepInPlugin("org.valheimsagas.collector", "Valheim Sagas", "0.3.16")]
+[BepInPlugin("org.valheimsagas.collector", "Valheim Sagas", "0.3.17")]
 [BepInDependency("randyknapp.mods.epicloot", BepInDependency.DependencyFlags.SoftDependency)]
 [BepInDependency("MidnightsFX.StarLevelSystem", BepInDependency.DependencyFlags.SoftDependency)]
 public sealed partial class SagasPlugin : BaseUnityPlugin {
@@ -36,7 +36,7 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
  readonly HashSet<string> sentCells=new HashSet<string>(); int mapCursor; bool importing=true; float nextTick; string activeWorld=""; string lastLocalId=""; string journalId=""; int retryCursor;
  readonly ConcurrentQueue<Action> committed=new ConcurrentQueue<Action>();
  readonly Dictionary<string,float> nextWarning=new Dictionary<string,float>();
- string positionLogKey="";
+ string positionLogKey="";int startupTraceTicks;bool profileTraceRecorded;
 
  static readonly System.Reflection.FieldInfo exploredField=AccessTools.Field(typeof(Minimap),"m_explored");
  const string RpcName="Sagas.V1", AckName="Sagas.Ack.V1";
@@ -94,7 +94,9 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
  void Tick() {
   if(activeWorld!=World||!ZNet.instance||ZNet.instance.GetWorldUID()==0){telemetryBudget.Reset(Time.unscaledTime);retryAfter.Clear();outboundProfile=null;}
   if(!ZNet.instance || ZNet.instance.GetWorldUID()==0) { RuntimeTerrain.Clear(); outbox?.Finish(pending.Values.ToArray());outbox=null; StopService(); activeWorld="";registered.Clear();online.Clear();pending.Clear();mediaTransfer.Clear();mediaCursors.Clear();return; }
-  if(activeWorld!=World) {outbox?.Finish(pending.Values.ToArray());StopService();service=null;activeWorld=World;nextSlsRefresh=0;mediaTransfer.Clear();mediaCursors.Clear();knownCharacters.Clear();registered.Clear();online.Clear();pending.Clear();sentCells.Clear();tileVersions.Clear();fullyMapped.Clear();RuntimeTerrain.Clear();pendingMedia.Clear();sentMedia.Clear();artwork?.Clear();mapCursor=0;importing=true;pendingMaps.Clear();journalId="";outbox=null;}
+  using var startupTrace=new StartupTrace(activeWorld!=World||startupTraceTicks<2,"world",message=>Logger.LogInfo(message));
+  if(activeWorld!=World) {startupTraceTicks=0;profileTraceRecorded=false;outbox?.Finish(pending.Values.ToArray());StopService();service=null;activeWorld=World;nextSlsRefresh=0;mediaTransfer.Clear();mediaCursors.Clear();knownCharacters.Clear();registered.Clear();online.Clear();pending.Clear();sentCells.Clear();tileVersions.Clear();fullyMapped.Clear();RuntimeTerrain.Clear();pendingMedia.Clear();sentMedia.Clear();artwork?.Clear();mapCursor=0;importing=true;pendingMaps.Clear();journalId="";outbox=null;}
+  startupTraceTicks++;startupTrace.Mark("world reset");
   if(ZNet.instance.IsServer() && service==null && Time.unscaledTime>=nextServiceStart) {
    try {
     if(serviceStartup.Poll()){var ready=serviceStartup.Current!;service=ready.Service;foreach(var id in ready.Characters)knownCharacters.Add(id);Logger.LogInfo("Sagas background service startup completed in "+ready.Milliseconds.ToString("F1",CultureInfo.InvariantCulture)+" ms (worker time).");}
@@ -105,6 +107,7 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
     }
    }catch(Exception e){nextServiceStart=Time.unscaledTime+60;Warn("background service startup",e);}
   }
+  startupTrace.Mark("service scheduling/adoption");
 
   foreach(var peer in ZNet.instance.GetPeers()) if(peer.IsReady() && registered.Add(peer.m_rpc)) {
    var captured=peer;
@@ -112,6 +115,7 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
    peer.m_rpc.Register<string>(RpcName,(rpc,json)=>Receive(captured,rpc,json));
    peer.m_rpc.Register<string>(AckName,(rpc,id)=>{if(!ZNet.instance.IsServer() && ZNet.instance.GetServerPeer()?.m_rpc==rpc) {pending.Remove(id);pendingMaps.Remove(id);pendingMedia.Remove(id);}});
   }
+  startupTrace.Mark("peer registration");
   if(service!=null) {
    var current=new HashSet<long>();
    foreach(var peer in ZNet.instance.GetPeers().Where(p=>p.IsReady() && p.m_playerID!=0)) {
@@ -122,9 +126,11 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
    }
    foreach(var old in online.Keys.Where(id=>!current.Contains(id)).ToArray()){service.SetOffline(World,online[old]);online.Remove(old);}
   }
+  startupTrace.Mark("presence");
   var player=Player.m_localPlayer;
   var nextJournal=player&&player.GetPlayerID()!=0?(ZNet.instance.IsServer()?"host-":"")+Identity(player.GetPlayerID()):ZNet.instance.IsServer()?"server":"";
   if(nextJournal!=""&&journalId!=nextJournal){outbox?.Finish(pending.Values.ToArray());if(journalId!="")pending.Clear();sentCells.Clear();tileVersions.Clear();fullyMapped.Clear();RuntimeTerrain.Clear();pendingMedia.Clear();sentMedia.Clear();artwork?.Clear();pendingMaps.Clear();mapCursor=0;importing=true;journalId=nextJournal;RunStage("outbox startup",()=>{outbox=new Outbox(data.Value,World+"-"+journalId,message=>Logger.LogWarning(message));foreach(var e in outbox.Load().Where(e=>e.World==World&&SagaService.ValidEvent(e)).Take(4096))pending[e.Id]=e;});}
+  startupTrace.Mark("outbox initialization");
 
   if(player && player.GetPlayerID()!=0) {
    // Local hosts have no peer entry. Presence must not depend on equipment adapters.
@@ -136,8 +142,9 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
    RunStage("equipment snapshot",()=>outboundProfile=new Packet{Player=Snapshot(player)});
    RunStage("exploration scan",()=>SyncMap(player));
   }
+  startupTrace.Mark("player snapshot and exploration");
   foreach(var key in retryAfter.Where(x=>x.Value<Time.unscaledTime-60).Select(x=>x.Key).ToArray())retryAfter.Remove(key);
-  RunStage("outbox save",()=>outbox?.Save(pending.Values.ToArray()));
+  RunStage("outbox save",()=>outbox?.Save(pending.Values.ToArray()));startupTrace.Mark("outbox save");
  }
  bool Send(Packet packet) {
   if(!ZNet.instance||World!=activeWorld||ZNet.instance.GetWorldUID()==0)return false;
@@ -212,11 +219,13 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
  internal void Record(SagaEvent e) { e.World=World;if(e.World==""||e.Id==""||!SagaService.ValidEvent(e))return;if(pending.Count<4096){if(!pending.ContainsKey(e.Id))SagasNotifications.Notify(e,notifications.Value,Identity(Player.m_localPlayer?Player.m_localPlayer.GetPlayerID():0));pending[e.Id]=e;}else Logger.LogWarning("Sagas outbox full (4096 events): new event not retained; check server connection/storage."); }
  string QueueArt(RuntimeArt.Image? image){if(image==null)return "";if(image.Kind=="portrait")foreach(var old in pendingMedia.Where(x=>x.Value.Media?.Kind=="portrait"&&x.Value.Media.Id!=image.Id).Select(x=>x.Key).ToArray()){sentMedia.Remove(pendingMedia[old].Media!.Id);pendingMedia.Remove(old);}if((!sentMedia.TryGetValue(image.Id,out var lastSent)||Time.unscaledTime-lastSent>120)&&pendingMedia.Count<64){var packet=new Packet{AckId="media:"+image.Id,Media=new MediaUpload{World=World,PlayerId=lastLocalId,Id=image.Id,Kind=image.Kind,Png=image.Png}};pendingMedia[packet.AckId]=packet;if(sentMedia.Count>=256)sentMedia.Remove(sentMedia.OrderBy(x=>x.Value).First().Key);sentMedia[image.Id]=Time.unscaledTime;}return image.Id;}
  PlayerSnapshot Snapshot(Player p) {
+  using var timing=new StartupTrace(!profileTraceRecorded,"equipment",message=>Logger.LogInfo(message));profileTraceRecorded=true;
   if(!shareProfile.Value){pendingMedia.Clear();sentMedia.Clear();artwork?.Clear();}lastLocalId=Identity(p.GetPlayerID());knownCharacters.Add(lastLocalId);var pos=p.transform.position;var s=new PlayerSnapshot{World=World,PlayerId=Identity(p.GetPlayerID()),Name=p.GetPlayerName(),Online=true,ShareProfile=shareProfile.Value,ShareMap=shareMap.Value,SharePosition=sharePosition.Value&&ZNet.instance.IsReferencePositionPublic(),X=pos.x,Z=pos.z};
-  foreach(var item in p.GetInventory().GetEquippedItems()){var gear=Gear.Read(item);EquippedState.Apply(gear,item,p);if(shareProfile.Value)gear.IconId=QueueArt(artwork?.TryIcon(item));s.Gear.Add(gear);} if(shareProfile.Value){RunStage("portrait capture",()=>s.PortraitId=QueueArt(artwork?.TryPortrait(p,!pendingMedia.Values.Any(x=>x.Media?.Kind=="portrait"))));s.PortraitStatus=artwork?.Status??"waiting-for-player";}s.Hotbar=shareProfile.Value?HotbarCapture.Read(p,item=>QueueArt(artwork?.TryIcon(item))):new List<GearItem>();s.EffectiveResistances=RuntimeArt.EffectiveResistances(p);
+  timing.Mark("identity and permissions");
+  foreach(var item in p.GetInventory().GetEquippedItems()){var gear=Gear.Read(item);EquippedState.Apply(gear,item,p);if(shareProfile.Value)gear.IconId=QueueArt(artwork?.TryIcon(item));s.Gear.Add(gear);} timing.Mark("equipped metadata");if(shareProfile.Value){RunStage("portrait capture",()=>s.PortraitId=QueueArt(artwork?.TryPortrait(p,!pendingMedia.Values.Any(x=>x.Media?.Kind=="portrait"))));s.PortraitStatus=artwork?.Status??"waiting-for-player";}timing.Mark("portrait scheduling");s.Hotbar=shareProfile.Value?HotbarCapture.Read(p,item=>QueueArt(artwork?.TryIcon(item))):new List<GearItem>();timing.Mark("hotbar metadata");s.EffectiveResistances=RuntimeArt.EffectiveResistances(p);timing.Mark("resistances");
   s.EffectiveStats["Armor"]=p.GetBodyArmor();s.EffectiveStats["Health"]=p.GetHealth();s.EffectiveStats["Max health"]=p.GetMaxHealth();s.EffectiveStats["Max stamina"]=p.GetMaxStamina();s.EffectiveStats["Max eitr"]=p.GetMaxEitr();
   if(shareProfile.Value){s.EpicLootInstalled=EpicProgress.Installed;s.Gold=EpicProgress.CarriedGold(p);}
-  return s;
+  timing.Mark("effective stats and gold");return s;
  }
  void SyncMap(Player p) {
   if(!shareMap.Value||!Minimap.instance||WorldGenerator.instance==null||pendingMaps.Count>=2||RuntimeTerrainShader.Pending)return;

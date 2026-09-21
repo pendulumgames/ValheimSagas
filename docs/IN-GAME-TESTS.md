@@ -90,3 +90,8 @@ Compare `Sagas portrait timings` preparation, visibility/framing, final render/r
 3. Verify map orientation/colors and fog boundaries match the in-game map. A coherent atlas must appear after preparation; no transient blocky fallback tiles should be exported while it is pending. Explore more terrain and verify ongoing updates.
 4. Leave/change worlds during startup/map preparation, then immediately reconnect. No old-world atlas, stale service or locked database should be adopted. Close and reopen the host and confirm queued events and saved media survive. Revoke sharing during preparation and verify no private media/map export.
 5. Repeat on the dedicated host with two clients. Host initialization should run off-thread; graphical map, icon and portrait work remains on clients. Test unsupported/failed graphics readback separately where available; degraded terrain is explicitly logged. No dedicated acceptance is claimed by automated tests.
+
+
+## 0.3.17 startup attribution and subtle zones
+
+Fully restart Gale Test. Compare initial world/equipment warnings with143.4/88.2ms from0.3.16 and review `Sagas startup detail` phase breakdowns. Confirm Epic Loot rarity/effects, SLS zones and Nemesis still work. First-use JIT before method entry is not in the phase totals. Hard-refresh the website: zone outlines should be subtle20% maximum, lower host opacity still honored, identical boundaries no darker, and fog/hover unchanged. Do not change the in-game SLS opacity for this test.
