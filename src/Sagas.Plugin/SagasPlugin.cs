@@ -14,7 +14,7 @@ using Newtonsoft.Json;
 using UnityEngine;
 namespace ValheimSagas;
 
-[BepInPlugin("org.valheimsagas.collector", "Valheim Sagas", "0.3.14")]
+[BepInPlugin("org.valheimsagas.collector", "Valheim Sagas", "0.3.15")]
 [BepInDependency("randyknapp.mods.epicloot", BepInDependency.DependencyFlags.SoftDependency)]
 [BepInDependency("MidnightsFX.StarLevelSystem", BepInDependency.DependencyFlags.SoftDependency)]
 public sealed partial class SagasPlugin : BaseUnityPlugin {
@@ -71,9 +71,10 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
   Logger.LogInfo("Valheim Sagas loaded; telemetry hooks installed. No external map dependency.");
  }
  void StopService(){slsCapture?.Dispose();slsCapture=null;if(service==null)return;foreach(var id in online.Values.Distinct())service.SetOffline(activeWorld,id);if(lastLocalId!="")service.SetOffline(activeWorld,lastLocalId);lastLocalId="";service.Dispose();service=null;}
- void OnDestroy() { GuardLogin(ClearLoginClipboard); RuntimeTerrain.Clear(); outbox?.Finish(pending.Values.ToArray());StopService(); harmony?.UnpatchSelf(); Instance=null; }
+ void OnDestroy() { artwork?.Clear(); GuardLogin(ClearLoginClipboard); RuntimeTerrain.Clear(); outbox?.Finish(pending.Values.ToArray());StopService(); harmony?.UnpatchSelf(); Instance=null; }
  void Update() {
   GuardLogin(UpdateLogin);
+  artwork?.PumpPortrait(Player.m_localPlayer,shareProfile.Value,World);
   while(committed.TryDequeue(out var action)) {try{action();}catch{}}
   if(Time.unscaledTime>=nextTick){nextTick=Time.unscaledTime+3;RunStage("world update",Tick);}
   RunStage("SLS capture slice",RefreshSls);

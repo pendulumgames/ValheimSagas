@@ -68,6 +68,8 @@ Maps import gradually and a first high-resolution portrait can take several minu
 
 `[Server] RequireViewerToken = false` is the public-viewing default. Set it to `true` to require the shared `ViewerToken` for viewing. Public viewers still only receive data permitted by each player's sharing settings.
 
+Portraits update after equipment or appearance changes settle, with a two-second debounce and a ten-second minimum capture cooldown. Unchanged appearances do not trigger periodic captures. Sitting or attached poses defer a new capture until you stand and settle; the last shared portrait remains visible. Preparation spans multiple frames, GPU readback is asynchronous, and image processing runs in the background. Portraits require a client graphics device supporting asynchronous readback; dedicated servers receive the images from clients. The `Sagas staged portrait` log reports the maximum main-thread capture work in a frame. Actual rendering still runs on the game thread, so playtesting is required to measure the remaining frame cost.
+
 Map sharing defaults on for new configurations. Profile, portrait and position sharing remain configurable. Live position also follows Valheim's **Visible to other players** map setting. The atlas only receives permitted exploration; fog is not a client-side substitute for access control.
 
 The header shows **Login** when signed out. After login, it shows your saved Viking portrait (or an initial when no portrait is available). Click the icon for **Saga Settings** or **Log out**. Shared server tokens show a read-only account; Saga Settings explains how to switch to a personal login.
@@ -119,7 +121,7 @@ Story prompts use relevant recorded events, career totals, bosses and credited t
 
 Back up `BepInEx/config/ValheimSagas` with the host stopped, including `sagas.db` and `personal-lore.key` if present. The key file is required to decrypt saved personal OpenRouter credentials. Do not share backups, configs or tokens publicly. Uninstalling the plugin does not delete recorded history.
 
-**0.3.14 is a preview release verified with automated checks.** It includes performance fixes for SLS/gear snapshots and change-triggered portrait capture with background image processing; fresh local and dedicated-server playtests must confirm frame-time improvements. Automated tests use labeled synthetic fixtures; real credentialed OpenRouter generation, two-client multiplayer acceptance and Linux hosting still require testing. Unresolved attackers and uncertain loot provenance stay unattributed rather than being guessed. Fight durations are observed telemetry, and carried gold is a snapshot, not a lifetime earnings counter.
+**0.3.15 is a preview release verified with automated checks.** It includes performance fixes for SLS/gear snapshots and staged, change-triggered portrait capture with asynchronous GPU readback and background image processing; fresh local and dedicated-server playtests must confirm frame-time improvements. Automated tests use labeled synthetic fixtures; real credentialed OpenRouter generation, two-client multiplayer acceptance and Linux hosting still require testing. Unresolved attackers and uncertain loot provenance stay unattributed rather than being guessed. Fight durations are observed telemetry, and carried gold is a snapshot, not a lifetime earnings counter.
 
 ## License
 

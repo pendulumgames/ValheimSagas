@@ -5,9 +5,23 @@ var policy=new PortraitRefresh();
 Check(!policy.Due("armor-a",0)&&!policy.Due("armor-a",1),"First appearance settles before capture");
 Check(policy.Due("armor-a",2),"Settled initial appearance captures");policy.Started(2);policy.Completed("armor-a",3);
 for(int second=4;second<603;second++)Check(!policy.Due("armor-a",second),"Unchanged appearance has no minute-by-minute refresh");
-Check(policy.Due("armor-a",603),"Ten-minute fallback refreshes modded appearance");policy.Started(603);policy.Completed("armor-a",604);
-Check(!policy.Due("armor-b",605)&&!policy.Due("armor-c",606)&&!policy.Due("armor-c",608),"Rapid gear swaps debounce and obey capture cooldown");Check(policy.Due("armor-c",613),"Latest settled outfit captured after cooldown");policy.Started(613);policy.Failed(614);Check(!policy.Due("armor-c",673)&&policy.Due("armor-c",674),"Failure retries are bounded");
-policy.Reset();Check(!policy.Due("new-world",700)&&policy.Due("new-world",702),"Privacy/world reset forgets previous appearance");
+Check(!policy.Due("armor-a",603)&&!policy.Due("armor-a",86400),"No periodic capture even after a day unchanged");
+Check(!policy.Due("armor-b",86401)&&policy.Due("armor-b",86403),"Equipment change remains eligible");policy.Started(86403);policy.Completed("armor-b",86404);
+Check(!policy.Due("armor-c",86405)&&!policy.Due("armor-d",86406)&&!policy.Due("armor-d",86408),"Rapid swaps debounce and obey cooldown");Check(policy.Due("armor-d",86413),"Latest settled outfit captures after cooldown");policy.Started(86413);policy.Failed(86414);Check(!policy.Due("armor-d",86473)&&policy.Due("armor-d",86474),"Failure retries stay bounded");
+policy.Reset();Check(!policy.Due("seated",0,false)&&!policy.Due("seated",60,false),"Initial seated pose is never captured");Check(!policy.Due("seated",61)&&!policy.Due("seated",62)&&policy.Due("seated",63),"Standing restarts settle delay");policy.Started(63);policy.Completed("seated",64);
+Check(!policy.Due("new-weapon",65,false)&&!policy.Due("new-weapon",120,false),"Gear change while seated stays pending");Check(!policy.Due("new-weapon",121)&&policy.Due("new-weapon",123),"Pending weapon captures after standing");
+policy.Defer();Check(!policy.Due("new-weapon",130)&&policy.Due("new-weapon",132),"Mid-capture seated cancellation restarts debounce");
+policy.Reset();Check(!policy.Due("new-world",700)&&policy.Due("new-world",702),"World/privacy reset forgets prior portrait");
+foreach(var cancelAt in new[]{0,1,2}){
+ var lease=new ReadbackLifetime();int released=0;lease.Begin();lease.Begin();
+ for(int i=0;i<cancelAt;i++)lease.Complete();lease.Retire(()=>released++);Check(released==(cancelAt==2?1:0),"Retirement never releases an in-flight GPU lease");
+ for(int i=cancelAt;i<2;i++){lease.Complete();Check(released==(i==1?1:0),"Release occurs only after the last callback");}
+ lease.Retire(()=>released++);Check(released==1,"Cancellation/cleanup is idempotent");try{lease.Begin();Check(false,"Retired capture cannot submit");}catch(InvalidOperationException){Check(true,"Retired submission rejected");}
+}
+var partialLease=new ReadbackLifetime();int partialRelease=0;partialLease.Begin();partialLease.Retire(()=>partialRelease++);Check(partialRelease==0,"Second-submission failure retains first GPU request");partialLease.Complete();Check(partialRelease==1,"Partial submission releases after callback");
+var emptyLease=new ReadbackLifetime();int emptyRelease=0;emptyLease.Retire(()=>emptyRelease++);Check(emptyRelease==1,"Failure before submission releases immediately");
+try{emptyLease.Complete();Check(false,"Unexpected callback rejected");}catch(InvalidOperationException){Check(true,"Unbalanced completion rejected");}
+var workTiming=new PortraitWorkTiming();workTiming.Add(10,1.5);workTiming.Add(10,2.5);workTiming.Add(11,.5);Check(workTiming.Maximum==4,"Capture timing sums preparation and callback work in the same frame");workTiming.Reset();Check(workTiming.Maximum==0,"New capture has independent frame timing");
 var sample=new byte[]{255,0,0,255,0,255,0,0,255,0,0,255,0,0,255,0};
 var small=RuntimeArtPixels.ResizePortrait(sample,2,2,1,1);Check(small.SequenceEqual(new byte[]{255,0,0,127}),"Oversize downsample preserves foreground color without transparent fringes");
 Check(RuntimeArtPixels.ResizePortrait(sample,2,2,2,2).Where((v,i)=>sample[i+3-i%4]>0).SequenceEqual(sample.Where((v,i)=>sample[i+3-i%4]>0)),"Same-size fallback preserves visible pixels");

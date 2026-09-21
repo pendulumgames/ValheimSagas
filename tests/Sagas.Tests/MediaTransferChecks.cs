@@ -50,7 +50,7 @@ static class MediaTransferChecks {
    var pending=service.Store.Players(media.World).Single();check(pending.PortraitId==oldId&&pending.Gear[0].IconId==new string('e',64),"Previous portrait remains while a larger replacement uploads; icon references unchanged");
    check(service.UploadMedia(media)&&service.UpdatePlayer(player)&&service.Flush(),"Large portrait persisted alongside offline profile");
    check(service.Store.Players(media.World).Single().PortraitId==media.Id,"Next snapshot adopts the committed replacement portrait");
-   player.PortraitId="";service.UpdatePlayer(player);service.Flush();check(service.Store.Players(media.World).Single().PortraitId=="","Explicit portrait clearing is preserved");
+   player.PortraitId="";service.UpdatePlayer(player);service.Flush();check(service.Store.Players(media.World).Single().PortraitId==media.Id,"Deferred replacement retains the previous consented portrait");
    player.PortraitId=media.Id;service.UpdatePlayer(player);service.Flush();
   }
   using(var service=new SagaService(options)){

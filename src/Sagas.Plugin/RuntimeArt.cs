@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
@@ -16,7 +17,7 @@ namespace ValheimSagas;
 /// <summary>Local runtime-only artwork. Construct/call on Unity's main thread.
 /// Callers MUST apply profile-sharing consent before requesting or transmitting art.
 /// No installed textures or character assets are bundled with the mod.</summary>
-internal sealed class RuntimeArt {
+internal sealed partial class RuntimeArt {
  internal sealed class Image {
   public string Id="", Kind="";
   public byte[] Png=Array.Empty<byte>();
@@ -33,6 +34,7 @@ internal sealed class RuntimeArt {
  Task<PortraitResult>? processing;string processingSignature="";long processingPlayer;int generation,processingGeneration;bool forceSimplified,processingSimplified;
  sealed class PortraitResult {internal Image Image=null!;internal double MatteMs,EncodeMs;}
  static readonly FieldInfo[] appearanceFields=new[]{"m_modelIndex","m_skinColor","m_hairColor","m_beardItem","m_hairItem","m_leftItem","m_rightItem","m_chestItem","m_legItem","m_helmetItem","m_shoulderItem","m_utilityItem","m_trinketItem","m_leftBackItem","m_rightBackItem"}.Select(n=>AccessTools.Field(typeof(VisEquipment),n)).Where(f=>f!=null).ToArray();
+ static bool Standing(Player player)=>!player.IsSitting()&&!player.IsAttached();
  static string Appearance(Player player){
   var text=new StringBuilder();var visual=player.GetComponentInChildren<VisEquipment>();
   if(visual)foreach(var field in appearanceFields)text.Append(field.Name).Append('=').Append(field.GetValue(visual)).Append(';');
@@ -45,7 +47,7 @@ internal sealed class RuntimeArt {
  public string Status {get;private set;}="waiting-for-player";
  public RuntimeArt(Action<string,Exception> warning){warn=warning;}
  void CheckThread(){if(Thread.CurrentThread.ManagedThreadId!=thread)throw new InvalidOperationException("Runtime artwork requires Unity's main thread.");}
- public void Clear(){CheckThread();icons.Clear();iconOrder.Clear();portrait=null;portraitPlayer=0;generation++;refresh.Reset();forceSimplified=false;Status="waiting-for-player";}
+ public void Clear(){CheckThread();CancelCapture();icons.Clear();iconOrder.Clear();portrait=null;portraitPlayer=0;generation++;refresh.Reset();forceSimplified=false;Status="waiting-for-player";}
 
  public Image? TryIcon(ItemDrop.ItemData item) {
   CheckThread();
@@ -76,171 +78,40 @@ internal sealed class RuntimeArt {
   if(SystemInfo.graphicsDeviceType==UnityEngine.Rendering.GraphicsDeviceType.Null){Status="no-graphics-device";return null;}
   long id=player.GetPlayerID();var now=Time.realtimeSinceStartup;
   if(portraitPlayer!=id){portrait=null;portraitPlayer=id;generation++;refresh.Reset();forceSimplified=false;}
-  var signature=Appearance(player);var due=refresh.Due(signature,now);
+  var signature=Appearance(player);var due=refresh.Due(signature,now,Standing(player));
+  if(capture!=null)return portrait;
   if(processing!=null){
    if(!processing.IsCompleted)return portrait;
    var job=processing;processing=null;
-   if(processingGeneration==generation&&processingPlayer==id&&processingSignature==signature){
+   if(processingGeneration==generation&&processingPlayer==id&&processingSignature==signature&&Standing(player)){
     if(job.IsFaulted){forceSimplified=true;refresh.Failed(now);Status="processing-failed";warn("portrait processing",job.Exception!);}
     else{var result=job.Result;portrait=result.Image;Status=processingSimplified?"simplified":"ready";forceSimplified=false;refresh.Completed(signature,now);Debug.Log("Sagas portrait timings: background matte="+result.MatteMs.ToString("F1")+" ms, encode/hash="+result.EncodeMs.ToString("F1")+" ms; ready "+portrait.Width+"x"+portrait.Height+", "+portrait.Png.Length+" bytes.");}
    }else{_ = job.Exception;Status="appearance-changed";}
    return portrait;
   }
-  if(!allowRefresh||!due)return portrait;
-  refresh.Started(now);Status="rendering";var captureClock=Stopwatch.StartNew();double preparedMs=0,probeMs=0,readbackMs=0;
-  GameObject? root=null;
-  var renderers=new List<Renderer>();var fallbackMaterials=new List<Material>();
-  var effectMeshes=new List<Mesh>();
-  var diagnostics=new StringBuilder();
-  var previous=RenderTexture.active;
-  RenderTexture? target=null;
-  try {
-   // Select an unused active-object layer rather than assuming a mod leaves 31
-   // vacant. This excludes terrain and other objects that aren't Renderers too.
-   uint usedLayers=0;
-   foreach(var existing in UnityEngine.Object.FindObjectsByType<Transform>(FindObjectsSortMode.None))usedLayers|=1u<<existing.gameObject.layer;
-   // Unity reserves layer31 for previews; choose an ordinary unused layer.
-   int captureLayer=30;while(captureLayer>=0&&(usedLayers&(1u<<captureLayer))!=0)captureLayer--;
-   if(captureLayer<0){Status="render-layer-unavailable";throw new InvalidOperationException("No isolated render layer is available for the portrait.");}
-   // Recreate only transforms and visual components. Keeping native skinning
-   // preserves bone matrices, bindposes and GPU vertex/index buffers; converting
-   // BakeMesh into a MeshRenderer rendered static equipment but no body in the
-   // observed Unity6 runtime. No Player/Animator/VisEquipment script is cloned.
-   root=new GameObject("Sagas temporary portrait geometry"){hideFlags=HideFlags.HideAndDontSave};
-   root.SetActive(false);
-   var poses=new Dictionary<Transform,Transform>();
-   int count=0,vertices=0;Bounds bounds=new Bounds();bool hasBounds=false;
-   var visual=player.GetComponentInChildren<VisEquipment>();var bodySource=visual?visual.m_bodyModel:null;
-   Renderer? capturedBody=null;
-   foreach(var source in player.GetComponentsInChildren<Renderer>()) {
-    if(!source.enabled||!source.gameObject.activeInHierarchy)continue;
-    Mesh? mesh=source is SkinnedMeshRenderer skinSource?skinSource.sharedMesh:source is MeshRenderer?source.GetComponent<MeshFilter>()?.sharedMesh:null;
-    if(!mesh||vertices+mesh.vertexCount>250000||count>=64)continue;
-    var node=CopyPose(source.transform,root.transform,poses,captureLayer).gameObject;
-    Renderer renderer;
-    if(source is SkinnedMeshRenderer skin){
-     var copy=node.AddComponent<SkinnedMeshRenderer>();copy.enabled=false;
-     var sourceBones=skin.bones;var bones=new Transform[sourceBones.Length];
-     for(int i=0;i<bones.Length;i++)bones[i]=sourceBones[i]?CopyPose(sourceBones[i],root.transform,poses,captureLayer):null!;
-     copy.sharedMesh=mesh;copy.bones=bones;
-     copy.rootBone=skin.rootBone?CopyPose(skin.rootBone,root.transform,poses,captureLayer):null;
-     copy.quality=skin.quality;copy.localBounds=skin.localBounds;
-     copy.updateWhenOffscreen=true;copy.forceMatrixRecalculationPerRender=true;copy.skinnedMotionVectors=false;
-     if(diagnostics.Length<3200){int missing=0;foreach(var bone in bones)if(!bone)missing++;diagnostics.Append("bones=").Append(bones.Length).Append(" missing=").Append(missing).Append(" root=").Append((bool)copy.rootBone).Append(';');}
-     for(int i=0;i<mesh.blendShapeCount;i++)copy.SetBlendShapeWeight(i,skin.GetBlendShapeWeight(i));
-     renderer=copy;
-    }else{
-     node.AddComponent<MeshFilter>().sharedMesh=mesh;
-     renderer=node.AddComponent<MeshRenderer>();
-    }
-    count++;vertices+=mesh.vertexCount;
-    renderer.sharedMaterials=source.sharedMaterials;renderers.Add(renderer);
-    if(source==bodySource)capturedBody=renderer;
-    var properties=new MaterialPropertyBlock();source.GetPropertyBlock(properties);renderer.SetPropertyBlock(properties);
-    for(int slot=0;slot<source.sharedMaterials.Length;slot++){var perMaterial=new MaterialPropertyBlock();source.GetPropertyBlock(perMaterial,slot);renderer.SetPropertyBlock(perMaterial,slot);}
-    PortraitLighting.IsolateProbes(renderer);
-    renderer.enabled=true;renderer.forceRenderingOff=false;renderer.shadowCastingMode=UnityEngine.Rendering.ShadowCastingMode.Off;renderer.receiveShadows=false;
-    // The clone retains the full original hierarchy, so live world bounds are
-    // also the exact intended clone bounds. Set the clone's culling bounds
-    // explicitly before its first render instead of waiting for a frame update.
-    renderer.bounds=source.bounds;
-    if(!hasBounds){bounds=source.bounds;hasBounds=true;}else bounds.Encapsulate(source.bounds);
-    if(diagnostics.Length<3500){
-     uint indices=0;for(int sub=0;sub<mesh.subMeshCount;sub++)indices+=mesh.GetIndexCount(sub);
-     diagnostics.Append(source.name.Length>64?source.name.Substring(0,64):source.name).Append(": v=").Append(mesh.vertexCount).Append(" indices=").Append(indices).Append(" sub=").Append(mesh.subMeshCount).Append(" center-offset=").Append(source.bounds.center-player.transform.position).Append(" size=").Append(source.bounds.size).Append(" skin=").Append(source is SkinnedMeshRenderer).Append(';');
-    }
-   }
-   root.SetActive(true);
-   if(!capturedBody){Status="body-unavailable";warn("character portrait",new InvalidOperationException("Refusing partial equipment-only portrait: the player's VisEquipment body was missing or rejected. "+diagnostics));return portrait;}
-   if(!hasBounds||vertices==0||bounds.size.sqrMagnitude<.001f){Status="waiting-for-geometry";warn("character portrait",new InvalidOperationException("No visible equipped geometry is ready. "+diagnostics));return portrait;}
-   var cameraObject=new GameObject("Sagas temporary portrait camera"){hideFlags=HideFlags.HideAndDontSave};
-   cameraObject.transform.SetParent(root.transform,false);
-   var camera=cameraObject.AddComponent<Camera>();camera.enabled=false;
-   camera.clearFlags=CameraClearFlags.SolidColor;camera.backgroundColor=new Color(.035f,.055f,.065f,0);
-   // Inspected installed Jotunn RenderManager documents that Valheim material
-   // shaders do not support orthographic capture. A narrow perspective keeps
-   // this static2D portrait visually flat without that incompatible projection.
-   camera.cullingMask=1<<captureLayer;camera.orthographic=false;camera.fieldOfView=12;camera.aspect=2f/3f;
-   var aim=bounds.center;
-   float distance=PortraitGeometry.RotatingCameraDistance(bounds.extents.x,bounds.extents.y,bounds.extents.z,camera.aspect,camera.fieldOfView);
-   var facing=Quaternion.Euler(0,player.transform.eulerAngles.y,0);
-   camera.transform.position=aim+facing*new Vector3(.2f,0,1).normalized*distance;
-   camera.transform.LookAt(aim);camera.nearClipPlane=.05f;camera.farClipPlane=distance+bounds.size.magnitude+10;
-   camera.allowHDR=false;camera.allowMSAA=false;camera.useOcclusionCulling=false;camera.renderingPath=RenderingPath.Forward;camera.layerCullDistances=new float[32];camera.layerCullSpherical=false;
-   var lampObject=new GameObject("Sagas temporary portrait light"){hideFlags=HideFlags.HideAndDontSave};
-   lampObject.transform.SetParent(root.transform,false);
-   var lamp=lampObject.AddComponent<Light>();lamp.type=LightType.Directional;lamp.cullingMask=1<<captureLayer;
-   lamp.intensity=.8f;lamp.color=Color.white;lamp.shadows=LightShadows.None;lamp.renderMode=LightRenderMode.ForcePixel;
-   lamp.transform.rotation=Quaternion.LookRotation(facing*new Vector3(.35f,-.35f,-1));
-   var fillObject=new GameObject("Sagas temporary portrait fill"){hideFlags=HideFlags.HideAndDontSave};
-   fillObject.transform.SetParent(root.transform,false);
-   var fill=fillObject.AddComponent<Light>();fill.type=LightType.Directional;fill.cullingMask=1<<captureLayer;
-   fill.intensity=.35f;fill.color=Color.white;fill.shadows=LightShadows.None;fill.renderMode=LightRenderMode.ForcePixel;
-   fill.transform.rotation=Quaternion.LookRotation(facing*new Vector3(-.5f,0,-1));
-   int equippedRendererCount=renderers.Count;
-   CaptureEffects(player,root,camera,captureLayer,bounds,renderers,effectMeshes,diagnostics);
-   bool simplified=forceSimplified&&UseFallback(renderers,fallbackMaterials,equippedRendererCount),bodyVerified=false,framingChecked=false;preparedMs=captureClock.Elapsed.TotalMilliseconds;
-   // The first target is only a cheap visibility/framing probe. Re-render the
-   // final pose at real higher resolution rather than enlarging a small PNG.
-   foreach(int width in new[]{341,1024}) {
-    target=RenderTexture.GetTemporary(width,width*3/2,24,RenderTextureFormat.ARGB32,RenderTextureReadWrite.sRGB);
-    // Pooled textures can allocate lazily; IsCreated before the first bind is
-    // not a failure. Explicitly request creation before checking availability.
-    if(!target||(!target.IsCreated()&&!target.Create()))throw new InvalidOperationException("Private portrait render target could not be created.");
-    camera.targetTexture=target;
-    if(!bodyVerified){
-     try{VerifyBody(camera,target,renderers,capturedBody);}
-     catch(EmptyPortraitException){
-      warn("character portrait body",new InvalidOperationException("Body-only native-skinned render was empty; retrying simplified materials. frame-size="+bounds.size+" body-offset="+(capturedBody.bounds.center-bounds.center)+" bones="+poses.Count+" "+diagnostics));
-      if(!UseFallback(renderers,fallbackMaterials,equippedRendererCount)){Status="body-unavailable";throw;}
-      simplified=true;
-      try{VerifyBody(camera,target,renderers,capturedBody);}catch(EmptyPortraitException){Status="body-unavailable";throw;}
-     }
-     bodyVerified=true;
-    }
-    if(!framingChecked){
-     // Probe the actual equipped silhouette instead of trusting broad animation
-     // bounds. A cropped projection rerenders with more real pixels while
-     // retaining the working camera position, shader inputs and native rig.
-     TightenPortraitFrame(camera,target);framingChecked=true;
-     VerifyBody(camera,target,renderers,capturedBody);
-     camera.targetTexture=null;RenderTexture.active=previous;RenderTexture.ReleaseTemporary(target);target=null;
-     continue;
-    }
-    probeMs=captureClock.Elapsed.TotalMilliseconds-preparedMs;
-    var readClock=Stopwatch.StartNew();var buffers=ReadPortraitBuffers(camera,target);readbackMs=readClock.Elapsed.TotalMilliseconds;
-    int imageWidth=target.width,imageHeight=target.height;bool linear=QualitySettings.activeColorSpace==ColorSpace.Linear;var format=buffers.Format;
-    processingSignature=signature;processingPlayer=id;processingGeneration=generation;processingSimplified=simplified;
-    processing=Task.Run(()=>ProcessPortrait(buffers.Black,buffers.White,imageWidth,imageHeight,format,linear));
-    Status="processing";return portrait;
-
-   }
-   Status="image-too-large";warn("character portrait",new InvalidOperationException("Portrait exceeds the bounded portrait upload size after downscaling."));
-   return portrait;
-  }catch(Exception ex){if(Status=="rendering")Status=ex is EmptyPortraitException?"capture-empty":"capture-failed";refresh.Failed(Time.realtimeSinceStartup);warn("character portrait",new InvalidOperationException("Portrait status="+Status+". "+diagnostics,ex));return portrait;}
-  finally {
-   RenderTexture.active=previous;if(target)RenderTexture.ReleaseTemporary(target);
-   if(root){root.SetActive(false);UnityEngine.Object.Destroy(root);}
-   foreach(var material in fallbackMaterials)UnityEngine.Object.Destroy(material);
-   foreach(var mesh in effectMeshes)UnityEngine.Object.Destroy(mesh);
-   Debug.Log("Sagas portrait timings: main-thread preparation="+preparedMs.ToString("F1")+" ms, visibility/framing="+probeMs.ToString("F1")+" ms, final render/readback="+readbackMs.ToString("F1")+" ms, total="+captureClock.Elapsed.TotalMilliseconds.ToString("F1")+" ms.");
-  }
+  if(!SystemInfo.supportsAsyncGPUReadback){Status="async-readback-unavailable";return portrait;}
+  if(probeProcessing!=null){if(!probeProcessing.IsCompleted)return portrait;_ = probeProcessing.Exception;probeProcessing=null;}
+  if(!allowRefresh||!due||PortraitReadbackPair.PendingRequests!=0)return portrait;
+  refresh.Started(now);Status="preparing";
+  captureSignature=signature;capturePlayer=player;captureWorld=SagasPlugin.World;captureGeneration=generation;captureStarted=now;captureTiming.Reset();captureSteps=0;
+  capture=BuildPortrait(player,signature).GetEnumerator();return portrait;
  }
 
  // Freeze attached visual effects into inert meshes. Never clone effect scripts,
  // advance live particle simulation or change the source renderer/light. Baking
  // both matte passes from the same snapshot avoids flickering opacity edges.
- void CaptureEffects(Player player,GameObject root,Camera camera,int layer,Bounds bodyBounds,List<Renderer> renderers,List<Mesh> meshes,StringBuilder diagnostics){
+ IEnumerable<object?> CaptureEffects(Player player,GameObject root,Camera camera,int layer,Bounds bodyBounds,List<Renderer> renderers,List<Mesh> meshes,StringBuilder diagnostics,Dictionary<Transform,FrozenPose> frozen,Dictionary<Transform,Transform> poses,Vector3 frozenPosition){
   int captured=0,vertices=0,skipped=0,lights=0,attempts=0;
   var allowed=bodyBounds;allowed.Expand(4f);
-  var poses=new Dictionary<Transform,Transform>();
-  bool InBounds(Bounds b)=>allowed.Contains(b.min)&&allowed.Contains(b.max)&&b.size.sqrMagnitude>0;
+  Matrix4x4 FreezeMatrix(Renderer source)=>CopyFrozenPose(source.transform,root.transform,poses,frozen,layer).localToWorldMatrix*source.transform.worldToLocalMatrix;
+  Bounds Shift(Renderer source){var m=FreezeMatrix(source);var b=source.bounds;var e=b.extents;var x=m.MultiplyVector(new Vector3(e.x,0,0));var y=m.MultiplyVector(new Vector3(0,e.y,0));var z=m.MultiplyVector(new Vector3(0,0,e.z));return new Bounds(m.MultiplyPoint3x4(b.center),new Vector3(Math.Abs(x.x)+Math.Abs(y.x)+Math.Abs(z.x),Math.Abs(x.y)+Math.Abs(y.y)+Math.Abs(z.y),Math.Abs(x.z)+Math.Abs(y.z)+Math.Abs(z.z))*2);}
+  bool InBounds(Renderer source){var b=Shift(source);return allowed.Contains(b.min)&&allowed.Contains(b.max)&&b.size.sqrMagnitude>0;}
   void Add(Renderer source,Mesh mesh,Material? material,bool worldSpace){
    if(!mesh||mesh.vertexCount==0||!material)return;
    if(captured>=24||mesh.vertexCount>32768-vertices){skipped++;return;}
    GameObject node;
-   if(worldSpace){node=new GameObject("Sagas frozen equipment effect"){hideFlags=HideFlags.HideAndDontSave,layer=layer};node.transform.SetParent(root.transform,false);}
-   else node=CopyPose(source.transform,root.transform,poses,layer).gameObject;
+   if(worldSpace){node=new GameObject("Sagas frozen equipment effect"){hideFlags=HideFlags.HideAndDontSave,layer=layer};node.transform.SetParent(root.transform,false);var matrix=FreezeMatrix(source);var positions=mesh.vertices;for(int i=0;i<positions.Length;i++)positions[i]=matrix.MultiplyPoint3x4(positions[i]);mesh.vertices=positions;mesh.RecalculateBounds();}
+   else node=CopyFrozenPose(source.transform,root.transform,poses,frozen,layer).gameObject;
    // A trail and its particles must have distinct renderer components even
    // when the source shares one transform.
    if(node.GetComponent<MeshRenderer>()){
@@ -251,15 +122,16 @@ internal sealed class RuntimeArt {
    var properties=new MaterialPropertyBlock();source.GetPropertyBlock(properties);copy.SetPropertyBlock(properties);
    var perMaterial=new MaterialPropertyBlock();source.GetPropertyBlock(perMaterial,0);copy.SetPropertyBlock(perMaterial,0);
    PortraitLighting.IsolateProbes(copy);
-   copy.shadowCastingMode=UnityEngine.Rendering.ShadowCastingMode.Off;copy.receiveShadows=false;copy.bounds=source.bounds;
+   copy.shadowCastingMode=UnityEngine.Rendering.ShadowCastingMode.Off;copy.receiveShadows=false;copy.bounds=Shift(source);
    renderers.Add(copy);captured++;vertices+=mesh.vertexCount;
   }
   Mesh NewMesh(){var mesh=new Mesh{name="Sagas frozen effect mesh",hideFlags=HideFlags.HideAndDontSave};meshes.Add(mesh);return mesh;}
   foreach(var source in player.GetComponentsInChildren<ParticleSystemRenderer>()){
+   yield return null;
    if(captured>=24||attempts++>=32)break;
    var system=source.GetComponent<ParticleSystem>();
    if(!source.enabled||!source.gameObject.activeInHierarchy||!system||system.particleCount==0)continue;
-   if(system.particleCount>2048||!InBounds(source.bounds)){skipped++;continue;}
+   if(system.particleCount>2048||!InBounds(source)){skipped++;continue;}
    // Bound mesh-particle expansion before entering native BakeMesh, not only
    // after allocating its output. Billboard quads need four vertices each.
    long perParticle=4;
@@ -280,20 +152,22 @@ internal sealed class RuntimeArt {
    }catch(Exception ex){skipped++;warn("portrait attached particle snapshot",ex);}
   }
   foreach(var source in player.GetComponentsInChildren<TrailRenderer>()){
+   yield return null;
    if(captured>=24||attempts++>=32)break;
    if(!source.enabled||!source.gameObject.activeInHierarchy||source.positionCount<2)continue;
    long trailVertices=((long)source.positionCount*(2L+source.numCornerVertices)+2L*source.numCapVertices)*2;
-   if(source.positionCount>2048||trailVertices>32768-vertices||!InBounds(source.bounds)){skipped++;continue;}
+   if(source.positionCount>2048||trailVertices>32768-vertices||!InBounds(source)){skipped++;continue;}
    try{var mesh=NewMesh();source.BakeMesh(mesh,camera,false);Add(source,mesh,source.sharedMaterial,false);}
    catch(Exception ex){skipped++;warn("portrait attached trail snapshot",ex);}
   }
   foreach(var source in player.GetComponentsInChildren<Light>()){
+   yield return null;
    if(lights>=8)break;
-   if(!source.enabled||!source.gameObject.activeInHierarchy||source.intensity<=0||!allowed.Contains(source.transform.position)||(source.type!=LightType.Point&&source.type!=LightType.Spot))continue;
+   if(!source.enabled||!source.gameObject.activeInHierarchy||source.intensity<=0||!allowed.Contains(CopyFrozenPose(source.transform,root.transform,poses,frozen,layer).position)||(source.type!=LightType.Point&&source.type!=LightType.Spot))continue;
    // Always freeze attached lights. The render scope excludes ALL original
    // scene lights from the capture layer, preventing sunlight and duplicates.
    var node=new GameObject("Sagas frozen equipment light"){hideFlags=HideFlags.HideAndDontSave,layer=layer};node.transform.SetParent(root.transform,false);
-   node.transform.SetPositionAndRotation(source.transform.position,source.transform.rotation);
+   var frozenLight=CopyFrozenPose(source.transform,root.transform,poses,frozen,layer);node.transform.SetPositionAndRotation(frozenLight.position,frozenLight.rotation);
    var copy=node.AddComponent<Light>();copy.type=source.type;copy.color=source.color;copy.intensity=Mathf.Clamp(source.intensity,0,8);copy.range=Mathf.Clamp(source.range,0,20);
    copy.useColorTemperature=source.useColorTemperature;copy.colorTemperature=source.colorTemperature;
    copy.spotAngle=source.spotAngle;copy.innerSpotAngle=source.innerSpotAngle;copy.cullingMask=1<<layer;copy.shadows=LightShadows.None;lights++;
@@ -301,73 +175,6 @@ internal sealed class RuntimeArt {
   diagnostics.Append(" frozen-effects=").Append(captured).Append(" effect-vertices=").Append(vertices).Append(" attached-lights=").Append(lights).Append(" skipped-effects=").Append(skipped).Append(';');
  }
 
- static void TightenPortraitFrame(Camera camera,RenderTexture target){
-  var texture=new Texture2D(target.width,target.height,TextureFormat.RGBA32,false){hideFlags=HideFlags.HideAndDontSave};
-  try{
-   ReadPortraitMatte(camera,target,texture);
-   if(!RuntimeArtPixels.TryPortraitFrame(texture.GetRawTextureData(),target.width,target.height,out float cx,out float cy,out float scale))return;
-   // In clip space x'= (x-cx*w)/scale. This is an exact off-axis
-   // projection crop, independent of the depth of cloak, bow or shield.
-   var crop=Matrix4x4.identity;crop.m00=crop.m11=1/scale;crop.m03=-cx/scale;crop.m13=-cy/scale;
-   camera.projectionMatrix=crop*camera.projectionMatrix;
-   Debug.Log("Valheim Sagas portrait framing: actual silhouette zoom="+(1/scale).ToString("F2")+", padded viewport center="+cx.ToString("F3")+","+cy.ToString("F3"));
-  }finally{UnityEngine.Object.Destroy(texture);}
- }
-
- static void VerifyBody(Camera camera,RenderTexture target,List<Renderer> renderers,Renderer body){
-  // A separate body-only pass prevents a hammer/shield from satisfying the
-  // visibility check. Only inert capture renderers are toggled, never live gear.
-  var texture=new Texture2D(target.width,target.height,TextureFormat.RGBA32,false){hideFlags=HideFlags.HideAndDontSave};
-  try{
-   foreach(var renderer in renderers)renderer.enabled=renderer==body;
-   ReadPortraitMatte(camera,target,texture);
-   var pixels=texture.GetRawTextureData();
-   if(!RuntimeArtPixels.HasVisibleContent(pixels))throw new EmptyPortraitException("No visible player body in isolated body pass; equipment-only portrait rejected. visible="+RuntimeArtPixels.CountVisible(pixels)+" rgb-variation="+RuntimeArtPixels.CountRgbVariation(pixels)+" viewport-center="+camera.WorldToViewportPoint(body.bounds.center)+" body-size="+body.bounds.size);
-  }finally{foreach(var renderer in renderers)renderer.enabled=true;UnityEngine.Object.Destroy(texture);}
- }
-
- // Copy ancestors too: importer scales can be split across parent and bone
- // transforms (including mirrored/nonuniform scales). Decomposing a world
- // matrix loses shear. Identical local TRS chains preserve the exact matrices.
- // No source Transform is reparented, changed or passed as a live bone reference.
- static Transform CopyPose(Transform source,Transform root,Dictionary<Transform,Transform> copies,int layer,int depth=0){
-  if(copies.TryGetValue(source,out var known))return known;
-  if(copies.Count>=1024||depth>=128)throw new InvalidOperationException("Portrait transform limit exceeded.");
-  var parent=source.parent?CopyPose(source.parent,root,copies,layer,depth+1):root;
-  if(copies.Count>=1024)throw new InvalidOperationException("Portrait transform limit exceeded.");
-  var node=new GameObject("Sagas captured pose"){hideFlags=HideFlags.HideAndDontSave,layer=layer};
-  var copy=node.transform;copy.SetParent(parent,false);
-  copy.localPosition=source.localPosition;copy.localRotation=source.localRotation;copy.localScale=source.localScale;
-  copies.Add(source,copy);return copy;
- }
-
- // Installed Custom/Player FORWARD passes have ColorWriteMask14 (RGB only).
- // Observed0.2.6 body pixels therefore retained the transparent clear alpha.
- // Recover actual coverage from two backgrounds instead
- // of treating material alpha as visibility or making a whole rectangle opaque.
- // Cb = alpha*foreground, Cw = Cb + (1-alpha). Identical shader output over
- // both backgrounds is opaque; unchanged background remains transparent.
- // Both renders occur synchronously with unchanged pose/time and private camera.
- static void ReadPortraitMatte(Camera camera,RenderTexture target,Texture2D texture){
-  var oldColor=camera.backgroundColor;
-  try{
-   camera.backgroundColor=new Color(0,0,0,0);PortraitLighting.Render(camera);RenderTexture.active=target;
-   texture.ReadPixels(new Rect(0,0,target.width,target.height),0,0,false);var black=texture.GetRawTextureData();
-   camera.backgroundColor=new Color(1,1,1,0);PortraitLighting.Render(camera);RenderTexture.active=target;
-   texture.ReadPixels(new Rect(0,0,target.width,target.height),0,0,false);var white=texture.GetRawTextureData();
-   RuntimeArtPixels.ReconstructMatte(black,white,QualitySettings.activeColorSpace==ColorSpace.Linear);
-   texture.LoadRawTextureData(black);
-  }finally{camera.backgroundColor=oldColor;}
- }
- sealed class PortraitBuffers {internal byte[] Black=null!,White=null!;internal UnityEngine.Experimental.Rendering.GraphicsFormat Format;}
- static PortraitBuffers ReadPortraitBuffers(Camera camera,RenderTexture target){
-  var texture=new Texture2D(target.width,target.height,TextureFormat.RGBA32,false){hideFlags=HideFlags.HideAndDontSave};var oldColor=camera.backgroundColor;
-  try{
-   camera.backgroundColor=new Color(0,0,0,0);PortraitLighting.Render(camera);RenderTexture.active=target;texture.ReadPixels(new Rect(0,0,target.width,target.height),0,0,false);var black=texture.GetRawTextureData();
-   camera.backgroundColor=new Color(1,1,1,0);PortraitLighting.Render(camera);RenderTexture.active=target;texture.ReadPixels(new Rect(0,0,target.width,target.height),0,0,false);var white=texture.GetRawTextureData();
-   return new PortraitBuffers{Black=black,White=white,Format=texture.graphicsFormat};
-  }finally{camera.backgroundColor=oldColor;UnityEngine.Object.Destroy(texture);}
- }
  // Detached byte arrays only. EncodeArrayToPNG is documented thread-safe; no Texture2D/native-array access here.
  static PortraitResult ProcessPortrait(byte[] black,byte[] white,int width,int height,UnityEngine.Experimental.Rendering.GraphicsFormat format,bool linear){
   var clock=Stopwatch.StartNew();RuntimeArtPixels.ReconstructMatte(black,white,linear);

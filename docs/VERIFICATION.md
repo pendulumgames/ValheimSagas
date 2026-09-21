@@ -1,3 +1,15 @@
+# 0.3.15 staged portrait verification
+
+Verified September 21, 2026. Plugin compilation passed against installed assemblies: zero errors and two existing MSB3277 reference-unification warnings. Full regression suites passed: 2,486 Core assertions, 80 lore checks, 21,964 terrain checks, 1,544 portrait/pixel/scheduling/resource-lifetime checks, and 171 installed-API metadata checks. Website JavaScript syntax passed; website UI assets are unchanged. Local evidence: `.dev/staged0315-verified.log`.
+
+New checks exercise no periodic refresh, two-second debounce/ten-second cooldown, sitting/standing deferral, cancellation ownership until all callbacks complete, partial submission failure, per-frame timing aggregation and consent-aware saved-portrait retention. The installed Humanoid sitting override, Player attachment API and AsyncGPUReadback signatures were inspected directly. These checks do not execute the GPU capture pipeline.
+
+The isolated installed-Unity-Mono HTTP probe passed persistence, portrait/media delivery, public/private access, optional integrations, login and encrypted Saga Profile keys. Updated its old key fixture to create a named Saga Profile. Its missing MonoPosixHelper warning exercises the existing identity-compression fallback; its deliberately injected HTTP500 remains observable with a correlation ID. No game instance or real provider request ran. Evidence: `.dev/mono-http-0315-final/report.txt`.
+
+Unity requires readback data to be consumed during its valid callback frame and temporary targets to remain alive until completion: [AsyncGPUReadbackRequest](https://docs.unity3d.com/ja/current/ScriptReference/Rendering.AsyncGPUReadbackRequest.html), [AsyncGPUReadback.Request](https://docs.unity3d.com/jp/current/ScriptReference/Rendering.AsyncGPUReadback.Request.html). Sagas copies pixels in callbacks and retains textures/model resources through cancellation. There is no blocking readback fallback. The existing detached-array PNG encoder remains on a background task.
+
+Preparation yields between bounded work units; black/white render pairs run together to preserve shader-time consistency. Individual native render, pose-snapshot and callback-copy operations still run on the main thread. No percentage improvement or hitch-free guarantee is claimed. Actual image orientation, framing, body/effects, sitting suppression, cancellation behavior and maximum frame cost require the new IN-GAME-TESTS.md playtest, followed by dedicated-server acceptance.
+
 # 0.3.14 portrait optimization verification
 
 Verified September 20, 2026. Build passed with zero errors and two existing MSB3277 warnings. Full suites passed: 2,484 Core assertions, 80 lore checks, 21,964 terrain checks, 1,520 portrait/pixel/scheduling checks, and 166 installed-assembly metadata checks. Final plugin build also passed after preserving the simplified-portrait status.

@@ -71,3 +71,13 @@ Repeat with host and clients upgraded on the dedicated server before declaring t
 Confirm 0.3.14 in the startup log. Stand/play with unchanged gear for several minutes: there should be no minute-by-minute portrait renders. Change weapon, shield, armor, hair or cosmetics; after the outfit settles (and any capture/upload cooldown), verify a new correctly oriented portrait with body, transparency and weapon effects. Old imagery should remain visible during processing. An unchanged character has a ten-minute fallback refresh.
 
 Compare `Sagas portrait timings` preparation, visibility/framing, final render/readback and background matte/encode values with the previous approximately 223 ms combined capture. Background timings do not block the Unity update. Check rapid swaps and disabling profile sharing during processing: an old job must not publish a stale or private portrait. Check logout/rejoin and world changes. No asynchronous GPU readback or frame-spread rendering is used.
+
+
+## 0.3.15 staged portrait acceptance
+
+1. Run Gale Test and host the isolated test world. Open the website; check the full body, upright orientation, feet/framing, neutral lighting and equipped weapon effects after capture finishes. A short delay is expected while preparation, readback and upload complete.
+2. Leave appearance unchanged for at least ten minutes. No periodic portrait capture should start. Swap weapons several times rapidly, then settle; expect a replacement after debounce and at least ten seconds between capture starts. Compare `Sagas staged portrait` maximum main-thread work/frame with the previous 48–110 ms synchronous captures. Background encode time is not a main-thread stall measurement.
+3. Change gear while seated on the ground or in a chair. Keep the saved portrait until standing and settled. Repeat on a fresh profile without a saved image (placeholder until eligible), and while attached to a bed. A seated pose must not be published.
+4. During preparation, change gear again, log out/change worlds, or revoke profile sharing. No outdated image should be published. Restore sharing and verify recovery; revocation must still deny media access. Confirm saved artwork survives logout and host restart.
+5. On a graphics backend without asynchronous readback, expect `async-readback-unavailable` and retained artwork, not a blocking fallback. Capture failures retry no faster than once per minute. Report graphics backend and complete logs if images are empty, inverted or stuck.
+6. Retest on a dedicated host with two clients: each client generates its own image; the server persists and serves it. Monitor frame timings and network backpressure independently. Automated checks do not establish hitch-free gameplay or multiplayer performance.

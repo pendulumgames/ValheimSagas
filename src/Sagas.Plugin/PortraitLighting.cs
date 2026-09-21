@@ -12,8 +12,8 @@ internal static class PortraitLighting {
  // reflection below is essential for metallic armor, whose diffuse term is
  // deliberately small. Increasing the key alone just clips shiny highlights.
  static readonly Color Ambient=new Color(.62f,.62f,.62f,1);
- public static void Render(Camera camera){
-  var reflection=CreateStudioReflection();
+ public static void Render(Camera camera,Cubemap? reflection=null){
+  bool owned=!reflection;if(owned)reflection=CreateStudioReflection();
   try{
   using(var state=new TemporaryRenderState()){
    var root=camera.transform.parent;
@@ -58,9 +58,9 @@ internal static class PortraitLighting {
    state.Set(()=>Shader.GetGlobalFloat(Wet),value=>Shader.SetGlobalFloat(Wet,value),0f);
    camera.Render();
   }
-  }finally{Object.Destroy(reflection);}
+  }finally{if(owned)Object.Destroy(reflection);}
  }
- static Cubemap CreateStudioReflection(){
+ internal static Cubemap CreateStudioReflection(){
   // Original procedural illumination, not the current world's sky/lighting.
   // HDR texture values are linear. A broad neutral ceiling and darker floor
   // give metal form without a sharp sun hotspot. Mips keep rough armor soft.

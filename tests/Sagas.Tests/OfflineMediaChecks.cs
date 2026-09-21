@@ -22,6 +22,8 @@ static class OfflineMediaChecks {
   using(var service=new SagaService(options)){
    service.Start();service.UpdatePlayer(p);service.UpdatePlayer(new(){World=options.World,PlayerId="remaining",Name="Synthetic Remaining Viking",Online=true});
    service.UploadMedia(new(){World=options.World,PlayerId=p.PlayerId,Id=id,Kind="icon",Png=png});service.Flush();
+   p.PortraitId="";p.PortraitStatus="waiting-for-standing";service.UpdatePlayer(p);service.Flush();
+   check(service.Store.Players(options.World).Single(v=>v.PlayerId==p.PlayerId).PortraitId==id,"Deferred seated capture preserves the previous consented portrait");p.PortraitId=id;
    service.SetOffline(options.World,p.PlayerId);check(service.Flush(),"Player logout committed before media check");
    using var client=new HttpClient{BaseAddress=new Uri(options.ListenPrefix)};await Verify(client,"After logout with another player online");
    check((await client.GetAsync(Url("remaining"))).StatusCode==HttpStatusCode.NotFound && (await client.GetAsync(Url(world:"another-world"))).StatusCode==HttpStatusCode.NotFound,"Offline art remains scoped to player and world");
@@ -31,7 +33,9 @@ static class OfflineMediaChecks {
    service.Start();using var client=new HttpClient{BaseAddress=new Uri(options.ListenPrefix)};await Verify(client,"After host restart");
    p.Online=false;p.ShareProfile=false;service.UpdatePlayer(p);service.Flush();
    check((await client.GetAsync(Url())).StatusCode==HttpStatusCode.NotFound,"Offline media respects explicit profile privacy revocation");
-   p.ShareProfile=true;service.UpdatePlayer(p);service.Flush();
+   p.ShareProfile=true;p.PortraitId="";service.UpdatePlayer(p);service.Flush();
+   check(service.Store.Players(options.World).Single(v=>v.PlayerId==p.PlayerId).PortraitId=="","Deferred capture never restores a previously revoked portrait reference");
+   p.PortraitId=id;service.UpdatePlayer(p);service.Flush();
    check((await client.GetAsync(Url())).IsSuccessStatusCode,"Restoring profile sharing recovers persisted media without another client upload");
   }
  }

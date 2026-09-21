@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Http.Headers;
 var root=Path.Combine(Path.GetTempPath(),"sagas-tests-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(root);int assertions=0;
 void Check(bool yes,string message){assertions++;if(Environment.GetEnvironmentVariable("SAGAS_TEST_TRACE")=="1")Console.WriteLine("CHECK "+assertions+": "+message+" = "+yes);if(!yes)throw new Exception(message);}
+if(args.Contains("--offline-media-only")){await OfflineMediaChecks.Run(root,Check);Console.WriteLine($"PASS {assertions} deferred/offline portrait assertions.");Directory.Delete(root,true);return;}
 if(args.Contains("--sls-only")){SlsChecks.Run(root,Check);Console.WriteLine($"PASS {assertions} SLS assertions.");Directory.Delete(root,true);return;}
 if(args.Contains("--nemesis-only")){NemesisChecks.Run(root,Check);Console.WriteLine($"PASS {assertions} Nemesis assertions.");Directory.Delete(root,true);return;}
 if(args.Contains("--personal-lore-only")){await PersonalLoreChecks.Run(root,Check);Console.WriteLine($"PASS {assertions} personal storyteller assertions.");Directory.Delete(root,true);return;}

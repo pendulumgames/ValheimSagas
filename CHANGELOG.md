@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.15
+
+- Spread portrait preparation, bone copying, equipment effects and visibility/framing passes across frames. Freeze the character pose before preparation; retain native skinned rendering and weapon effects.
+- Replace synchronous portrait pixel readback with bounded asynchronous GPU requests. Copy callback data into detached arrays, then reconstruct transparency and encode PNGs in the background. Keep GPU resources alive until callbacks finish, including cancellation and partial submission failures. Unsupported graphics devices retain the saved portrait instead of falling back to blocking readback.
+- Capture only after appearance changes settle: two-second debounce and ten-second minimum cooldown, with no periodic refresh. Defer seated/attached poses until standing and settled; keep the last shared portrait during deferred capture and upload. Profile privacy revocation still removes access.
+- Add per-frame capture-work timing. Automated checks cover scheduling, resource lifetime, pixels, persistence and installed APIs; real GPU appearance and frame-time improvements require a playtest. Individual Unity render operations still execute on the main thread.
+
 ## 0.3.14
 
 - Refresh portraits after settled equipment/cosmetic changes, with a two-second debounce, ten-second capture cooldown and ten-minute safety refresh instead of rebuilding every minute. Failed captures retry no faster than once per minute.
