@@ -14,7 +14,7 @@ using Newtonsoft.Json;
 using UnityEngine;
 namespace ValheimSagas;
 
-[BepInPlugin("org.valheimsagas.collector", "Valheim Sagas", "0.3.15")]
+[BepInPlugin("org.valheimsagas.collector", "Valheim Sagas", "0.3.16")]
 [BepInDependency("randyknapp.mods.epicloot", BepInDependency.DependencyFlags.SoftDependency)]
 [BepInDependency("MidnightsFX.StarLevelSystem", BepInDependency.DependencyFlags.SoftDependency)]
 public sealed partial class SagasPlugin : BaseUnityPlugin {
@@ -24,7 +24,7 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
  internal static string EventId(string kind,ZDOID zdo) {using var sha=SHA256.Create();return kind+":"+BitConverter.ToString(sha.ComputeHash(Encoding.UTF8.GetBytes(World+":"+zdo))).Replace("-", "").ToLowerInvariant();}
  internal static string Localize(string value) => Localization.instance == null ? value : Localization.instance.Localize(value);
  RuntimeArt? artwork; readonly Dictionary<string,Packet> pendingMedia=new Dictionary<string,Packet>(); readonly Dictionary<string,float> sentMedia=new Dictionary<string,float>(); readonly HashSet<string> fullyMapped=new HashSet<string>(); readonly Dictionary<string,string> tileVersions=new Dictionary<string,string>(); ConfigEntry<bool> notifications=null!; ConfigEntry<string> serverName=null!,serverAddress=null!;
- SagaService? service; Harmony? harmony; Outbox? outbox;
+ SagaService? service; readonly AsyncResource<StartedService> serviceStartup=new AsyncResource<StartedService>(); float nextServiceStart; Harmony? harmony; Outbox? outbox;
  readonly Dictionary<string,Packet> pendingMaps=new Dictionary<string,Packet>();
  ConfigEntry<bool> requireToken=null!,host=null!, shareMap=null!, sharePosition=null!,shareProfile=null!;
  ConfigEntry<string> model=null!; ConfigEntry<int> daily=null!,cooldown=null!,milestones=null!,retention=null!,statisticsRetention=null!;
@@ -70,11 +70,14 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
   harmony=new Harmony("org.valheimsagas.collector"); harmony.PatchAll(typeof(SagasPlugin).Assembly);
   Logger.LogInfo("Valheim Sagas loaded; telemetry hooks installed. No external map dependency.");
  }
- void StopService(){slsCapture?.Dispose();slsCapture=null;if(service==null)return;foreach(var id in online.Values.Distinct())service.SetOffline(activeWorld,id);if(lastLocalId!="")service.SetOffline(activeWorld,lastLocalId);lastLocalId="";service.Dispose();service=null;}
+ sealed class StartedService:IDisposable {internal SagaService Service=null!;internal string[] Characters=Array.Empty<string>();internal double Milliseconds;public void Dispose()=>Service.Dispose();}
+ void StopService(){slsCapture?.Dispose();slsCapture=null;var ids=online.Values.Concat(new[]{lastLocalId}).Where(x=>x!="").Distinct().ToArray();var world=activeWorld;service=null;lastLocalId="";serviceStartup.Retire(started=>{foreach(var id in ids)started.Service.SetOffline(world,id);});}
  void OnDestroy() { artwork?.Clear(); GuardLogin(ClearLoginClipboard); RuntimeTerrain.Clear(); outbox?.Finish(pending.Values.ToArray());StopService(); harmony?.UnpatchSelf(); Instance=null; }
  void Update() {
   GuardLogin(UpdateLogin);
   artwork?.PumpPortrait(Player.m_localPlayer,shareProfile.Value,World);
+  RunStage("terrain preparation",RuntimeTerrainShader.Pump);
+  if(!RuntimeTerrainShader.Pending)RunStage("item icon capture",()=>artwork?.PumpIcons(shareProfile.Value));
   while(committed.TryDequeue(out var action)) {try{action();}catch{}}
   if(Time.unscaledTime>=nextTick){nextTick=Time.unscaledTime+3;RunStage("world update",Tick);}
   RunStage("SLS capture slice",RefreshSls);
@@ -92,8 +95,15 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
   if(activeWorld!=World||!ZNet.instance||ZNet.instance.GetWorldUID()==0){telemetryBudget.Reset(Time.unscaledTime);retryAfter.Clear();outboundProfile=null;}
   if(!ZNet.instance || ZNet.instance.GetWorldUID()==0) { RuntimeTerrain.Clear(); outbox?.Finish(pending.Values.ToArray());outbox=null; StopService(); activeWorld="";registered.Clear();online.Clear();pending.Clear();mediaTransfer.Clear();mediaCursors.Clear();return; }
   if(activeWorld!=World) {outbox?.Finish(pending.Values.ToArray());StopService();service=null;activeWorld=World;nextSlsRefresh=0;mediaTransfer.Clear();mediaCursors.Clear();knownCharacters.Clear();registered.Clear();online.Clear();pending.Clear();sentCells.Clear();tileVersions.Clear();fullyMapped.Clear();RuntimeTerrain.Clear();pendingMedia.Clear();sentMedia.Clear();artwork?.Clear();mapCursor=0;importing=true;pendingMaps.Clear();journalId="";outbox=null;}
-  if(ZNet.instance.IsServer() && service==null) {
-   service=new SagaService(new SagaOptions{DataDirectory=data.Value,WebDirectory=Path.Combine(Path.GetDirectoryName(Info.Location)!,"web"),ListenPrefix=host.Value?prefix.Value:"",ViewerToken=token.Value,RequireViewerToken=requireToken.Value,World=World,WorldName=ZNet.instance.GetWorldName(),ServerName=WebsiteServerName(),ServerAddress=serverAddress.Value,SlsInstalled=SlsAdapter.Installed,LoreEnabled=lore.Value,LoreModel=model.Value,LoreAllowPaid=allowPaidLore.Value,LoreUseAccountPricing=true,LoreDailyBudget=Math.Max(0,daily.Value),LoreCooldownMinutes=Math.Max(1,cooldown.Value),LoreMilestoneEvents=Math.Max(1,milestones.Value),RetentionDays=Math.Max(0,retention.Value),StatisticsRetentionDays=statisticsRetention.Value<=0?0:Math.Max(retention.Value,statisticsRetention.Value),Log=message=>Logger.LogWarning(message),OpenRouterKey=Environment.GetEnvironmentVariable("OPENROUTER_API_KEY")??key.Value}); service.Start();foreach(var stored in service.Store.Players(World))knownCharacters.Add(stored.PlayerId);
+  if(ZNet.instance.IsServer() && service==null && Time.unscaledTime>=nextServiceStart) {
+   try {
+    if(serviceStartup.Poll()){var ready=serviceStartup.Current!;service=ready.Service;foreach(var id in ready.Characters)knownCharacters.Add(id);Logger.LogInfo("Sagas background service startup completed in "+ready.Milliseconds.ToString("F1",CultureInfo.InvariantCulture)+" ms (worker time).");}
+    else if(!serviceStartup.Busy){
+     // Snapshot all Unity/configuration values before entering the worker.
+     var options=new SagaOptions{DataDirectory=data.Value,WebDirectory=Path.Combine(Path.GetDirectoryName(Info.Location)!,"web"),ListenPrefix=host.Value?prefix.Value:"",ViewerToken=token.Value,RequireViewerToken=requireToken.Value,World=World,WorldName=ZNet.instance.GetWorldName(),ServerName=WebsiteServerName(),ServerAddress=serverAddress.Value,SlsInstalled=SlsAdapter.Installed,LoreEnabled=lore.Value,LoreModel=model.Value,LoreAllowPaid=allowPaidLore.Value,LoreUseAccountPricing=true,LoreDailyBudget=Math.Max(0,daily.Value),LoreCooldownMinutes=Math.Max(1,cooldown.Value),LoreMilestoneEvents=Math.Max(1,milestones.Value),RetentionDays=Math.Max(0,retention.Value),StatisticsRetentionDays=statisticsRetention.Value<=0?0:Math.Max(retention.Value,statisticsRetention.Value),Log=message=>Logger.LogWarning(message),OpenRouterKey=Environment.GetEnvironmentVariable("OPENROUTER_API_KEY")??key.Value};
+     serviceStartup.Begin(()=>{var timer=System.Diagnostics.Stopwatch.StartNew();var created=new SagaService(options);try{created.Start();return new StartedService{Service=created,Characters=created.Store.Players(options.World).Select(p=>p.PlayerId).ToArray(),Milliseconds=timer.Elapsed.TotalMilliseconds};}catch{created.Dispose();throw;}});
+    }
+   }catch(Exception e){nextServiceStart=Time.unscaledTime+60;Warn("background service startup",e);}
   }
 
   foreach(var peer in ZNet.instance.GetPeers()) if(peer.IsReady() && registered.Add(peer.m_rpc)) {
@@ -114,7 +124,7 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
   }
   var player=Player.m_localPlayer;
   var nextJournal=player&&player.GetPlayerID()!=0?(ZNet.instance.IsServer()?"host-":"")+Identity(player.GetPlayerID()):ZNet.instance.IsServer()?"server":"";
-  if(nextJournal!=""&&journalId!=nextJournal){outbox?.Finish(pending.Values.ToArray());if(journalId!="")pending.Clear();sentCells.Clear();tileVersions.Clear();fullyMapped.Clear();RuntimeTerrain.Clear();pendingMedia.Clear();sentMedia.Clear();artwork?.Clear();pendingMaps.Clear();mapCursor=0;importing=true;journalId=nextJournal;outbox=new Outbox(data.Value,World+"-"+journalId,message=>Logger.LogWarning(message));foreach(var e in outbox.Load().Where(e=>e.World==World&&SagaService.ValidEvent(e)).Take(4096))pending[e.Id]=e;}
+  if(nextJournal!=""&&journalId!=nextJournal){outbox?.Finish(pending.Values.ToArray());if(journalId!="")pending.Clear();sentCells.Clear();tileVersions.Clear();fullyMapped.Clear();RuntimeTerrain.Clear();pendingMedia.Clear();sentMedia.Clear();artwork?.Clear();pendingMaps.Clear();mapCursor=0;importing=true;journalId=nextJournal;RunStage("outbox startup",()=>{outbox=new Outbox(data.Value,World+"-"+journalId,message=>Logger.LogWarning(message));foreach(var e in outbox.Load().Where(e=>e.World==World&&SagaService.ValidEvent(e)).Take(4096))pending[e.Id]=e;});}
 
   if(player && player.GetPlayerID()!=0) {
    // Local hosts have no peer entry. Presence must not depend on equipment adapters.
@@ -134,7 +144,7 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
   if(packet.Player!=null&&(packet.Player.ShareProfile!=shareProfile.Value||packet.Player.ShareMap!=shareMap.Value))return false;
   var retryKey=packet.Event?.Id??packet.AckId;
   if(retryKey!=""&&retryAfter.TryGetValue(retryKey,out var due)&&Time.unscaledTime<due)return false;
-  if(ZNet.instance.IsServer()){Apply(packet,0,null);if(retryKey!="")retryAfter[retryKey]=Time.unscaledTime+30;return true;}
+  if(ZNet.instance.IsServer()){if(service==null)return false;Apply(packet,0,null);if(retryKey!="")retryAfter[retryKey]=Time.unscaledTime+30;return true;}
   var peer=ZNet.instance.GetServerPeer(); if(peer==null||!peer.IsReady())return false;
   int queued=peer.m_socket.GetSendQueueSize();
   if(queued>=TelemetryBudget.QueueThreshold){if(!nextWarning.TryGetValue("network pressure",out var next)||Time.unscaledTime>=next){nextWarning["network pressure"]=Time.unscaledTime+60;Logger.LogWarning("Sagas uploads paused: game connection has "+queued+" queued bytes. Gameplay traffic takes priority; telemetry remains pending.");}return false;}
@@ -209,7 +219,7 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
   return s;
  }
  void SyncMap(Player p) {
-  if(!shareMap.Value||!Minimap.instance||WorldGenerator.instance==null||pendingMaps.Count>=2)return;
+  if(!shareMap.Value||!Minimap.instance||WorldGenerator.instance==null||pendingMaps.Count>=2||RuntimeTerrainShader.Pending)return;
   var map=Minimap.instance;var bits=exploredField.GetValue(map) as BitArray;if(bits==null)return;
   // Every exported sample is personally known; shader capture never exports cartography-only terrain.
   var batch=new ExplorationBatch{World=World,PlayerId=Identity(p.GetPlayerID()),Imported=importing};
@@ -222,7 +232,7 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
    AddCell(cx,cz);
   }
   void AddCell(int cx,int cz) {
-   if(payloadBytes>74000){full=true;return;}var keyCell=cx+":"+cz;if(fullyMapped.Contains(keyCell))return;var pixels=RuntimeTerrain.Capture(map,bits,cx,cz);if(pixels=="")return;var rgba=Convert.FromBase64String(pixels);using var tileHash=SHA256.Create();var signature=Convert.ToBase64String(tileHash.ComputeHash(rgba));if(tileVersions.TryGetValue(keyCell,out var previous)&&previous==signature)return;payloadBytes+=pixels.Length;if(payloadBytes>74000)full=true;tileVersions[keyCell]=signature;if(Enumerable.Range(0,rgba.Length/4).All(i=>rgba[i*4+3]==255))fullyMapped.Add(keyCell);
+   if(payloadBytes>74000){full=true;return;}var keyCell=cx+":"+cz;if(fullyMapped.Contains(keyCell))return;var pixels=RuntimeTerrain.Capture(map,bits,cx,cz);if(pixels==""){if(RuntimeTerrainShader.Pending)full=true;return;}var rgba=Convert.FromBase64String(pixels);using var tileHash=SHA256.Create();var signature=Convert.ToBase64String(tileHash.ComputeHash(rgba));if(tileVersions.TryGetValue(keyCell,out var previous)&&previous==signature)return;payloadBytes+=pixels.Length;if(payloadBytes>74000)full=true;tileVersions[keyCell]=signature;if(Enumerable.Range(0,rgba.Length/4).All(i=>rgba[i*4+3]==255))fullyMapped.Add(keyCell);
    var wx=(cx+.5f)*64;var wz=(cz+.5f)*64;
    batch.Cells.Add(new MapCell{X=cx,Z=cz,Biome="Explored terrain",Height=0,TerrainPixels=pixels});sentCells.Add(keyCell);full=true; // One terrain tile per paced packet.
   }

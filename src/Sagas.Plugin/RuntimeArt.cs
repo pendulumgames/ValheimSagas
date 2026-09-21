@@ -28,6 +28,7 @@ internal sealed partial class RuntimeArt {
  readonly Action<string,Exception> warn;
  readonly Dictionary<int,Image> icons=new Dictionary<int,Image>();
  readonly Queue<int> iconOrder=new Queue<int>();
+ readonly Queue<(int Key,Sprite Sprite)> iconRequests=new Queue<(int,Sprite)>();readonly HashSet<int> requestedIcons=new HashSet<int>();double iconBatchMaximum;
  Image? portrait;
  long portraitPlayer;
  readonly PortraitRefresh refresh=new PortraitRefresh();
@@ -47,15 +48,23 @@ internal sealed partial class RuntimeArt {
  public string Status {get;private set;}="waiting-for-player";
  public RuntimeArt(Action<string,Exception> warning){warn=warning;}
  void CheckThread(){if(Thread.CurrentThread.ManagedThreadId!=thread)throw new InvalidOperationException("Runtime artwork requires Unity's main thread.");}
- public void Clear(){CheckThread();CancelCapture();icons.Clear();iconOrder.Clear();portrait=null;portraitPlayer=0;generation++;refresh.Reset();forceSimplified=false;Status="waiting-for-player";}
+ public void Clear(){CheckThread();CancelCapture();iconRequests.Clear();requestedIcons.Clear();iconBatchMaximum=0;icons.Clear();iconOrder.Clear();portrait=null;portraitPlayer=0;generation++;refresh.Reset();forceSimplified=false;Status="waiting-for-player";}
 
  public Image? TryIcon(ItemDrop.ItemData item) {
-  CheckThread();
-  try {
-   // Installed ItemData.GetIcon selects the current variant (including modded icons).
-   if(item.m_shared.m_icons==null||item.m_variant<0||item.m_variant>=item.m_shared.m_icons.Length)return null;
-   var sprite=item.GetIcon();if(!sprite||!sprite.texture)return null;
-   int key=sprite.GetInstanceID();if(icons.TryGetValue(key,out var known))return known;
+  CheckThread();try{if(item.m_shared.m_icons==null||item.m_variant<0||item.m_variant>=item.m_shared.m_icons.Length)return null;
+  var sprite=item.GetIcon();if(!sprite||!sprite.texture)return null;int key=sprite.GetInstanceID();
+  if(icons.TryGetValue(key,out var known))return known;
+  if(requestedIcons.Count<MaximumIcons&&requestedIcons.Add(key))iconRequests.Enqueue((key,sprite));
+  return null;}catch(Exception e){warn("item icon request",e);return null;}
+ }
+ public void PumpIcons(bool permitted){
+  CheckThread();if(!permitted){iconRequests.Clear();requestedIcons.Clear();return;}if(capture!=null||iconRequests.Count==0)return;
+  var timer=Stopwatch.StartNew();var request=iconRequests.Dequeue();requestedIcons.Remove(request.Key);if(request.Sprite)CaptureIcon(request.Sprite);
+  iconBatchMaximum=Math.Max(iconBatchMaximum,timer.Elapsed.TotalMilliseconds);
+  if(iconRequests.Count==0){Debug.Log("Sagas icon queue drained: max one-icon main-thread work="+iconBatchMaximum.ToString("F1")+" ms.");iconBatchMaximum=0;}
+ }
+ Image? CaptureIcon(Sprite sprite){
+  try {if(!sprite||!sprite.texture)return null;int key=sprite.GetInstanceID();
    var rect=sprite.textureRect;
    var source=sprite.texture;
    int width=Mathf.Clamp(Mathf.RoundToInt(rect.width),1,96),height=Mathf.Clamp(Mathf.RoundToInt(rect.height),1,96);
@@ -93,7 +102,7 @@ internal sealed partial class RuntimeArt {
   if(probeProcessing!=null){if(!probeProcessing.IsCompleted)return portrait;_ = probeProcessing.Exception;probeProcessing=null;}
   if(!allowRefresh||!due||PortraitReadbackPair.PendingRequests!=0)return portrait;
   refresh.Started(now);Status="preparing";
-  captureSignature=signature;capturePlayer=player;captureWorld=SagasPlugin.World;captureGeneration=generation;captureStarted=now;captureTiming.Reset();captureSteps=0;
+  captureSignature=signature;capturePlayer=player;captureWorld=SagasPlugin.World;captureGeneration=generation;captureStarted=now;captureTiming.Reset();capturePhaseMax.Clear();captureSteps=0;
   capture=BuildPortrait(player,signature).GetEnumerator();return portrait;
  }
 

@@ -178,4 +178,5 @@ try{restoreScope.Dispose();Check(false,"native restore error is reported");}catc
 Check(restoreOrder.SequenceEqual(new[]{3,2,1}),"one restore failure cannot skip other scene restoration");
 restoreScope.Dispose();Check(restoreOrder.Count==3,"dispose is idempotent after restoration failure");
 try{restoreScope.Remember(()=>{});Check(false,"disposed scopes reject new scene mutations");}catch(ObjectDisposedException){Check(true,"disposed scope cannot leak new mutations");}
+await StartupChecks.Run(Check);
 Console.WriteLine($"PASS {checks} synthetic portrait alpha reconstruction, emission, visibility, scale, camera-framing and render-state restoration checks. This does not validate GPU rendering.");

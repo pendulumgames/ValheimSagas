@@ -81,3 +81,12 @@ Compare `Sagas portrait timings` preparation, visibility/framing, final render/r
 4. During preparation, change gear again, log out/change worlds, or revoke profile sharing. No outdated image should be published. Restore sharing and verify recovery; revocation must still deny media access. Confirm saved artwork survives logout and host restart.
 5. On a graphics backend without asynchronous readback, expect `async-readback-unavailable` and retained artwork, not a blocking fallback. Capture failures retry no faster than once per minute. Report graphics backend and complete logs if images are empty, inverted or stuck.
 6. Retest on a dedicated host with two clients: each client generates its own image; the server persists and serves it. Monitor frame timings and network backpressure independently. Automated checks do not establish hitch-free gameplay or multiplayer performance.
+
+
+## 0.3.16 startup acceptance
+
+1. Restart Gale Test fully, host the isolated world and compare startup logs against the previous 334 ms world update, 106 ms equipment and 231 ms exploration samples. Look for background service startup (worker time), atlas render/setup, atlas callback maximum, icon queue maximum and portrait phase costs. Worker elapsed time is not a frame stall; individual render operations still require real measurements.
+2. Confirm the website becomes available, the live player appears, initial events eventually arrive once, and equipment icons populate after the queue drains. Check current gear matches the latest rapid swaps, including switching before icons finish.
+3. Verify map orientation/colors and fog boundaries match the in-game map. A coherent atlas must appear after preparation; no transient blocky fallback tiles should be exported while it is pending. Explore more terrain and verify ongoing updates.
+4. Leave/change worlds during startup/map preparation, then immediately reconnect. No old-world atlas, stale service or locked database should be adopted. Close and reopen the host and confirm queued events and saved media survive. Revoke sharing during preparation and verify no private media/map export.
+5. Repeat on the dedicated host with two clients. Host initialization should run off-thread; graphical map, icon and portrait work remains on clients. Test unsupported/failed graphics readback separately where available; degraded terrain is explicitly logged. No dedicated acceptance is claimed by automated tests.

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.16
+
+- Construct host storage and website services on a worker. Keep local telemetry pending until adoption; retire abandoned startup and drain active storage off-thread before reopening the database.
+- Read the coherent world atlas asynchronously in bounded strips, avoiding the full-image synchronous GPU readback and 64 MB main-thread copy. Export only complete, personally fog-masked tiles; pending capture never publishes temporary fallback tiles. Preserve explicit degraded terrain fallback on unsupported/failed readback.
+- Queue uncached item icons and render at most one per frame, outside equipment snapshots and active portrait/map preparation. Equipment can arrive before its icons.
+- Log atlas setup/readback, icon batch maximum, outbox startup and per-phase portrait costs. Startup timing improvements still need a fresh game session; individual Unity render calls remain on the main thread.
+
 ## 0.3.15
 
 - Spread portrait preparation, bone copying, equipment effects and visibility/framing passes across frames. Freeze the character pose before preparation; retain native skinned rendering and weapon effects.

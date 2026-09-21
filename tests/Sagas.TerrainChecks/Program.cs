@@ -80,4 +80,12 @@ sw.Restart();
 for(int i=0;i<16000;i++)HasKnown(empty,2048,12,i%40-20,i/40%40-20);
 double baselineMs=sw.Elapsed.TotalMilliseconds;sw.Restart();
 for(int i=0;i<16000;i++)RuntimeTerrainMask.MayContainKnownSquare(empty,2048,12,i%40-20,i/40%40-20);
+// Strip boundaries must reproduce the original coherent image, including bilinear interpolation across rows.
+var stripRandom=new Random(316);var flatAtlas=new byte[64*64*4];stripRandom.NextBytes(flatAtlas);var strips=new StripAtlas(64,8);
+for(int row=0;row<64;row+=8)strips.Add(row,flatAtlas.Skip(row*64*4).Take(8*64*4).ToArray());
+Check(strips.Complete&&strips.Visible,"Detached strips complete coherent atlas");
+for(int z=-3;z<=3;z++)for(int x=-3;x<=3;x++)Check(strips.Tile(256,x,z).SequenceEqual(TerrainAtlasSampling.Tile(flatAtlas,64,256,x,z)),"Strip and flat sampling match across boundaries and edges");
+try{new StripAtlas(64,8).Tile(256,0,0);Check(false,"Incomplete atlas rejected");}catch(InvalidOperationException){Check(true,"No partial atlas is published");}
+try{new StripAtlas(64,8).Add(8,new byte[8*64*4]);Check(false,"Out of order rejected");}catch(ArgumentException){Check(true,"Strip ordering enforced");}
+try{new StripAtlas(64,8).Add(0,new byte[1]);Check(false,"Malformed strip rejected");}catch(ArgumentException){Check(true,"Strip dimensions enforced");}
 Console.WriteLine($"PASS {checks} synthetic fog and coherent-atlas checks. Empty-cell16000 reference={baselineMs:F2}ms precheck={sw.Elapsed.TotalMilliseconds:F2}ms (development runtime only).");

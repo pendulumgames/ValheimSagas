@@ -17,6 +17,7 @@ internal static class RuntimeTerrain {
    for(int i=0;i<knownPixels.Length;i++)if(knownPixels[i]){output[i*4]=rendered[i*4];output[i*4+1]=rendered[i*4+1];output[i*4+2]=rendered[i*4+2];output[i*4+3]=255;}
    return Convert.ToBase64String(output);
   }
+  if(RuntimeTerrainShader.Pending)return ""; // Preparing is not a failed atlas; never publish temporary fallback tiles.
   // Explicitly degraded16x16 fallback, already logged by RuntimeTerrainShader.
   var heights=heightField.GetValue(map) as Texture2D;var forests=forestField.GetValue(map) as Texture2D;var bytes=new byte[16*16*4];bool any=false;
   for(int z=0;z<16;z++)for(int x=0;x<16;x++){

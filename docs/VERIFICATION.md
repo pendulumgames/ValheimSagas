@@ -1,3 +1,13 @@
+# 0.3.16 startup work verification
+
+Verified September 21, 2026. Final plugin build passed against installed Valheim/Unity/BepInEx assemblies (zero errors, two existing MSB3277 warnings). Full suites: 2,486 Core assertions, 80 lore, 22,017 terrain, 1,556 portrait/lifecycle and 172 installed metadata checks; final focused portrait/lifecycle rerun passed 1,557 after adding retirement-error recovery. Website JavaScript syntax passed; website UI is unchanged. Local logs: `.dev/startup0316-tests.log`, `.dev/startup0316-finalbuild.log`.
+
+Production background-resource tests cover slow construction, nonblocking retirement, preventing simultaneous reopen, discarded startup, duplicate calls, constructor failure, shutdown failure and retry. Installed Unity Mono separately passed real worker service construction/start, draining queued synthetic player data, asynchronous disposal, and reopening the same database with persisted data and reset presence. Reproduce with `scripts/test-unity-mono.ps1 -Method RunStartup`; evidence `.dev/mono-startup-0316/report.txt`. No live game or server was altered by these tests.
+
+Terrain tests compare byte-identical flat/strip atlas sampling across strip boundaries and clamped edges, reject partial/malformed/out-of-order strips, and retain existing fog checks. Installed metadata confirms the rectangular AsyncGPUReadback.Request overload. The GPU target is rendered once; each request copies at most 32 rows (512 KiB at 4096 width) and retains resources through callback completion on cancellation. Existing tested readback-lifetime policy is shared with portraits. Pending atlas work does not export degraded fallback tiles.
+
+The 0.3.15 local playtest produced nine ready portraits; seven subsequent capture maxima were 3.5-3.9 ms, one 12.3 ms, initial 42.6 ms. Startup warnings were world update334.2 ms, equipment106.3 ms and exploration231.2 ms. Those are the baseline, not measurements of 0.3.16. New logs separate worker startup, atlas render/setup, strip callback copy, icon batch maximum and portrait phases. Real GPU map appearance/orientation, first-use render costs, world-change cancellation and dedicated-host performance still need the new IN-GAME-TESTS.md session. No hitch-free guarantee or paid provider call.
+
 # 0.3.15 staged portrait verification
 
 Verified September 21, 2026. Plugin compilation passed against installed assemblies: zero errors and two existing MSB3277 reference-unification warnings. Full regression suites passed: 2,486 Core assertions, 80 lore checks, 21,964 terrain checks, 1,544 portrait/pixel/scheduling/resource-lifetime checks, and 171 installed-API metadata checks. Website JavaScript syntax passed; website UI assets are unchanged. Local evidence: `.dev/staged0315-verified.log`.

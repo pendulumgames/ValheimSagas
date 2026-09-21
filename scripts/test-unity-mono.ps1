@@ -1,7 +1,7 @@
 param(
     [string]$GamePath = 'C:\Program Files (x86)\Steam\steamapps\common\Valheim',
     [string]$OutputDirectory = '',
-    [ValidateSet('Run','RunHttp')][string]$Method = 'Run'
+    [ValidateSet('Run','RunHttp','RunStartup')][string]$Method = 'Run'
 )
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path $PSScriptRoot -Parent
