@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 namespace ValheimSagas;
+public sealed class GemSocket { public string Prefab {get;set;}=""; public string Name {get;set;}=""; public string IconId {get;set;}=""; public List<string> Effects {get;set;}=new List<string>(); }
 public sealed class SagaEvent {
+ public List<GemSocket> Sockets {get;set;}=new List<GemSocket>(); public string SocketColor {get;set;}="";
  public bool NemesisBoss {get;set;}
  public double? DurationSeconds {get;set;}
  public string Id {get;set;} = ""; public string World {get;set;} = ""; public string PlayerId {get;set;} = ""; public string PlayerName {get;set;} = "";
@@ -21,7 +23,7 @@ public sealed class PlayerSnapshot { public string MapColor {get;set;}=""; publi
  public DateTime Utc {get;set;} = DateTime.UtcNow; public DateTime? LastSeenUtc {get;set;} public bool ShareMap {get;set;} public bool ShareProfile {get;set;} = true; public float? X {get;set;} public float? Z {get;set;} public List<GearItem> Gear {get;set;} = new List<GearItem>();
  public Dictionary<string,float> EffectiveStats {get;set;} = new Dictionary<string,float>(); public string StatsNote {get;set;} = "Effective values depend on skills, food, status effects and active weapon.";
 }
-public sealed class GearItem { public int HotbarSlot {get;set;} public bool Equipped {get;set;} public bool Active {get;set;} public string IconId {get;set;} = "";
+public sealed class GearItem { public List<GemSocket> Sockets {get;set;}=new List<GemSocket>(); public string SocketColor {get;set;}=""; public int HotbarSlot {get;set;} public bool Equipped {get;set;} public bool Active {get;set;} public string IconId {get;set;} = "";
  public string Slot {get;set;} = ""; public string Name {get;set;} = ""; public string Prefab {get;set;} = ""; public string Type {get;set;} = ""; public int Quality {get;set;} = 1;
  public string Rarity {get;set;} = ""; public string RarityColor {get;set;} = ""; public float Durability {get;set;} public float MaxDurability {get;set;}
  public Dictionary<string,float> BaseStats {get;set;} = new Dictionary<string,float>(); public Dictionary<string,float> Stats {get;set;} = new Dictionary<string,float>();

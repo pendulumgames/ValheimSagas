@@ -14,8 +14,9 @@ using Newtonsoft.Json;
 using UnityEngine;
 namespace ValheimSagas;
 
-[BepInPlugin("org.valheimsagas.collector", "Valheim Sagas", "0.3.23")]
+[BepInPlugin("org.valheimsagas.collector", "Valheim Sagas", "0.3.24")]
 [BepInDependency("_shudnal.ConfigurationManager", BepInDependency.DependencyFlags.SoftDependency)]
+[BepInDependency("org.bepinex.plugins.jewelcrafting", BepInDependency.DependencyFlags.SoftDependency)]
 [BepInDependency("randyknapp.mods.epicloot", BepInDependency.DependencyFlags.SoftDependency)]
 [BepInDependency("MidnightsFX.StarLevelSystem", BepInDependency.DependencyFlags.SoftDependency)]
 public sealed partial class SagasPlugin : BaseUnityPlugin {
@@ -227,7 +228,7 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
   using var timing=new StartupTrace(!profileTraceRecorded,"equipment",message=>Logger.LogInfo(message));profileTraceRecorded=true;
   if(!shareProfile.Value){pendingMedia.Clear();sentMedia.Clear();artwork?.Clear();}lastLocalId=Identity(p.GetPlayerID());knownCharacters.Add(lastLocalId);var pos=p.transform.position;var s=new PlayerSnapshot{World=World,PlayerId=Identity(p.GetPlayerID()),Name=p.GetPlayerName(),Online=true,ShareProfile=shareProfile.Value,ShareMap=shareMap.Value,SharePins=sharePins.Value,SharePosition=sharePosition.Value&&ZNet.instance.IsReferencePositionPublic(),X=pos.x,Z=pos.z};
   timing.Mark("identity and permissions");
-  foreach(var item in p.GetInventory().GetEquippedItems()){var gear=Gear.Read(item);EquippedState.Apply(gear,item,p);if(shareProfile.Value)gear.IconId=QueueArt(artwork?.TryIcon(item));s.Gear.Add(gear);} timing.Mark("equipped metadata");if(shareProfile.Value){RunStage("portrait capture",()=>s.PortraitId=QueueArt(artwork?.TryPortrait(p,!pendingMedia.Values.Any(x=>x.Media?.Kind=="portrait"))));s.PortraitStatus=artwork?.Status??"waiting-for-player";}timing.Mark("portrait scheduling");s.Hotbar=shareProfile.Value?HotbarCapture.Read(p,item=>QueueArt(artwork?.TryIcon(item))):new List<GearItem>();timing.Mark("hotbar metadata");s.EffectiveResistances=RuntimeArt.EffectiveResistances(p);timing.Mark("resistances");
+  foreach(var item in JewelcraftingAdapter.Equipped(p)){var gear=Gear.Read(item);EquippedState.Apply(gear,item,p);if(shareProfile.Value){gear.IconId=QueueArt(artwork?.TryIcon(item));JewelcraftingAdapter.Icons(gear,i=>QueueArt(artwork?.TryIcon(i)));}s.Gear.Add(gear);} timing.Mark("equipped metadata");if(shareProfile.Value){RunStage("portrait capture",()=>s.PortraitId=QueueArt(artwork?.TryPortrait(p,!pendingMedia.Values.Any(x=>x.Media?.Kind=="portrait"))));s.PortraitStatus=artwork?.Status??"waiting-for-player";}timing.Mark("portrait scheduling");s.Hotbar=shareProfile.Value?HotbarCapture.Read(p,item=>QueueArt(artwork?.TryIcon(item))):new List<GearItem>();timing.Mark("hotbar metadata");s.EffectiveResistances=RuntimeArt.EffectiveResistances(p);timing.Mark("resistances");
   s.EffectiveStats["Armor"]=p.GetBodyArmor();s.EffectiveStats["Health"]=p.GetHealth();s.EffectiveStats["Max health"]=p.GetMaxHealth();s.EffectiveStats["Max stamina"]=p.GetMaxStamina();s.EffectiveStats["Max eitr"]=p.GetMaxEitr();
   if(shareProfile.Value){s.EpicLootInstalled=EpicProgress.Installed;s.Gold=EpicProgress.CarriedGold(p);}
   timing.Mark("effective stats and gold");return s;

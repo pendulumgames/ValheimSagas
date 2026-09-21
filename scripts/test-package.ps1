@@ -1,4 +1,4 @@
-param([string]$Package='artifacts/ValheimSagas-0.3.23.zip')
+param([string]$Package='artifacts/ValheimSagas-0.3.24.zip')
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
 if(![IO.Path]::IsPathRooted($Package)){$Package=Join-Path $root $Package}

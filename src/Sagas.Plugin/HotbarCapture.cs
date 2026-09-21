@@ -12,7 +12,7 @@ internal static class HotbarCapture {
    var gear=Gear.Read(item);gear.HotbarSlot=item.m_gridPos.x+1;
    // Selected hands include shields/torches; selected ammunition has its own game field.
    EquippedState.Apply(gear,item,player);
-   try { gear.IconId=iconCapture(item); } catch { /* Optional artwork cannot suppress hotbar facts. */ }
+   try { gear.IconId=iconCapture(item); JewelcraftingAdapter.Icons(gear,iconCapture); } catch { /* Optional artwork cannot suppress hotbar facts. */ }
    result.Add(gear);
   }
   return result;

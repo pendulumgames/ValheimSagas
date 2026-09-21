@@ -1,6 +1,6 @@
 # Optional integrations
 
-Sagas has soft BepInEx dependencies on `MidnightsFX.StarLevelSystem` and `randyknapp.mods.epicloot`; it has no assembly reference to either mod. Its Core and website do not load their DLLs. The same Sagas package works without both. All participating game clients still need the matching Sagas release for full telemetry.
+Sagas has soft BepInEx dependencies on `MidnightsFX.StarLevelSystem` `randyknapp.mods.epicloot` and `org.bepinex.plugins.jewelcrafting`; it has no assembly reference to these mods. Its Core and website do not load their DLLs. The same Sagas package works without any of them. All participating game clients still need the matching Sagas release for full telemetry.
 
 ## Star Level System
 
@@ -25,3 +25,15 @@ Rarity/effects/color and bounty integrations use optional reflection and guarded
 Synthetic tests exercise both features present/absent independently, zone privacy/alpha masks, API persistence, score redaction, team deduplication, time filters, retention, lore and desktop/mobile UI. Assembly metadata checks verify exact inspected APIs and both soft dependencies. The installed Unity Mono probe tests the Core/API path with synthetic data, not the game collector itself.
 
 For live acceptance: compare the same SLS square in game and website, switch its above-fog setting and palette/opacity, inspect another selected Viking's exploration, compare a changing score, defeat one flagged Nemesis boss with two players, restart and verify one encounter/two credits, then test an isolated profile without either optional mod. Do not alter an existing world or fabricate historical kills to test progression.
+
+## Jewelcrafting 2.0.10
+
+Read-only inspection uses the installed Gale Jewelcrafting profile. The adapter caches types/methods inside the registered plugin assembly; no global type scans, hard assembly reference or new polling job. `API.GetSocketableItemColor(ItemData)` gates `API.GetGems(ItemData)` to equipment `Sockets`, excluding `SocketBag`/fusion boxes. Ordered null slots remain empty/unavailable. `GemInfo.gemPrefab` and `gemEffectsPowerRange` supply names and configured ranges; `gemEffects` midpoint and `gemSeed` are deliberately not exposed as rolled totals. Bounds are 11 socket records and 8 effect descriptions per socket, matching the installed internal socket limit. Unsupported variants log a rate-limited warning and retain ordinary item tracking.
+
+`API.GetEquippedJewelry(Player)` plus `Visual.equippedFingerItem/equippedNeckItem` adds extra equipped slots without duplicate inventory items. `JewelrySetup.upgradeableJewelry` gates armor values from installed ItemData.GetArmor APIs. Portrait appearance signatures include those equipped items, using the existing change-driven debounce/cooldown/capture pipeline. Gem artwork uses the existing one-uncached-icon-per-frame queue and shared upload budget. No game textures are bundled. HTTP gem artwork requires an owned, currently shared gear/hotbar reference and remains available for last-known offline snapshots.
+
+`Utils.DropPrefabItem(GameObject, Character)` returns actual equipment spawns outside vanilla DropItems. A guarded optional postfix marks only owned, dead non-player creature spawns; the existing ItemDrop.Start stage records sockets after SpawnEquipment has saved them. Normal JC gem drops are added to the ordinary creature list and already use the existing hook. Never count GenerateDropList previews as drops. Crafting/chest/container contents and unknown-origin pickups are not promoted into earned collections. Exact gameplay ordering and multiplayer ownership remain playtest requirements.
+
+Socket metadata persists separately from Epic Loot rarity/effects, follows provenance reconciliation, and expires with detailed effect history. Heat-map entries distinguish socket loadouts. Lore uses bounded shared snapshot/event gem facts without claiming configured powers as observed combat performance. Rarity leaderboards remain rarity leaderboards; there is no inferred JC rarity, crafting/synergy ranking, or gem-bag inventory exposure.
+
+Validation: actual installed signature/field checks; production adapter compiled against synthetic API contracts in tests/Sagas.JewelChecks with present/absent runs; Core tests for privacy, persistence/restart, socket-only media, validation bounds, duplicate drop/collection reconciliation and saga context; browser tests for both/one/no item integration, gem image decode, range labels, empty slots, keyboard/tap/hotbar, colors, escaping and responsive layout. These are not in-game Jewelcrafting tests.

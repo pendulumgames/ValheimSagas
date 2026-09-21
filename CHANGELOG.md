@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.24
+
+- Optional Smoothbrain Jewelcrafting support: socketed gear/hotbar tooltips, gem icons and configured power ranges, extra equipped ring/necklace slots, jewelry armor, item colors and portrait change detection. No hard mod dependency.
+- Preserve socket metadata in actual drop/collection records, map inspection, offline snapshots and saga evidence. Special creature equipment spawns use existing provenance/deduplication; opt-in Sagas notifications include earned socketed pickups.
+- Keep Epic Loot rarity/effects alongside Jewelcrafting sockets. Configured ranges are not reported as rolled/effective totals; gem-bag/fusion-box contents are excluded.
+- Installed 2.0.10 API inspection, synthetic present/absent adapter tests, persistence/media/privacy checks and desktop/mobile browser coverage. Real gameplay verification remains pending.
+
 ## 0.3.23
 
 - Configurable Ctrl+F10 Steam overlay website shortcut, local listener fallback, dedicated host public URL and personal override. Explicit authenticated/rate-limited URL request; credentials never sent in URLs. Steam browser login remains separate.

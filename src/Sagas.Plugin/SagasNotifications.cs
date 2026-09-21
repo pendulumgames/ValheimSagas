@@ -14,7 +14,7 @@ internal static class SagasNotifications {
  // Called on the Unity thread only, from initial Record, never from outbox replay/Send.
  internal static void Notify(SagaEvent e,bool enabled,string localPlayerId){
   if(e.Kind!="collect"||string.IsNullOrEmpty(localPlayerId)||e.PlayerId!=localPlayerId||
-   string.IsNullOrEmpty(e.Id)||string.IsNullOrEmpty(e.Provenance)||string.IsNullOrEmpty(e.Rarity)||e.Amount<=0)return;
+   string.IsNullOrEmpty(e.Id)||string.IsNullOrEmpty(e.Provenance)||(string.IsNullOrEmpty(e.Rarity)&&e.Sockets.Count==0)||e.Amount<=0)return;
   var id=e.World+"|"+e.Id;
   if(!Seen.Add(id))return;
   Order.Enqueue(id);while(Order.Count>MaxSeen)Seen.Remove(Order.Dequeue());
@@ -23,8 +23,8 @@ internal static class SagasNotifications {
   if(e.Utc<DateTime.UtcNow.AddSeconds(-30)||e.Utc>DateTime.UtcNow.AddSeconds(2))return;
   nextAllowed=Clock.ElapsedMilliseconds+3000;
   var item=Plain(e.Name,100);if(item.Length==0)item="Rare treasure";
-  var rarity=Plain(e.Rarity,30);
-  var color=RarityColors.Normalize(e.RarityColor);
+  var rarity=Plain(e.Rarity,30);if(e.Sockets.Count>0)rarity+=(rarity.Length>0?", ":"")+e.Sockets.Count+" sockets";
+  var color=RarityColors.Normalize(e.RarityColor.Length>0?e.RarityColor:e.SocketColor);
   var label=item+(rarity.Length>0?" ("+rarity+")":"");
   if(color.Length>0)label="<color="+color+">"+label+"</color>";
   // Installed API inspected: TopLeft, text, amount=0, icon=null, hiddenHUD=false, log=true.

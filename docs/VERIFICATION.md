@@ -171,3 +171,12 @@ Installed Steamworks.NET signatures inspected directly and added to214installed 
 Browser suites passed across the chain and remaining focused runs. Updated old acceptance assertion to the newly requested roster order. Isolated SLS extraction fixture gained an empty cluster stub for its new hover dependency;23checks passed. New cluster tests use real canvas click,30coincident pins, escaped picker, exact position, filters,400randomized locations with separated badge centers,2048dense benchmark (~3?4ms) and mobile width. Desktop/mobile previews are synthetic. Existing map19/Viking19/Nemesis8/tray/directory/roster checks passed.
 
 Steam overlay opening and dedicated host public-URL RPC still require actual in-game acceptance. Metadata/compilation do not prove Steam overlay availability on a user's machine. No real OpenRouter calls, live host changes or game-save edits.
+
+
+### 0.3.24 ? optional Jewelcrafting
+
+Read installed Gale Jewelcrafting2.0.10 assemblies only. Full2584Core,80lore,22017terrain,1557portrait/lifecycle assertions passed; final13synthetic production-adapter contract checks(11present/2absent),224installed metadata checks. Final plugin compiles with0errors and2existing MSB3277 warnings. New Core tests validate bounded socket metadata, both mods together, ownership/privacy on gem-only media, offline/restart artwork, late-drop provenance reconciliation and duplicate suppression, and socket saga context without API calls.
+
+Entire browser chain passed. Added synthetic Jewelcrafting gear with keyboard/tap/hotbar tooltip access, runtime-media request/decode using a synthetic PNG, range disclaimers, null sockets, ring placement, JC color / Epic rarity color precedence, absent sockets, escaping, distinct map loadouts and mobile width. Desktop/mobile screenshots reviewed; fixture is clearly labelled and contains no copied JC assets.
+
+Pending real gameplay: Jewelcrafting-generated socketed creature drop and pickup; ring/necklace extra-slot and armor snapshots; socket replacement and portrait refresh; actual gem icon capture and offline persistence; Epic Loot/JC co-installation; two-client ownership and frame timing. Metadata inspection and fake-API tests do not execute Jewelcrafting Harmony hooks or GPU capture.

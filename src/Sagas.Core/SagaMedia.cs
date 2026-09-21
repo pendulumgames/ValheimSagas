@@ -29,7 +29,7 @@ public sealed partial class SagaService {
  }
  public bool UploadMedia(MediaUpload m,Action<bool>? committed=null){if(!ValidMedia(m))return false;var copy=Copy(m);return Enqueue(()=>{try{store.Media(copy);committed?.Invoke(true);}catch{committed?.Invoke(false);throw;}});}
  async Task ServeMedia(HttpListenerContext c,string world,string player,string id){if(!MediaId(id)||id==""||!TextValid(player,100,true)){await Respond(c,404,new{error="Artwork unavailable"});return;}
-  var p=store.Players(world).FirstOrDefault(x=>x.PlayerId==player);if((p==null||!p.ShareProfile||(p.PortraitId!=id&&!p.Gear.Any(g=>g.IconId==id)&&!p.Hotbar.Any(g=>g.IconId==id)))&&!VisiblePinMedia(world,player,id)){await Respond(c,404,new{error="Artwork unavailable"});return;}
+  var p=store.Players(world).FirstOrDefault(x=>x.PlayerId==player);if((p==null||!p.ShareProfile||(p.PortraitId!=id&&!p.Gear.Any(g=>g.IconId==id||g.Sockets.Any(s=>s.IconId==id))&&!p.Hotbar.Any(g=>g.IconId==id||g.Sockets.Any(s=>s.IconId==id))))&&!VisiblePinMedia(world,player,id)){await Respond(c,404,new{error="Artwork unavailable"});return;}
   var bytes=store.Media(world,player,id);if(bytes==null){await Respond(c,404,new{error="Artwork pending"});return;}c.Response.StatusCode=200;c.Response.ContentType="image/png";c.Response.ContentLength64=bytes.Length;await c.Response.OutputStream.WriteAsync(bytes,0,bytes.Length);c.Response.Close();
  }
 }

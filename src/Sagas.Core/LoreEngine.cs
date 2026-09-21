@@ -160,7 +160,7 @@ public sealed class LoreEngine {
   var prefix = e.Utc.ToUniversalTime().ToString("yyyy-MM-dd HH:mm 'UTC'", CultureInfo.InvariantCulture) + ": ";
   var name = Clean(string.IsNullOrWhiteSpace(e.Name) ? e.Prefab : e.Name, 100);
   if (e.Kind == "kill") return prefix + "Credited creature death: " + name + ", " + e.Stars + " stars" + (e.NemesisBoss ? ", SLS Nemesis boss (not vanilla progression)" : e.Boss ? ", boss" : "") + ".";
-  if (e.Kind == "collect" || e.Kind == "drop") return prefix + (e.Kind == "collect" ? "Collection" : "Drop (not collection)") + ": " + e.Amount + " x " + name + ", quality " + e.Quality + (string.IsNullOrEmpty(e.Rarity) ? "" : ", rarity " + Clean(e.Rarity, 40)) + (e.Effects.Count==0?"":"; effects: "+string.Join("; ",e.Effects.Take(4).Select(x=>Clean(x,80)))) + ".";
+  if (e.Kind == "collect" || e.Kind == "drop") return prefix + (e.Kind == "collect" ? "Collection" : "Drop (not collection)") + ": " + e.Amount + " x " + name + ", quality " + e.Quality + (string.IsNullOrEmpty(e.Rarity) ? "" : ", rarity " + Clean(e.Rarity, 40)) + (e.Sockets.Count==0?"":"; Jewelcrafting sockets: "+string.Join("; ",e.Sockets.Select((s,i)=>"slot "+(i+1)+" "+Clean(s.Name==""?"empty or unavailable":s.Name,60)))) + (e.Effects.Count==0?"":"; effects: "+string.Join("; ",e.Effects.Take(4).Select(x=>Clean(x,80)))) + ".";
   if(e.Kind=="bounty")return prefix+"Recorded bounty completion: "+name+".";
   if (e.Kind == "death") return prefix + "Character death recorded.";
   return prefix + "Recorded activity: " + Clean(e.Kind, 40) + ".";

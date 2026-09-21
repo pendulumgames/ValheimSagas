@@ -31,7 +31,7 @@ Screenshots show an isolated copy of recorded playtest data, with display names 
 4. Settings are in `BepInEx/config/org.valheimsagas.collector.cfg`. Existing saved settings are preserved on upgrade. Restart the host after changing server settings.
 5. For a dedicated host, use its allocated website TCP port and the wildcard listener described below. Visitors open `http://SERVER-IP:PORT/`. An HTTPS reverse proxy is optional for a domain and encrypted access; no separate website installation is required.
 
-All participating players need Sagas for full telemetry, portraits and exploration. Epic Loot and Star Level System are optional. Game/Unity assemblies and runtime game assets are not bundled. Biome backgrounds are bundled as responsive WebP images for offline use; unused original PNG artwork is excluded from releases.
+All participating players need Sagas for full telemetry, portraits and exploration. Epic Loot, Jewelcrafting and Star Level System are optional. Game/Unity assemblies and runtime game assets are not bundled. Biome backgrounds are bundled as responsive WebP images for offline use; unused original PNG artwork is excluded from releases.
 
 ## Dedicated servers: IP and allocated port
 
@@ -102,15 +102,22 @@ While playing, press **Left Ctrl + F8** to copy a personal login token, then pas
 
 Scenery progression follows recorded credit: Meadows initially; Eikthyr unlocks Black Forest, Elder unlocks Swamp, Bonemass unlocks Mountains, Moder unlocks Plains, Yagluth unlocks Mistlands, Queen unlocks Ashlands, and Fader unlocks Deep North. Tracking cannot reconstruct unrecorded boss kills from before installation.
 
-## Optional SLS and Epic Loot
+## Optional SLS, Epic Loot and Jewelcrafting
 
-Neither mod is required. Without them, statistics, vanilla gear/tooltips, portraits, maps, leaderboards and sagas continue to work. SLS and Epic Loot are independently detected; installing one does not require the other.
+None of these mods is required. Without them, statistics, vanilla gear/tooltips, portraits, maps, leaderboards and sagas continue to work. SLS, Epic Loot and Jewelcrafting are independently detected; installing one does not require the others.
 
 When **SLS is installed on the host**, the atlas mirrors its enabled zone overlay, resolved level palette and above/below-fog setting. Website outlines are capped at 20% opacity (lower host values are preserved), applied once so overlapping borders do not become darker. The website adds a zone-level tooltip only above level 1. Below-fog outlines and tooltips follow the selected shared exploration; above-fog mode reveals the zone grid without revealing terrain. Host zone settings refresh about every 15 seconds. The website also offers a local SLS-layer visibility toggle.
 
 With the SLS Nemesis system enabled, a received score appears on the Viking's portrait and map tooltip. It is the latest host-observed replicated score, not a lifetime total; missing scores remain unknown. Profile privacy still applies. Nemesis boss defeats have separate filtered player metrics and a team-credit leaderboard, and can inform saga evidence. Repeated death reports count once. These encounters do not unlock ordinary boss progression/scenery or enter normal boss-speed rankings. Older events lacking the Nemesis flag cannot safely be backfilled.
 
 Epic Loot independently enhances rarity colors, gear effects, bounty tracking and loot presentation. It is never required for SLS features or basic website operation. See [integration details](https://github.com/pendulumgames/ValheimSagas/blob/main/docs/OPTIONAL-MODS.md).
+
+**Jewelcrafting (Smoothbrain)** adds a separate socket section to equipment and hotbar tooltips: filled/empty slots, gem names, cached runtime gem icons and configured effect power ranges. Sagas also reads equipped extra ring/necklace slots and the mod's upgradeable jewelry armor. Socketed gear inherits Jewelcrafting's item color; an Epic Loot rarity color takes precedence when both are present, while both sets of metadata remain visible. Last-known socket information and icons remain available offline under profile-sharing permissions.
+
+Recorded socketed drops/collections and their map details retain gem names; generated sagas may use those recorded facts. Sagas' optional loot notifications also recognize earned socketed pickups, using the existing toggle/rate limits. Jewelcrafting's special creature equipment spawns use the same actual-drop provenance and deduplication path as other loot. Loose gems in ordinary creature drops are tracked by their game names; gem bags, fusion-box inventories, socket crafting/destruction history and synergy totals are not exported. Socket count is not invented as an Epic Loot rarity or added to its rarity rankings.
+
+Inspected against **Jewelcrafting 2.0.10**. Its public gem API exposes configured power ranges, not the seeded roll or effective combined total; tooltips label that distinction. No new effective-stat arithmetic is inferred. No Jewelcrafting DLL/assets are bundled and the website/Core never load it. Either mod, both mods, or neither may be used. Real in-game validation with this mod is still required; see [integration details](https://github.com/pendulumgames/ValheimSagas/blob/main/docs/OPTIONAL-MODS.md).
+
 
 ## Enable sagas
 
@@ -145,7 +152,7 @@ Story prompts use relevant recorded events, career totals, bosses and credited t
 
 Back up `BepInEx/config/ValheimSagas` with the host stopped, including `sagas.db` and `personal-lore.key` if present. The key file is required to decrypt saved personal OpenRouter credentials. Do not share backups, configs or tokens publicly. Uninstalling the plugin does not delete recorded history.
 
-**0.3.23 is a preview release verified with automated checks.** It includes performance fixes for SLS/gear snapshots and staged, change-triggered portrait capture with asynchronous GPU readback and background image processing; fresh local and dedicated-server playtests must confirm frame-time improvements. Automated tests use labeled synthetic fixtures; real credentialed OpenRouter generation, two-client multiplayer acceptance and Linux hosting still require testing. Unresolved attackers and uncertain loot provenance stay unattributed rather than being guessed. Fight durations are observed telemetry, and carried gold is a snapshot, not a lifetime earnings counter.
+**0.3.24 is a preview release verified with automated checks.** It includes performance fixes for SLS/gear snapshots and staged, change-triggered portrait capture with asynchronous GPU readback and background image processing; fresh local and dedicated-server playtests must confirm frame-time improvements. Automated tests use labeled synthetic fixtures; real credentialed OpenRouter generation, two-client multiplayer acceptance and Linux hosting still require testing. Unresolved attackers and uncertain loot provenance stay unattributed rather than being guessed. Fight durations are observed telemetry, and carried gold is a snapshot, not a lifetime earnings counter.
 
 ## License
 

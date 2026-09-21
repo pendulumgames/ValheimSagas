@@ -40,7 +40,7 @@ internal sealed partial class RuntimeArt {
  static string Appearance(Player player){
   var text=new StringBuilder();var visual=player.GetComponentInChildren<VisEquipment>();
   if(visual)foreach(var field in appearanceFields)text.Append(field.Name).Append('=').Append(field.GetValue(visual)).Append(';');
-  foreach(var item in player.GetInventory().GetEquippedItems().OrderBy(i=>i.m_shared.m_itemType).ThenBy(i=>i.m_shared.m_name)){
+  foreach(var item in JewelcraftingAdapter.Equipped(player).OrderBy(i=>i.m_shared.m_itemType).ThenBy(i=>i.m_shared.m_name)){
    text.Append(item.m_dropPrefab?item.m_dropPrefab.name:item.m_shared.m_name).Append(':').Append(item.m_quality).Append(':').Append(item.m_variant).Append(';');
    foreach(var pair in item.m_customData.OrderBy(p=>p.Key))text.Append(pair.Key).Append('=').Append(pair.Value).Append(';');
   }return text.ToString();

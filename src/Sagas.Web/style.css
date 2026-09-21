@@ -178,3 +178,5 @@ body.scenic-profile .character-heading .epithets span{background:#17282ee6;color
 .cluster-pins{display:grid;gap:5px;max-height:240px;overflow:auto;margin-top:10px}.cluster-pins button{text-align:left;padding:9px 11px;white-space:normal}.cluster-pins small{display:block;color:var(--muted);font-size:.75rem;margin-top:3px}.world-presence{margin-top:22px}#homeRoster{margin-bottom:0}
 
 .map-inspect:has(.cluster-pins){max-height:320px}.cluster-pins{max-height:180px}.cluster-pins button{float:none}
+
+.socket-tooltip{border-top:1px solid var(--line);margin:12px 0;padding-top:10px}.socket-tooltip h5{margin:0 0 10px;color:var(--gold);font-size:.9rem}.gem-socket{display:flex;gap:9px;margin:8px 0}.gem-icon{display:grid;place-items:center;width:34px;height:34px;flex-shrink:0;color:var(--gold);border:1px solid var(--line);border-radius:50%}.gem-icon img{width:28px;height:28px;object-fit:contain}.gem-socket small{display:block}.gem-socket p{margin:3px 0;font-size:.8rem;color:#bfded5}

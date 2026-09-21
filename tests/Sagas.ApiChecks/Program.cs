@@ -126,6 +126,16 @@ Inspect(Path.Combine(plugins,"shudnal-ConfigurationManager","ConfigurationManage
  Signature(r,"ConfigurationManager.ConfigSettingEntry","SetValue","Object");
  Method(r,"ConfigurationManager.ConfigSettingEntry","InitializeDynamicAttributeSources","tags");
 });
+var jewel=Environment.GetEnvironmentVariable("SAGAS_JEWELCRAFTING_DLL")??@"C:\Users\mecra\AppData\Roaming\com.kesomannen.gale\valheim\profiles\Jewelcrafting\BepInEx\plugins\Smoothbrain-Jewelcrafting\Jewelcrafting.dll";
+if(File.Exists(jewel))Inspect(jewel,r=>{
+ Field(r,"Jewelcrafting.JewelrySetup","upgradeableJewelry");
+ Signature(r,"Jewelcrafting.API","GetGems","ItemData");Signature(r,"Jewelcrafting.API","GetSocketableItemColor","ItemData");Signature(r,"Jewelcrafting.API","GetEquippedJewelry","Player");
+ Signature(r,"Jewelcrafting.Utils","DropPrefabItem","UnityEngine.GameObject","Character");Method(r,"Jewelcrafting.Utils","DropPrefabItem","prefab","target");
+ TypedField(r,"Jewelcrafting.Visual","equippedFingerItem","ItemData");TypedField(r,"Jewelcrafting.Visual","equippedNeckItem","ItemData");
+ var gem=Type(r,"Jewelcrafting.API").GetNestedTypes().Select(r.GetTypeDefinition).Single(t=>r.GetString(t.Name)=="GemInfo");
+ foreach(var field in new[]{"gemPrefab","gemEffectsPowerRange"}){if(!gem.GetFields().Select(r.GetFieldDefinition).Any(f=>r.GetString(f.Name)==field))throw new Exception("Jewelcrafting GemInfo field missing: "+field);passed++;}
+});
+else Console.WriteLine("SKIP optional Jewelcrafting metadata: set SAGAS_JEWELCRAFTING_DLL to inspect an installed DLL.");
 Console.WriteLine($"PASS {passed} installed-assembly metadata checks. No game code executed; this does not validate Harmony patch execution or gameplay.");
 
 sealed class MetadataTypeNames:ISignatureTypeProvider<string,object?> {

@@ -40,11 +40,12 @@ internal static class Gear {
  }
  internal static GearItem Read(ItemDrop.ItemData i) {
   Magic(i,out var rarity,out var rarityColor,out var effects);
-  var g=new GearItem{Slot=i.m_shared.m_itemType.ToString(),Name=SagasPlugin.Localize(i.m_shared.m_name),Prefab=i.m_dropPrefab?i.m_dropPrefab.name:"",Type=i.m_shared.m_itemType.ToString(),Quality=i.m_quality,Rarity=rarity,RarityColor=rarityColor,Effects=effects,Durability=i.m_durability,MaxDurability=i.GetMaxDurability(),Note="Item values use installed game/mod APIs; base uses quality 1. Conditional/set effects are descriptive, not added into totals. Icons are original website glyphs."};
-  if(new[]{"Helmet","Chest","Legs","Shoulder","Hands"}.Contains(g.Type)){g.Stats["Armor"]=i.GetArmor();g.BaseStats["Armor"]=i.GetArmor(1,i.m_worldLevel);} if(i.IsWeapon()||g.Type=="Shield"){g.Stats["Block (zero skill)"]=i.GetBlockPower(0);g.BaseStats["Block (zero skill)"]=i.GetBlockPower(1,0);}
+  var g=new GearItem{Slot=i.m_shared.m_itemType.ToString(),Name=SagasPlugin.Localize(i.m_shared.m_name),Prefab=i.m_dropPrefab?i.m_dropPrefab.name:"",Type=i.m_shared.m_itemType.ToString(),Quality=i.m_quality,Rarity=rarity,RarityColor=rarityColor,Effects=effects,Durability=i.m_durability,MaxDurability=i.GetMaxDurability(),Note="Item values use installed game/mod APIs; base uses quality 1. Conditional/set/socket effects are descriptive, not added into totals. Icons are shared runtime captures when available."};
+  if(new[]{"Helmet","Chest","Legs","Shoulder","Hands"}.Contains(g.Type)||JewelcraftingAdapter.HasArmor(i)){g.Stats["Armor"]=i.GetArmor();g.BaseStats["Armor"]=i.GetArmor(1,i.m_worldLevel);} if(i.IsWeapon()||g.Type=="Shield"){g.Stats["Block (zero skill)"]=i.GetBlockPower(0);g.BaseStats["Block (zero skill)"]=i.GetBlockPower(1,0);}
   g.Stats["Movement modifier"]=i.m_shared.m_movementModifier;Damage(g.Stats,i.GetDamage());Damage(g.BaseStats,i.GetDamage(1,i.m_worldLevel));
   foreach(var mod in i.m_shared.m_damageModifiers)g.Effects.Add(mod.m_type+": "+mod.m_modifier);
   if(i.m_shared.m_setStatusEffect)g.Effects.Add("Set "+i.m_shared.m_setName+" ("+i.m_shared.m_setSize+" pieces): "+SagasPlugin.Localize(i.m_shared.m_setStatusEffect.m_name));
+  JewelcraftingAdapter.Read(i,out var sockets,out var socketColor);g.Sockets=sockets;g.SocketColor=socketColor;
   return g;
  }
  static void Damage(Dictionary<string,float> values,HitData.DamageTypes d){ foreach(var f in damageFields){var n=(float)f.GetValue(d);if(n!=0)values["Damage "+f.Name.Replace("m_","")]=n;} }
@@ -59,7 +60,8 @@ internal static class Hooks {
  internal static SagaEvent ItemEvent(ItemDrop item,string kind) {
   var i=item.m_itemData; var pos=item.transform.position;var view=item.GetComponent<ZNetView>();
   Gear.Magic(i,out var rarity,out var rarityColor,out var effects);
-  return new SagaEvent{Id=SagasPlugin.EventId(kind,view.GetZDO().m_uid),Kind=kind,ItemType=i.m_shared.m_itemType.ToString(),Prefab=i.m_dropPrefab?i.m_dropPrefab.name:item.name.Replace("(Clone)",""),Name=SagasPlugin.Localize(i.m_shared.m_name),Amount=i.m_stack,Quality=i.m_quality,Rarity=rarity,RarityColor=rarityColor,Effects=effects,X=pos.x,Z=pos.z,Biome=WorldGenerator.instance!=null?WorldGenerator.instance.GetBiome(pos).ToString():"Unknown",Provenance=i.m_customData.TryGetValue(Origin,out var o)?o:"",Source=i.m_customData.TryGetValue(Source,out var s)?s:"unknown"};
+  JewelcraftingAdapter.Read(i,out var sockets,out var socketColor);
+  return new SagaEvent{Sockets=sockets,SocketColor=socketColor,Id=SagasPlugin.EventId(kind,view.GetZDO().m_uid),Kind=kind,ItemType=i.m_shared.m_itemType.ToString(),Prefab=i.m_dropPrefab?i.m_dropPrefab.name:item.name.Replace("(Clone)",""),Name=SagasPlugin.Localize(i.m_shared.m_name),Amount=i.m_stack,Quality=i.m_quality,Rarity=rarity,RarityColor=rarityColor,Effects=effects,X=pos.x,Z=pos.z,Biome=WorldGenerator.instance!=null?WorldGenerator.instance.GetBiome(pos).ToString():"Unknown",Provenance=i.m_customData.TryGetValue(Origin,out var o)?o:"",Source=i.m_customData.TryGetValue(Source,out var s)?s:"unknown"};
  }
  [HarmonyPatch]
  static class Death {
@@ -123,6 +125,20 @@ internal static class Hooks {
   static bool Prepare()=>AccessTools.TypeByName("EpicLoot.LootRoller")!=null;
   static MethodBase TargetMethod()=>AccessTools.Method(AccessTools.TypeByName("EpicLoot.LootRoller"),"SpawnLootForDrop");
   static void Postfix(GameObject __result,bool initializeObject){if(initializeObject&&__result){var i=__result.GetComponent<ItemDrop>();if(i)Spawned[i.GetInstanceID()]=("generated",currentCredit);}}
+ }
+ // Jewelcrafting equipment is instantiated after the vanilla drop list. Mark
+ // the actual spawned object; ItemStart reads sockets after generation finishes.
+ [HarmonyPatch]
+ static class JewelSpawn {
+  static readonly MethodInfo? Spawn=OptionalTypes.InPlugin("org.bepinex.plugins.jewelcrafting","Jewelcrafting.Utils")?.GetMethod("DropPrefabItem",new[]{typeof(GameObject),typeof(Character)});
+  static bool Prepare()=>Spawn!=null;
+  static MethodBase TargetMethod()=>Spawn!;
+  static void Postfix(GameObject __result,Character target){try{
+   if(!__result||!target||target is Player||target.GetHealth()>0)return;
+   var view=target.GetComponent<ZNetView>();var item=__result.GetComponent<ItemDrop>();
+   if(!item||!view||!view.IsValid()||!view.IsOwner())return;
+   Spawned[item.GetInstanceID()]=("jewelcrafting-creature",new Credit{Id=view.GetZDO().GetString("sagas.lastAttacker",""),Name=view.GetZDO().GetString("sagas.lastName","")});
+  }catch{ /* Optional provenance failure leaves pickup unknown, never invents credit. */ }}
  }
  // Optional SLS replacement uses an iterator; scope each MoveNext, not coroutine creation.
  [HarmonyPatch]

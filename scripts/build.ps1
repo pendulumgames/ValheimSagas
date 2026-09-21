@@ -10,7 +10,9 @@ foreach($file in @((Join-Path $GameManaged 'assembly_valheim.dll'),(Join-Path $B
 dotnet build src/Sagas.Plugin/Sagas.Plugin.csproj -c Release -p:RestoreLockedMode=true "-p:GameManaged=$GameManaged" "-p:BepInExCore=$BepInExCore"
 if($LASTEXITCODE -ne 0){throw 'Plugin build failed'}
 if(!$SkipTests) {
- foreach($project in @('tests/Sagas.Tests','tests/Sagas.LoreTests','tests/Sagas.TerrainChecks','tests/Sagas.ArtChecks')) {dotnet run --project $project -c Release;if($LASTEXITCODE -ne 0){throw "Failed: $project"}}
+ foreach($project in @('tests/Sagas.Tests','tests/Sagas.LoreTests','tests/Sagas.TerrainChecks','tests/Sagas.ArtChecks','tests/Sagas.JewelChecks')) {dotnet run --project $project -c Release;if($LASTEXITCODE -ne 0){throw "Failed: $project"}}
+ dotnet run --project tests/Sagas.JewelChecks -c Release -- --absent
+ if($LASTEXITCODE -ne 0){throw 'Absent Jewelcrafting adapter checks failed'}
  dotnet run --project tests/Sagas.ApiChecks -c Release -- $GameManaged (Join-Path (Split-Path $BepInExCore -Parent) 'plugins')
  if($LASTEXITCODE -ne 0){throw 'Installed API metadata checks failed'}
  node --check src/Sagas.Web/app.js
