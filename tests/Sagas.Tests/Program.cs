@@ -4,6 +4,10 @@ using System.Net;
 using System.Net.Http.Headers;
 var root=Path.Combine(Path.GetTempPath(),"sagas-tests-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(root);int assertions=0;
 void Check(bool yes,string message){assertions++;if(Environment.GetEnvironmentVariable("SAGAS_TEST_TRACE")=="1")Console.WriteLine("CHECK "+assertions+": "+message+" = "+yes);if(!yes)throw new Exception(message);}
+foreach(var invalid in new[]{"", "ftp://example.com", "javascript:alert(1)", "file:///C:/secret", "http://user:secret@example.com/", "https://example.com/?token=secret", "http://example.com/#secret", "http://*:8877/", "http://0.0.0.0:8877/", "http://[::]:8877/", new string('x',2049)})Check(WebsiteAddress.Validate(invalid)=="","Unsafe/non-browsable website address rejected");
+Check(WebsiteAddress.Validate(" http://127.0.0.1:8877/ ")=="http://127.0.0.1:8877/","Local website accepted");
+Check(WebsiteAddress.Validate("https://example.com/sagas/")=="https://example.com/sagas/","Proxy subpath accepted");
+if(args.Contains("--website-only")){Console.WriteLine($"PASS {assertions} website URL assertions.");Directory.Delete(root,true);return;}
 if(args.Contains("--north-only")){NorthBossChecks.Run(root,Check);Console.WriteLine($"PASS {assertions} North boss and directory metadata assertions.");Directory.Delete(root,true);return;}
 if(args.Contains("--offline-media-only")){await OfflineMediaChecks.Run(root,Check);Console.WriteLine($"PASS {assertions} deferred/offline portrait assertions.");Directory.Delete(root,true);return;}
 if(args.Contains("--map-details-only")){MapDetailsChecks.Run(root,Check);await MapDetailsHttpChecks.Run(root,Check);VikingMapChecks.Run(root,Check);Console.WriteLine($"PASS {assertions} map detail assertions.");Directory.Delete(root,true);return;}

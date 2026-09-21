@@ -14,7 +14,7 @@ using Newtonsoft.Json;
 using UnityEngine;
 namespace ValheimSagas;
 
-[BepInPlugin("org.valheimsagas.collector", "Valheim Sagas", "0.3.22")]
+[BepInPlugin("org.valheimsagas.collector", "Valheim Sagas", "0.3.23")]
 [BepInDependency("_shudnal.ConfigurationManager", BepInDependency.DependencyFlags.SoftDependency)]
 [BepInDependency("randyknapp.mods.epicloot", BepInDependency.DependencyFlags.SoftDependency)]
 [BepInDependency("MidnightsFX.StarLevelSystem", BepInDependency.DependencyFlags.SoftDependency)]
@@ -47,7 +47,7 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
  readonly Dictionary<string,float> retryAfter=new Dictionary<string,float>();
  Packet? outboundProfile; float nextUpload; int uploadLane;
  void Awake() {
-  Instance=this; SetupMapDetails(); SetupLogin(); requireToken=BindSetting("Server","RequireViewerToken",false,"True: private viewing requires ViewerToken. False: anyone who can reach the website may view shared data without a token. Does not change network binding or player sharing preferences."); artwork=new RuntimeArt(Warn); notifications=BindSetting("Notifications","EnableLootNotifications",false,"Show Sagas rare earned-loot pickup messages. Does not change Valheim or Epic Loot notifications."); serverName=BindSetting("Server","DisplayName","","Website server name override; blank uses the Valheim server name, then the world name."); serverAddress=BindSetting("Server","AdvertisedAddress","","Optional server IP/hostname and port displayed to website viewers. No automatic public-IP discovery.");
+  Instance=this; SetupMapDetails(); SetupLogin(); SetupWebsiteOverlay(); requireToken=BindSetting("Server","RequireViewerToken",false,"True: private viewing requires ViewerToken. False: anyone who can reach the website may view shared data without a token. Does not change network binding or player sharing preferences."); artwork=new RuntimeArt(Warn); notifications=BindSetting("Notifications","EnableLootNotifications",false,"Show Sagas rare earned-loot pickup messages. Does not change Valheim or Epic Loot notifications."); serverName=BindSetting("Server","DisplayName","","Website server name override; blank uses the Valheim server name, then the world name."); serverAddress=BindSetting("Server","AdvertisedAddress","","Optional server IP/hostname and port displayed to website viewers. No automatic public-IP discovery.");
   host=BindSetting("Server","EnableWebsite",true,"Start the private HTTP service only when hosting a world.");
   data=BindSetting("Server","DataDirectory",Path.Combine(Paths.ConfigPath,"ValheimSagas"),"Persistent database path; back up separately from world saves.");
   prefix=BindSetting("Server","ListenPrefix","http://127.0.0.1:8877/","Loopback by default. Use HTTPS reverse proxy for remote access.");
@@ -76,6 +76,7 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
  void OnDestroy() { artwork?.Clear(); GuardLogin(ClearLoginClipboard); RuntimeTerrain.Clear(); outbox?.Finish(pending.Values.ToArray());StopService(); harmony?.UnpatchSelf(); Instance=null; }
  void Update() {
   GuardLogin(UpdateLogin);
+  GuardLogin(UpdateWebsiteOverlay);
   artwork?.PumpPortrait(Player.m_localPlayer,shareProfile.Value,World);
   RunStage("terrain preparation",RuntimeTerrainShader.Pump);
   if(!RuntimeTerrainShader.Pending)RunStage("item icon capture",()=>artwork?.PumpIcons(shareProfile.Value));

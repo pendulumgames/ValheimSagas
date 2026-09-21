@@ -38,7 +38,7 @@ fs.mkdirSync(output, { recursive: true });
   assert.equal(await page.locator('#onlineCount').textContent(), '2', 'Two live named players');
   assert((await page.locator('#online').textContent()).includes('Astrid Ashwalker'));assert((await page.locator('#mostKilled').textContent()).includes('Greydwarf'),'Most hunted creature types rendered beside stars');const huntRanking=await page.evaluate(()=>{renderMostKilled({creatures:[{prefab:'Troll',name:'Troll',count:3,stars:0},{prefab:'Troll',name:'Troll',count:4,stars:2},{prefab:'Boar',name:'Boar',count:6,stars:0}]});const text=$('mostKilled').textContent;renderMostKilled(state.data.stats);return text;});assert(huntRanking.startsWith('Troll7'),'Creature ranking combines star/biome variants by type');await page.locator('#mostKilled').locator('..').screenshot({path:path.join(output,'most-hunted-types.png')});
   assert.equal(await page.locator('#mapEmpty').isVisible(), false, 'Explored terrain available');
-  assert((await page.locator('#online').boundingBox()).y<(await page.locator('#map').boundingBox()).y,'Online roster stays above atlas');
+  assert((await page.locator('#online').boundingBox()).y>(await page.locator('#map').boundingBox()).y,'Online roster follows atlas');
   assert((await page.locator('#overview').boundingBox()).y>(await page.locator('#atlas').boundingBox()).y,'Server statistics follow atlas');
   const request = requests.find(r => r.url().includes('/api/state'));
   assert.equal(new URL(request.url()).searchParams.has('players'), false, 'Everyone must omit player restriction');

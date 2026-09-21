@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.23
+
+- Configurable Ctrl+F10 Steam overlay website shortcut, local listener fallback, dedicated host public URL and personal override. Explicit authenticated/rate-limited URL request; credentials never sent in URLs. Steam browser login remains separate.
+- Move Online Vikings below the atlas and Recorded Vikings to the bottom of World.
+- Cluster crowded visible map pins with count badges, a scrollable location picker and an exact-position crosshair. Preserves discovery, ownership and personal pin consent; no extra telemetry.
+- Installed Steamworks API inspection, URL validation checks and synthetic desktop/mobile map regression coverage. Actual in-game Steam overlay and dedicated-host URL exchange still require playtesting.
+
 ## 0.3.22
 
 - Fix duplicated portraits in Online Vikings and Recorded Vikings after the directory update.

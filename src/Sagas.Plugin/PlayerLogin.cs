@@ -43,6 +43,7 @@ public sealed partial class SagasPlugin {
   }
  }
  void RegisterLogin(ZNetPeer peer){
+  RegisterWebsiteOverlay(peer);
   peer.m_rpc.Register<string>(LoginRequest,(rpc,request)=>{
    if(service==null||!ZNet.instance||!ZNet.instance.IsServer()||peer.m_rpc!=rpc||!peer.IsReady()||peer.m_playerID==0||request==null||request.Length>40)return;
    var parts=request.Split(':');if(parts.Length!=2||!Guid.TryParseExact(parts[0],"N",out _)||(parts[1]!="issue"&&parts[1]!="revoke"))return;

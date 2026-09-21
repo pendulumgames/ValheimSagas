@@ -145,7 +145,7 @@ Story prompts use relevant recorded events, career totals, bosses and credited t
 
 Back up `BepInEx/config/ValheimSagas` with the host stopped, including `sagas.db` and `personal-lore.key` if present. The key file is required to decrypt saved personal OpenRouter credentials. Do not share backups, configs or tokens publicly. Uninstalling the plugin does not delete recorded history.
 
-**0.3.22 is a preview release verified with automated checks.** It includes performance fixes for SLS/gear snapshots and staged, change-triggered portrait capture with asynchronous GPU readback and background image processing; fresh local and dedicated-server playtests must confirm frame-time improvements. Automated tests use labeled synthetic fixtures; real credentialed OpenRouter generation, two-client multiplayer acceptance and Linux hosting still require testing. Unresolved attackers and uncertain loot provenance stay unattributed rather than being guessed. Fight durations are observed telemetry, and carried gold is a snapshot, not a lifetime earnings counter.
+**0.3.23 is a preview release verified with automated checks.** It includes performance fixes for SLS/gear snapshots and staged, change-triggered portrait capture with asynchronous GPU readback and background image processing; fresh local and dedicated-server playtests must confirm frame-time improvements. Automated tests use labeled synthetic fixtures; real credentialed OpenRouter generation, two-client multiplayer acceptance and Linux hosting still require testing. Unresolved attackers and uncertain loot provenance stay unattributed rather than being guessed. Fight durations are observed telemetry, and carried gold is a snapshot, not a lifetime earnings counter.
 
 ## License
 
@@ -175,3 +175,15 @@ dotnet run --project tests/Sagas.LoreTests -c Release
 For browser checks, start `dotnet run --project src/Sagas.DevHost -c Release`, then `npm ci --prefix tests/web` and `npm test --prefix tests/web`. DevHost uses prominently labeled synthetic data and an in-process simulated AI response; it never calls OpenRouter. See [browser checks](tests/web/README.md) and [runtime acceptance](docs/IN-GAME-TESTS.md).
 
 **Appearance:** On a Viking page, open Appearance to choose Boxed, Full Screen, or Full Screen Scroll for your own browser. When viewing your own Viking while logged in, the same popover lets you save unlocked scenery visible to everyone.
+
+### Open Sagas inside Valheim
+
+Press **Ctrl+F10** while playing to open the website in the Steam overlay. Enable Steam Overlay for Valheim and launch the game through Steam (including Gale's usual Steam launch). Change or disable `Website Login / OpenWebsite` in F1. This uses Steam's browser; it does not embed a new browser or pause multiplayer. Close the overlay with your Steam overlay shortcut (normally Shift+Tab).
+
+Local hosts automatically use their `ListenPrefix` address/port (wildcard HTTP bindings become loopback for this shortcut). For dedicated servers, set **`Server / WebsiteUrl`** to the reachable website address, such as `http://example.com:19908/` or your HTTPS reverse-proxy URL. Keep `ListenPrefix = http://*:19908/` for a wildcard listener when appropriate; the public URL setting does not change binding or open ports. `AdvertisedAddress` is the displayed game-server address and is not assumed to be the web address. A player may set `Website Login / WebsiteUrlOverride` instead. Use a plain HTTP(S) address without credentials, query or fragment. The host sends only that public URL, on an authenticated, rate-limited hotkey request. No background URL polling.
+
+Website login is separate in Steam's browser: use the Login button, and **Ctrl+F8** to copy your personal login when needed. The shortcut never includes a viewer token or key in the URL and does not automatically log you in. If Steam Overlay is unavailable, Sagas displays an explanation; your ordinary browser remains available. Actual overlay operation needs an in-game test on your installation.
+
+### Map locations and page layout
+
+The atlas leads the World page, followed by Online Vikings and event statistics; Recorded Vikings is at the bottom. Nearby visible map icons become a numbered cluster. Click/tap a cluster to browse its locations, then choose a pin to center its exact coordinates, marked with a crosshair. Zooming separates pins where space permits; coincident pins stay accessible through the picker. The Icons tray's **Browse visible icons** also supports keyboard selection. Clusters respect the existing discovery, personal-sharing, owner and layer filters. Clustering runs in the browser over the separate cached icon feed; it adds no game capture or network traffic.

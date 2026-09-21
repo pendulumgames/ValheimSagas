@@ -21,6 +21,7 @@ void Property(MetadataReader r,TypeDefinition type,string property,string expect
  var definition=type.GetProperties().Select(r.GetPropertyDefinition).Single(p=>r.GetString(p.Name)==property);
  if(definition.DecodeSignature(new MetadataTypeNames(),(object?)null).ReturnType!=expected)throw new Exception($"Reflected property type changed: {property}");passed++;
 }
+Inspect(Path.Combine(game,"com.rlabrecque.steamworks.net.dll"),r=>{Signature(r,"Steamworks.SteamFriends","ActivateGameOverlayToWebPage","String","Steamworks.EActivateGameOverlayToWebPageMode");Signature(r,"Steamworks.SteamUtils","IsOverlayEnabled");});
 Inspect(Path.Combine(game,"assembly_utils.dll"),r=>Signature(r,"Utils","RoundToInt","Single"));
 Inspect(Path.Combine(game,"assembly_valheim.dll"),r=>{
  TypedField(r,"Minimap","m_pins","System.Collections.Generic.List`1<PinData>");TypedField(r,"Minimap","m_textureSize","Int32");TypedField(r,"Minimap","m_pixelSize","Single");TypedField(r,"Minimap","m_explored","System.Collections.BitArray");
