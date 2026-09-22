@@ -1,3 +1,9 @@
+## 0.3.29
+
+- Fix Sagas loot-tracking metadata preventing InventorySlots from stacking otherwise identical items. New provenance stays on the ground item's network object and is not copied into inventories or player redrops.
+- Automatically remove only obsolete `sagas.origin` / `sagas.source` tags as inventories load and items enter inventory checks. Preserve all other item metadata, including enchantments, sockets, quality, and large-stack data. Existing ground items migrate their provenance when loaded by their owner; no offline save editing is required.
+- Keep server-side loot deduplication and quantity limits. Ground stacks with uncertain mixed provenance remain ordinary pickups instead of inflating earned loot.
+- Includes 0.3.28 concurrent browser logins and compressed map uploads. Update the server and all Sagas clients together, then restart. In-game multiplayer stacking validation is still required.
 ## 0.3.28
 
 - Allow up to32 concurrent personal login credentials per character/world. Issuing a code no longer invalidates another browser; Ctrl+End explicitly revokes all. Server stores hashes only.

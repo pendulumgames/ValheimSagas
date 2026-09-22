@@ -51,7 +51,7 @@ internal static class Gear {
  static void Damage(Dictionary<string,float> values,HitData.DamageTypes d){ foreach(var f in damageFields){var n=(float)f.GetValue(d);if(n!=0)values["Damage "+f.Name.Replace("m_","")]=n;} }
 }
 internal static class Hooks {
- const string Origin="sagas.origin", Source="sagas.source";
+ const string Origin=LootTrackingMetadata.GroundOrigin, Source=LootTrackingMetadata.GroundSource;
  [ThreadStatic] internal static int CreatureDropDepth;
  internal sealed class Credit {internal string Id="",Name="";}
  [ThreadStatic] static Credit? currentCredit;
@@ -61,7 +61,8 @@ internal static class Hooks {
   var i=item.m_itemData; var pos=item.transform.position;var view=item.GetComponent<ZNetView>();
   Gear.Magic(i,out var rarity,out var rarityColor,out var effects);
   JewelcraftingAdapter.Read(i,out var sockets,out var socketColor);
-  return new SagaEvent{Sockets=sockets,SocketColor=socketColor,Id=SagasPlugin.EventId(kind,view.GetZDO().m_uid),Kind=kind,ItemType=i.m_shared.m_itemType.ToString(),Prefab=i.m_dropPrefab?i.m_dropPrefab.name:item.name.Replace("(Clone)",""),Name=SagasPlugin.Localize(i.m_shared.m_name),Amount=i.m_stack,Quality=i.m_quality,Rarity=rarity,RarityColor=rarityColor,Effects=effects,X=pos.x,Z=pos.z,Biome=WorldGenerator.instance!=null?WorldGenerator.instance.GetBiome(pos).ToString():"Unknown",Provenance=i.m_customData.TryGetValue(Origin,out var o)?o:"",Source=i.m_customData.TryGetValue(Source,out var s)?s:"unknown"};
+  var zdo=view.GetZDO();
+  return new SagaEvent{Sockets=sockets,SocketColor=socketColor,Id=SagasPlugin.EventId(kind,zdo.m_uid),Kind=kind,ItemType=i.m_shared.m_itemType.ToString(),Prefab=i.m_dropPrefab?i.m_dropPrefab.name:item.name.Replace("(Clone)",""),Name=SagasPlugin.Localize(i.m_shared.m_name),Amount=i.m_stack,Quality=i.m_quality,Rarity=rarity,RarityColor=rarityColor,Effects=effects,X=pos.x,Z=pos.z,Biome=WorldGenerator.instance!=null?WorldGenerator.instance.GetBiome(pos).ToString():"Unknown",Provenance=LootMetadataMigration.Read(item,Origin,LootTrackingMetadata.LegacyOrigin),Source=LootMetadataMigration.Read(item,Source,LootTrackingMetadata.LegacySource,"unknown")};
  }
  [HarmonyPatch]
  static class Death {
@@ -102,15 +103,15 @@ internal static class Hooks {
  [HarmonyPatch(typeof(ItemDrop),"Start")]
  static class ItemStart { [HarmonyPostfix,HarmonyPriority(Priority.Last)]static void Postfix(ItemDrop __instance){
   try {if(!Spawned.TryGetValue(__instance.GetInstanceID(),out var originSource))return;Spawned.Remove(__instance.GetInstanceID());var v=__instance.GetComponent<ZNetView>();if(!v||!v.IsValid()||!v.IsOwner())return;
-   var item=__instance.m_itemData;if(item.m_customData.ContainsKey(Origin))return;
-   item.m_customData[Origin]=SagasPlugin.EventId("drop",v.GetZDO().m_uid);item.m_customData[Source]=originSource.source;ItemDrop.SaveToZDO(__instance.m_itemData,__instance.GetComponent<ZNetView>().GetZDO());var dropEvent=ItemEvent(__instance,"drop");dropEvent.PlayerId=originSource.credit?.Id??"";dropEvent.PlayerName=originSource.credit?.Name??"";SagasPlugin.Instance?.Record(dropEvent);
+   var zdo=v.GetZDO();if(zdo.GetString(Source,"")!="")return;
+   zdo.Set(Origin,SagasPlugin.EventId("drop",zdo.m_uid));zdo.Set(Source,originSource.source);var dropEvent=ItemEvent(__instance,"drop");dropEvent.PlayerId=originSource.credit?.Id??"";dropEvent.PlayerName=originSource.credit?.Name??"";SagasPlugin.Instance?.Record(dropEvent);
   }catch(Exception e){Debug.LogWarning("Sagas drop capture: "+e.Message);}
  }}
  [HarmonyPatch(typeof(Humanoid),nameof(Humanoid.Pickup))]
  static class Pickup {
   static void Prefix(Humanoid __instance,GameObject go,out SagaEvent? __state){
    __state=null;try{if(__instance!=Player.m_localPlayer)return;var item=go.GetComponent<ItemDrop>();if(!item)return;item.Load();var v=item.GetComponent<ZNetView>();if(!v||!v.IsValid())return;
-    var e=ItemEvent(item,item.m_itemData.m_customData.ContainsKey(Origin)?"collect":"pickup");e.PlayerId=SagasPlugin.Identity(Player.m_localPlayer.GetPlayerID());e.PlayerName=Player.m_localPlayer.GetPlayerName();__state=e;
+    var e=ItemEvent(item,LootMetadataMigration.Read(item,Origin,LootTrackingMetadata.LegacyOrigin)!=""?"collect":"pickup");e.PlayerId=SagasPlugin.Identity(Player.m_localPlayer.GetPlayerID());e.PlayerName=Player.m_localPlayer.GetPlayerName();__state=e;
    }catch{__state=null;}
   }
   static void Postfix(bool __result,SagaEvent? __state){if(__result&&__state!=null)SagasPlugin.Instance?.Record(__state);}
@@ -118,7 +119,7 @@ internal static class Hooks {
  [HarmonyPatch(typeof(ItemDrop),"AutoStackItems")]
  static class Merge {
   static void Prefix(ItemDrop __instance,out int __state){__state=__instance.m_itemData.m_stack;}
-  static void Postfix(ItemDrop __instance,int __state){if(__instance.m_itemData.m_stack!=__state){__instance.m_itemData.m_customData.Remove(Origin);__instance.m_itemData.m_customData[Source]="mixed-ground-stack";ItemDrop.SaveToZDO(__instance.m_itemData,__instance.GetComponent<ZNetView>().GetZDO());}}
+  static void Postfix(ItemDrop __instance,int __state){if(__instance.m_itemData.m_stack!=__state){var v=__instance.GetComponent<ZNetView>();if(!v||!v.IsValid()||!v.IsOwner())return;v.GetZDO().Set(Origin,"");v.GetZDO().Set(Source,"mixed-ground-stack");}}
  }
  [HarmonyPatch]
  static class EpicSpawn {

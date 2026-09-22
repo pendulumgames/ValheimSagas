@@ -1,7 +1,8 @@
 param(
  [string]$GameManaged = 'C:\Program Files (x86)\Steam\steamapps\common\Valheim\valheim_Data\Managed',
  [string]$BepInExCore = 'C:\Users\mecra\AppData\Roaming\com.kesomannen.gale\valheim\profiles\Test\BepInEx\core',
- [switch]$SkipTests
+ [switch]$SkipTests,
+ [string]$InventorySlotsDll = ''
 )
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
@@ -15,6 +16,10 @@ if(!$SkipTests) {
  if($LASTEXITCODE -ne 0){throw 'Absent Jewelcrafting adapter checks failed'}
  dotnet run --project tests/Sagas.ApiChecks -c Release -- $GameManaged (Join-Path (Split-Path $BepInExCore -Parent) 'plugins')
  if($LASTEXITCODE -ne 0){throw 'Installed API metadata checks failed'}
+ if($InventorySlotsDll) {
+  dotnet run --project tests/Sagas.InventoryChecks -c Release -- $InventorySlotsDll
+  if($LASTEXITCODE -ne 0){throw 'Installed InventorySlots stacking checks failed'}
+ }
  node --check src/Sagas.Web/app.js
  if($LASTEXITCODE -ne 0){throw 'Website JavaScript check failed'}
 }

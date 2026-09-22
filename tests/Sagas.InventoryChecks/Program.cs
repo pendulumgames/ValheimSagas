@@ -1,0 +1,22 @@
+using System.Reflection;
+using ValheimSagas;
+var assembly=Assembly.LoadFrom(args[0]);
+var type=assembly.GetType("InventorySlots.StackMetadataPolicy",true)!;
+bool Auto(Dictionary<string,string> data)=>(bool)type.GetMethod("CanParticipateInAutomaticStacking",BindingFlags.Static|BindingFlags.NonPublic)!.Invoke(null,new object[]{data})!;
+bool Compatible(Dictionary<string,string> a,Dictionary<string,string>b)=>(bool)type.GetMethod("AreCompatible",BindingFlags.Static|BindingFlags.NonPublic)!.Invoke(null,new object[]{a,b})!;
+int count=0;void Check(string name,bool pass){if(!pass)throw new Exception(name);count++;Console.WriteLine("PASS "+name);}
+var a=new Dictionary<string,string>{{"sagas.origin","synthetic-a"},{"sagas.source","creature"}};
+var b=new Dictionary<string,string>{{"sagas.origin","synthetic-b"},{"sagas.source","creature"}};
+var clean=new Dictionary<string,string>();
+Check("Baseline Sagas tags block automatic stacking",!Auto(a));
+Check("Baseline separate drops cannot combine",!Compatible(a,b));
+Check("Baseline tagged/untagged cannot combine",!Compatible(a,clean));
+LootTrackingMetadata.RemoveLegacy(a);LootTrackingMetadata.RemoveLegacy(b);
+Check("Migrated drops can auto-stack",Auto(a)&&Auto(b));
+Check("Migrated separate drops combine",Compatible(a,b));
+Check("Migrated drops combine with existing untagged items",Compatible(a,clean));
+a["sagas.source"]="mixed-ground-stack";LootTrackingMetadata.RemoveLegacy(a);
+Check("Migrated mixed stack can auto-stack",Auto(a));
+a["foreign.socket"]="A";b["foreign.socket"]="B";a["sagas.origin"]="synthetic";LootTrackingMetadata.RemoveLegacy(a);
+Check("Foreign metadata restrictions remain enforced",!Auto(a)&&!Compatible(a,b)&&a["foreign.socket"]=="A");
+Console.WriteLine($"{count} checks against actual installed InventorySlots DLL passed; synthetic metadata, no Unity or saves.");
