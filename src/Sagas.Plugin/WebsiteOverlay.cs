@@ -46,7 +46,7 @@ public sealed partial class SagasPlugin {
  }
  void RegisterWebsiteOverlay(ZNetPeer peer){
   peer.m_rpc.Register<string>(WebsiteRequest,(rpc,nonce)=>{
-   if(!ZNet.instance||!ZNet.instance.IsServer()||rpc!=peer.m_rpc||!peer.IsReady()||peer.m_playerID==0||nonce==null||nonce.Length!=32||!Guid.TryParseExact(nonce,"N",out _))return;
+   if(!ZNet.instance||!ZNet.instance.IsServer()||rpc!=peer.m_rpc||!peer.IsReady()||nonce==null||nonce.Length!=32||!Guid.TryParseExact(nonce,"N",out _))return;
    if(websiteRates.TryGetValue(rpc,out var next)&&Time.unscaledTime<next)return;
    if(websiteRates.Count>256)websiteRates.Clear();websiteRates[rpc]=Time.unscaledTime+3;
    rpc.Invoke(WebsiteResponse,nonce+":"+WebsiteAddress.Validate(websiteUrl.Value));

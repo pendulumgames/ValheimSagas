@@ -14,14 +14,14 @@ using Newtonsoft.Json;
 using UnityEngine;
 namespace ValheimSagas;
 
-[BepInPlugin("org.valheimsagas.collector", "Valheim Sagas", "0.3.26")]
+[BepInPlugin("org.valheimsagas.collector", "Valheim Sagas", "0.3.27")]
 [BepInDependency("_shudnal.ConfigurationManager", BepInDependency.DependencyFlags.SoftDependency)]
 [BepInDependency("org.bepinex.plugins.jewelcrafting", BepInDependency.DependencyFlags.SoftDependency)]
 [BepInDependency("randyknapp.mods.epicloot", BepInDependency.DependencyFlags.SoftDependency)]
 [BepInDependency("MidnightsFX.StarLevelSystem", BepInDependency.DependencyFlags.SoftDependency)]
 public sealed partial class SagasPlugin : BaseUnityPlugin {
  internal static SagasPlugin? Instance;
- internal static string World => ZNet.instance ? ZNet.instance.GetWorldUID().ToString(CultureInfo.InvariantCulture) : "";
+ internal static string World { get { var world=ZNet.instance?ZNet.instance.GetWorld():null;return world!=null&&world.m_uid!=0?world.m_uid.ToString(CultureInfo.InvariantCulture):""; } }
  internal static string Identity(long id) { if(id==0)return ""; using var sha=SHA256.Create(); return BitConverter.ToString(sha.ComputeHash(Encoding.UTF8.GetBytes(World+":"+id))).Replace("-", "").ToLowerInvariant().Substring(0,24); }
  internal static string EventId(string kind,ZDOID zdo) {using var sha=SHA256.Create();return kind+":"+BitConverter.ToString(sha.ComputeHash(Encoding.UTF8.GetBytes(World+":"+zdo))).Replace("-", "").ToLowerInvariant();}
  internal static string Localize(string value) => Localization.instance == null ? value : Localization.instance.Localize(value);
@@ -96,10 +96,10 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
   return ZNet.instance.GetWorldName()??"Valheim Sagas";
  }
  void Tick() {
-  if(activeWorld!=World||!ZNet.instance||ZNet.instance.GetWorldUID()==0){telemetryBudget.Reset(Time.unscaledTime);retryAfter.Clear();outboundProfile=null;}
-  if(!ZNet.instance || ZNet.instance.GetWorldUID()==0) { RuntimeTerrain.Clear(); outbox?.Finish(pending.Values.ToArray());outbox=null; StopService(); activeWorld="";registered.Clear();online.Clear();pending.Clear();mediaTransfer.Clear();mediaCursors.Clear();return; }
+  if(activeWorld!=World||!ZNet.instance||World==""){telemetryBudget.Reset(Time.unscaledTime);retryAfter.Clear();outboundProfile=null;}
+  if(!ZNet.instance || World=="") { RuntimeTerrain.Clear(); outbox?.Finish(pending.Values.ToArray());outbox=null; StopService(); activeWorld="";registered.Clear();online.Clear();pending.Clear();outgoingWires.Clear();wireReceiver.Clear();fragmentRates.Clear();mediaTransfer.Clear();mediaCursors.Clear();return; }
   using var startupTrace=new StartupTrace(activeWorld!=World||startupTraceTicks<2,"world",message=>Logger.LogInfo(message));
-  if(activeWorld!=World) {startupTraceTicks=0;profileTraceRecorded=false;outbox?.Finish(pending.Values.ToArray());StopService();service=null;activeWorld=World;nextSlsRefresh=0;mediaTransfer.Clear();mediaCursors.Clear();knownCharacters.Clear();registered.Clear();online.Clear();pending.Clear();sentCells.Clear();tileVersions.Clear();fullyMapped.Clear();RuntimeTerrain.Clear();pendingMedia.Clear();sentMedia.Clear();artwork?.Clear();mapCursor=0;importing=true;pendingMaps.Clear();journalId="";outbox=null;}
+  if(activeWorld!=World) {startupTraceTicks=0;profileTraceRecorded=false;outbox?.Finish(pending.Values.ToArray());StopService();service=null;activeWorld=World;nextSlsRefresh=0;mediaTransfer.Clear();mediaCursors.Clear();knownCharacters.Clear();registered.Clear();online.Clear();pending.Clear();outgoingWires.Clear();wireReceiver.Clear();fragmentRates.Clear();sentCells.Clear();tileVersions.Clear();fullyMapped.Clear();RuntimeTerrain.Clear();pendingMedia.Clear();sentMedia.Clear();artwork?.Clear();mapCursor=0;importing=true;pendingMaps.Clear();journalId="";outbox=null;}
   startupTraceTicks++;startupTrace.Mark("world reset");
   if(ZNet.instance.IsServer() && service==null && Time.unscaledTime>=nextServiceStart) {
    try {
@@ -116,14 +116,15 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
   foreach(var peer in ZNet.instance.GetPeers()) if(peer.IsReady() && registered.Add(peer.m_rpc)) {
    var captured=peer;
    RegisterLogin(peer);
+   peer.m_rpc.Register<string>(FragmentRpc,(rpc,json)=>ReceiveFragment(captured,rpc,json));
    peer.m_rpc.Register<string>(RpcName,(rpc,json)=>Receive(captured,rpc,json));
    peer.m_rpc.Register<string>(AckName,(rpc,id)=>{if(!ZNet.instance.IsServer() && ZNet.instance.GetServerPeer()?.m_rpc==rpc) {pending.Remove(id);pendingMaps.Remove(id);pendingMedia.Remove(id);pendingPinPackets.Remove(id);}});
   }
   startupTrace.Mark("peer registration");
   if(service!=null) {
    var current=new HashSet<long>();
-   foreach(var peer in ZNet.instance.GetPeers().Where(p=>p.IsReady() && p.m_playerID!=0)) {
-    current.Add(peer.m_uid); var id=Identity(peer.m_playerID);knownCharacters.Add(id);
+   foreach(var peer in ZNet.instance.GetPeers().Where(p=>p.IsReady() && PeerPlayerId(p)!=0)) {
+    current.Add(peer.m_uid); var id=Identity(PeerPlayerId(peer));knownCharacters.Add(id);
 
     service.TouchPresence(World,id,peer.m_playerName,peer.m_publicRefPos);
     online[peer.m_uid]=id;
@@ -152,22 +153,22 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
   RunStage("outbox save",()=>outbox?.Save(pending.Values.ToArray()));startupTrace.Mark("outbox save");
  }
  bool Send(Packet packet) {
-  if(!ZNet.instance||World!=activeWorld||ZNet.instance.GetWorldUID()==0)return false;
+  if(!ZNet.instance||World!=activeWorld||World=="")return false;
   if(packet.Player!=null&&(packet.Player.ShareProfile!=shareProfile.Value||packet.Player.ShareMap!=shareMap.Value||packet.Player.SharePins!=sharePins.Value))return false;
   var retryKey=packet.Event?.Id??packet.AckId;
   if(retryKey!=""&&retryAfter.TryGetValue(retryKey,out var due)&&Time.unscaledTime<due)return false;
   if(ZNet.instance.IsServer()){if(service==null)return false;Apply(packet,0,null);if(retryKey!="")retryAfter[retryKey]=Time.unscaledTime+30;return true;}
   var peer=ZNet.instance.GetServerPeer(); if(peer==null||!peer.IsReady())return false;
-  int queued=peer.m_socket.GetSendQueueSize();
-  if(queued>=TelemetryBudget.QueueThreshold){if(!nextWarning.TryGetValue("network pressure",out var next)||Time.unscaledTime>=next){nextWarning["network pressure"]=Time.unscaledTime+60;Logger.LogWarning("Sagas uploads paused: game connection has "+queued+" queued bytes. Gameplay traffic takes priority; telemetry remains pending.");}return false;}
+  int queued=UploadQueue(peer);
+  if(queued>=TelemetryBudget.QueueThreshold)return false;
   int lane=packet.Exploration!=null||packet.Pins!=null?TelemetryBudget.Map:packet.Media!=null||packet.MediaChunk!=null?TelemetryBudget.Artwork:packet.Player!=null?TelemetryBudget.Profile:TelemetryBudget.Events;
   var json=packet.Wire??(packet.Wire=JsonConvert.SerializeObject(packet));int bytes=Encoding.UTF8.GetByteCount(json)+128;
   if(bytes>TelemetryBudget.MaximumPacketBytes){Warn("packet size",new InvalidOperationException("Sagas packet exceeded the bounded RPC size; upload not sent."));return false;}
-  if(!telemetryBudget.TrySpend(lane,bytes,Time.unscaledTime,queued))return false;
-  peer.m_rpc.Invoke(RpcName,json);if(retryKey!="")retryAfter[retryKey]=Time.unscaledTime+30;return true;
+  if(outgoingWires.ContainsKey(lane))return false;
+  BeginWire(peer,packet,json,lane);if(retryKey!="")retryAfter[retryKey]=Time.unscaledTime+30;return true;
  }
  void PumpUploads(){
-  if(!ZNet.instance||World!=activeWorld||ZNet.instance.GetWorldUID()==0)return;
+  if(!ZNet.instance||World!=activeWorld||World=="")return;
   // Round-robin lanes, at most one RPC every250ms across all Sagas data.
   for(int i=0;i<4;i++)switch((uploadLane+i)%4){
    case 0:if(outboundProfile!=null&&Send(outboundProfile))outboundProfile=null;break;
@@ -176,6 +177,7 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
    case 3:if(shareProfile.Value)SendArtwork();else{pendingMedia.Clear();mediaCursors.Clear();}break;
   }
   uploadLane=(uploadLane+1)%4;
+  if(!ZNet.instance.IsServer())PumpWire();
  }
  void SendArtwork() {
   mediaTransfer.Expire(Time.unscaledTime);
@@ -192,7 +194,7 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
     // Do not allocate/base64-encode a64KiB chunk until its byte allowance is available.
     var peer=ZNet.instance.GetServerPeer();if(peer==null)break;
     int length=Math.Min(MediaTransfer.ChunkBytes,media.Png.Length-cursor*MediaTransfer.ChunkBytes);
-    if(!telemetryBudget.Ready(TelemetryBudget.Artwork,((length+2)/3)*4+1024,Time.unscaledTime,peer.m_socket.GetSendQueueSize()))break;
+    if(!telemetryBudget.Ready(TelemetryBudget.Artwork,((length+2)/3)*4+1024,Time.unscaledTime,UploadQueue(peer)))break;
     if(retryAfter.TryGetValue(packet.AckId,out var due)&&Time.unscaledTime<due)break;
     if(!Send(new Packet{Version=2,MediaChunk=MediaTransfer.Slice(media,cursor)}))break;
     cursor=(cursor+1)%count;budget--;
@@ -202,9 +204,9 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
   }
  }
  void Receive(ZNetPeer peer,ZRpc rpc,string json) {
-  if(service==null || !ZNet.instance.IsServer() || peer.m_rpc!=rpc || !peer.IsReady() || peer.m_playerID==0 || json.Length>128000)return;
+  if(service==null || !ZNet.instance.IsServer() || peer.m_rpc!=rpc || !peer.IsReady() || PeerPlayerId(peer)==0 || json.Length>128000)return;
   var now=Time.unscaledTime; if(!rates.TryGetValue(rpc,out var rate)||now-rate.start>10)rate=(now,0); rate.count++; rates[rpc]=rate;if(rate.count>160)return;
-  try { var packet=JsonConvert.DeserializeObject<Packet>(json,new JsonSerializerSettings{MaxDepth=12,TypeNameHandling=TypeNameHandling.None});if(packet!=null && (packet.Version==1&&packet.MediaChunk==null||packet.Version==2&&packet.MediaChunk!=null&&packet.Media==null&&packet.Event==null&&packet.Player==null&&packet.Exploration==null&&packet.Pins==null)){if(packet.Event!=null&&(packet.Event.Kind=="collect"||packet.Event.Kind=="pickup"||packet.Event.Kind=="death"||packet.Event.Kind=="bounty"))packet.Event.PlayerName=peer.m_playerName;if(packet.Player!=null){packet.Player.Name=peer.m_playerName;packet.Player.SharePosition &= peer.m_publicRefPos;} Apply(packet,peer.m_playerID,rpc);} } catch(Exception e){Logger.LogDebug("Rejected Sagas packet: "+e.Message);}
+  try { var packet=JsonConvert.DeserializeObject<Packet>(json,new JsonSerializerSettings{MaxDepth=12,TypeNameHandling=TypeNameHandling.None});if(packet!=null && (packet.Version==1&&packet.MediaChunk==null||packet.Version==2&&packet.MediaChunk!=null&&packet.Media==null&&packet.Event==null&&packet.Player==null&&packet.Exploration==null&&packet.Pins==null)){if(packet.Event!=null&&(packet.Event.Kind=="collect"||packet.Event.Kind=="pickup"||packet.Event.Kind=="death"||packet.Event.Kind=="bounty"))packet.Event.PlayerName=peer.m_playerName;if(packet.Player!=null){packet.Player.Name=peer.m_playerName;packet.Player.SharePosition &= peer.m_publicRefPos;} Apply(packet,PeerPlayerId(peer),rpc);} } catch(Exception e){Logger.LogDebug("Rejected Sagas packet: "+e.Message);}
  }
  void Apply(Packet packet,long peerPlayer,ZRpc? rpc) {
   if(service==null)return;
@@ -217,7 +219,7 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
   if(packet.Pins!=null){packet.Pins.World=World;packet.Pins.PlayerId=id;service.UpdatePins(packet.Pins,ok=>{if(ok)committed.Enqueue(()=>{if(rpc!=null)rpc.Invoke(AckName,packet.AckId);else pendingPinPackets.Remove(packet.AckId);});});}
   if(packet.Exploration!=null) {var e=packet.Exploration;e.World=World;e.PlayerId=id;if(e.CellSize!=64||e.Cells.Count>128)return;service.Explore(e,ok=>{if(ok)committed.Enqueue(()=>{if(rpc!=null)rpc.Invoke(AckName,packet.AckId);else pendingMaps.Remove(packet.AckId);});});}
   if(packet.Event!=null) {var e=packet.Event;e.World=World;e.NemesisBoss &= SlsAdapter.Installed&&e.Kind=="kill"; if(e.Kind=="collect"||e.Kind=="pickup"||e.Kind=="death"||e.Kind=="bounty"){if(e.PlayerId!=id){if(rpc!=null)rpc.Invoke(AckName,e.Id);else pending.Remove(e.Id);return;}e.PlayerId=id;}
-   if(e.Kind=="kill"||e.Kind=="drop"){foreach(var peer in ZNet.instance.GetPeers())if(peer.IsReady()&&peer.m_playerID!=0)knownCharacters.Add(Identity(peer.m_playerID));if(!knownCharacters.Contains(e.PlayerId)){e.PlayerId="";e.PlayerName="Unattributed";}e.Contributors=e.Contributors.Where(knownCharacters.Contains).ToList();}
+   if(e.Kind=="kill"||e.Kind=="drop"){foreach(var peer in ZNet.instance.GetPeers())if(peer.IsReady()&&PeerPlayerId(peer)!=0)knownCharacters.Add(Identity(PeerPlayerId(peer)));if(!knownCharacters.Contains(e.PlayerId)){e.PlayerId="";e.PlayerName="Unattributed";}e.Contributors=e.Contributors.Where(knownCharacters.Contains).ToList();}
    if(e.Id.Length>160||e.Amount<1||e.Amount>10000||e.Stars<0||e.Stars>1000)return;
    service.TryEvent(e,ok=>{if(ok)committed.Enqueue(()=>{if(rpc!=null)rpc.Invoke(AckName,e.Id);else pending.Remove(e.Id);});});
   }

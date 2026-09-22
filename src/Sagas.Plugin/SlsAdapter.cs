@@ -51,6 +51,6 @@ public sealed partial class SagasPlugin {
  float? HostNemesisScore(long playerId){try{
   if(!SlsAdapter.NemesisEnabled||!ZNet.instance||!ZNet.instance.IsServer())return null;
   var local=Player.m_localPlayer;if(local&&local.GetPlayerID()==playerId)return SlsAdapter.Score(local.GetComponent<ZNetView>()?.GetZDO());
-  if(ZDOMan.instance==null)return null;foreach(var peer in ZNet.instance.GetPeers())if(peer.IsReady()&&peer.m_playerID==playerId)return SlsAdapter.Score(ZDOMan.instance.GetZDO(peer.m_characterID));return null;
+  if(ZDOMan.instance==null)return null;foreach(var peer in ZNet.instance.GetPeers())if(peer.IsReady()&&PeerPlayerId(peer)==playerId)return SlsAdapter.Score(ZDOMan.instance.GetZDO(peer.m_characterID));return null;
  }catch(Exception e){Warn("optional SLS score",e);return null;}}
 }

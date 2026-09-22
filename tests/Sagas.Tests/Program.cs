@@ -18,8 +18,10 @@ if(args.Contains("--personal-lore-only")){await PersonalLoreChecks.Run(root,Chec
 if(args.Contains("--player-login-only")){await PlayerLoginChecks.Run(root,Check);Console.WriteLine($"PASS {assertions} player login assertions.");Directory.Delete(root,true);return;}
 if(args.Contains("--profile-biomes-only")){await ProfileBiomeChecks.Run(root,Check);Console.WriteLine($"PASS {assertions} profile biome and static-route assertions.");Directory.Delete(root,true);return;}
 if(args.Contains("--media-only")){await MediaTransferChecks.Run(root,Check);Console.WriteLine($"PASS {assertions} high resolution media assertions.");Directory.Delete(root,true);return;}
+if(args.Contains("--network-only")){NetworkReliabilityChecks.Run(Check);TelemetryBudgetChecks.Run(Check);Console.WriteLine($"PASS {assertions} network assertions.");Directory.Delete(root,true);return;}
 SlsCaptureChecks.Run(Check);
 TelemetryBudgetChecks.Run(Check);
+NetworkReliabilityChecks.Run(Check);
 await HostPaidLoreChecks.Run(root,Check);
 SagaEvent Event(string id,string kind="kill",int amount=1,string provenance="")=>new(){Id=id,World="world",PlayerId="p1",PlayerName="Astrid",Utc=new DateTime(2026,9,17,10,0,0,DateTimeKind.Utc),Kind=kind,Name="Troll",Prefab="Troll",Amount=amount,Provenance=provenance,Stars=2,X=32,Z=32};
 var now=new DateTime(2026,9,17,12,0,0,DateTimeKind.Utc);

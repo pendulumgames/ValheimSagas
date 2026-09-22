@@ -22,7 +22,7 @@ public sealed partial class SagasPlugin {
  void ResetMapDetails(){pinEpoch++;scanningPins=null;pinCursor=0;pinOwner="";pinSignature="";nextPinScan=0;nextPinResync=0;pendingPinPackets.Clear();pinMediaSent.Clear();pinArt?.Clear();}
  bool SendMapDetails(){pinUploadTurn=!pinUploadTurn;if(!pinUploadTurn)return false;foreach(var packet in pendingPinPackets.Values)if(Send(packet))return true;return false;}
  void PumpMapDetails(){
-  if(!ZNet.instance||World!=activeWorld||ZNet.instance.GetWorldUID()==0||!Player.m_localPlayer||!Minimap.instance)return;
+  if(!ZNet.instance||World!=activeWorld||World==""||!Player.m_localPlayer||!Minimap.instance)return;
   if(!shareMap.Value){if(pinOwner!="")ResetMapDetails();return;}
   var owner=lastLocalId;if(owner=="")return;
   if(pinOwner!=owner||pinConsent!=sharePins.Value){ResetMapDetails();pinOwner=owner;pinConsent=sharePins.Value;}

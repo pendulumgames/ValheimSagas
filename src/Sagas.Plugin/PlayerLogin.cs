@@ -9,6 +9,7 @@ public sealed partial class SagasPlugin {
  const string LoginRequest="Sagas.Login.Request.V1",LoginResponse="Sagas.Login.Response.V1";
  string loginNonce="",loginWorld="",loginPlayer="",clipboardCredential="";
  float loginUntil,clipboardUntil,nextLoginRequest;
+ readonly HashSet<ZRpc> loginBusy=new HashSet<ZRpc>();
  readonly Dictionary<ZRpc,float> loginRates=new Dictionary<ZRpc,float>();
  float nextLoginFailure;
  void GuardLogin(Action action){
@@ -23,7 +24,7 @@ public sealed partial class SagasPlugin {
   loginShortcut=BindSetting("Website Login","CopyLoginToken",new KeyboardShortcut(KeyCode.Insert,KeyCode.LeftControl),"While playing, generate a personal website login and copy it to your clipboard. Replaces your previous token for this character/world. Never printed or saved locally.");
   revokeShortcut=BindSetting("Website Login","RevokeLoginToken",new KeyboardShortcut(KeyCode.End,KeyCode.LeftControl),"While playing, revoke your personal website login for this character/world.");
  }
- void LoginNotice(string message){if(Player.m_localPlayer)Player.m_localPlayer.Message(MessageHud.MessageType.Center,message);}
+ void LoginNotice(string message){Logger.LogInfo(message);if(Player.m_localPlayer)Player.m_localPlayer.Message(MessageHud.MessageType.Center,message);}
  void UpdateLogin(){
   if(clipboardCredential!=""&&Time.unscaledTime>=clipboardUntil){if(GUIUtility.systemCopyBuffer==clipboardCredential)GUIUtility.systemCopyBuffer="";clipboardCredential="";}
   if(loginNonce!=""&&Time.unscaledTime>=loginUntil){loginNonce="";LoginNotice("Sagas login request timed out. Try again shortly.");}
@@ -45,13 +46,22 @@ public sealed partial class SagasPlugin {
  void RegisterLogin(ZNetPeer peer){
   RegisterWebsiteOverlay(peer);
   peer.m_rpc.Register<string>(LoginRequest,(rpc,request)=>{
-   if(service==null||!ZNet.instance||!ZNet.instance.IsServer()||peer.m_rpc!=rpc||!peer.IsReady()||peer.m_playerID==0||request==null||request.Length>40)return;
+   if(!ZNet.instance||!ZNet.instance.IsServer()||peer.m_rpc!=rpc||!peer.IsReady()||request==null||request.Length>40)return;
    var parts=request.Split(':');if(parts.Length!=2||!Guid.TryParseExact(parts[0],"N",out _)||(parts[1]!="issue"&&parts[1]!="revoke"))return;
    if(loginRates.TryGetValue(rpc,out var next)&&Time.unscaledTime<next)return;loginRates[rpc]=Time.unscaledTime+5;
    // Identity comes exclusively from the server's authenticated peer, never request JSON.
-   var id=Identity(peer.m_playerID);service.TouchPresence(World,id,peer.m_playerName);service.Flush();
-   try{if(parts[1]=="revoke")service.Store.RevokePlayerLogin(World,id);var credential=parts[1]=="issue"?service.Store.RotatePlayerLogin(World,id):"";rpc.Invoke(LoginResponse,parts[0]+":"+credential);}
-   catch{ /* Do not put credentials or raw RPC payloads in diagnostics. */ }
+   if(service==null){rpc.Invoke(LoginResponse,parts[0]+":!service");return;}
+   var playerId=PeerPlayerId(peer);if(playerId==0){rpc.Invoke(LoginResponse,parts[0]+":!identity");Logger.LogWarning("Sagas login delayed: owned player identity is not available yet.");return;}
+   if(!loginBusy.Add(rpc)){rpc.Invoke(LoginResponse,parts[0]+":!busy");return;}
+   var id=Identity(playerId);service.TouchPresence(World,id,peer.m_playerName);
+   var loginService=service;var nonce=parts[0];bool revoke=parts[1]=="revoke";
+   var worldForLogin=World;
+   System.Threading.Tasks.Task.Run(()=>{
+    string response;
+    try{if(!loginService.Flush())throw new InvalidOperationException();if(revoke)loginService.Store.RevokePlayerLogin(worldForLogin, id);response=revoke?"":loginService.Store.RotatePlayerLogin(worldForLogin,id);}
+    catch{response="!storage";}
+    committed.Enqueue(()=>{loginBusy.Remove(rpc);if(ZNet.instance&&World==worldForLogin&&peer.IsReady()&&PeerPlayerId(peer)==playerId){rpc.Invoke(LoginResponse,nonce+":"+response);if(response=="!storage")Logger.LogWarning("Sagas login failed: credential storage unavailable.");}});
+   });
   });
   peer.m_rpc.Register<string>(LoginResponse,(rpc,response)=>{
    if(!ZNet.instance||ZNet.instance.IsServer()||ZNet.instance.GetServerPeer()?.m_rpc!=rpc||response==null||response.Length>110)return;
@@ -61,6 +71,7 @@ public sealed partial class SagasPlugin {
  void AcceptLogin(string nonce,string credential){
   if(nonce!=loginNonce||Time.unscaledTime>loginUntil||World!=loginWorld||!Player.m_localPlayer||Identity(Player.m_localPlayer.GetPlayerID())!=loginPlayer)return;
   loginNonce="";
+  if(credential.StartsWith("!",StringComparison.Ordinal)){LoginNotice(credential=="!identity"?"Sagas is waiting for your character identity. Try again shortly.":credential=="!service"?"The server Sagas service is not ready.":credential=="!busy"?"Your previous Sagas login request is still processing. Try again shortly.":"The server could not save your Sagas login. Ask the host to check the server log.");return;}
   if(credential==""){if(clipboardCredential!=""&&GUIUtility.systemCopyBuffer==clipboardCredential)GUIUtility.systemCopyBuffer="";clipboardCredential="";LoginNotice("Sagas personal login revoked.");return;}
   if(credential.Length!=70||!credential.StartsWith("sagas_",StringComparison.Ordinal))return;
   GUIUtility.systemCopyBuffer=credential;clipboardCredential=credential;clipboardUntil=Time.unscaledTime+120;

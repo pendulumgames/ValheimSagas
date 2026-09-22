@@ -1,3 +1,12 @@
+## 0.3.27
+
+- Fix dedicated-server identity resolution using the ready peer's owned Player ZDO; reject mismatched ownership, non-player objects and conflicting IDs. Apply consistently to logins, telemetry, presence and Nemesis lookup.
+- Return explicit personal-login identity/service/storage errors and log credential-free shortcut notices. Dedicated login persistence runs off the game thread. Website URL requests no longer depend on player metadata.
+- Guard the not-yet-created world during client startup without repeated exceptions.
+- Send telemetry in bounded, interleaved fragments instead of large RPC bursts; keep global pacing, per-lane budgets, durable event acknowledgments and privacy cancellation. Bound assembly size, lifetime, concurrency and receive rate.
+- Distinguish Steam pending data from ordinary acknowledgment backlog; retain strict pending/delay/total gates and conservative non-Steam fallback. Report actual queue details and recovery.
+- Requires 0.3.27 on server and clients. No configuration migration required. Dedicated multiplayer performance is pending real playtest.
+
 # Changelog
 
 ## 0.3.26

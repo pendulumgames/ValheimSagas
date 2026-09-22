@@ -152,7 +152,7 @@ Story prompts use relevant recorded events, career totals, bosses and credited t
 
 Back up `BepInEx/config/ValheimSagas` with the host stopped, including `sagas.db` and `personal-lore.key` if present. The key file is required to decrypt saved personal OpenRouter credentials. Do not share backups, configs or tokens publicly. Uninstalling the plugin does not delete recorded history.
 
-**0.3.26 is a preview release verified with automated checks.** It includes performance fixes for SLS/gear snapshots and staged, change-triggered portrait capture with asynchronous GPU readback and background image processing; fresh local and dedicated-server playtests must confirm frame-time improvements. Automated tests use labeled synthetic fixtures; real credentialed OpenRouter generation, two-client multiplayer acceptance and Linux hosting still require testing. Unresolved attackers and uncertain loot provenance stay unattributed rather than being guessed. Fight durations are observed telemetry, and carried gold is a snapshot, not a lifetime earnings counter.
+**0.3.27 is a preview release verified with automated checks.** It includes performance fixes for SLS/gear snapshots and staged, change-triggered portrait capture with asynchronous GPU readback and background image processing; fresh local and dedicated-server playtests must confirm frame-time improvements. Automated tests use labeled synthetic fixtures; real credentialed OpenRouter generation, two-client multiplayer acceptance and Linux hosting still require testing. Unresolved attackers and uncertain loot provenance stay unattributed rather than being guessed. Fight durations are observed telemetry, and carried gold is a snapshot, not a lifetime earnings counter.
 
 ## License
 
@@ -181,3 +181,12 @@ Click a nearby-pin group to spread up to 12 icons and browse its locations. Doub
 Statistics use the latest shared profiles to detect Epic Loot and Jewelcrafting, including offline snapshots. Epic Loot adds rarity discoveries and bounty completions. Jewelcrafting adds equipped gems and total equipped socket capacity, including empty sockets. These loadout counts are independent of the time filter, exclude hotbar duplicates and containers, and do not measure combat power. SLS Nemesis statistics follow the host's installed/enabled integration. No optional mod is required.
 
 On first launch after this update, the original Ctrl+F8/F9/F10 defaults migrate to Ctrl+Insert/End/Home respectively; custom shortcuts are preserved. You can change them again in F1. Loot notifications no longer have a configuration toggle.
+
+
+### Dedicated multiplayer update (0.3.27)
+
+Update **both the dedicated server and every Sagas client** to 0.3.27. This update introduces small, paced transport fragments; older servers cannot receive the new upload format. Restart each game/server after replacing plugin files. Existing configuration and recorded data are preserved.
+
+Dedicated-server character identity now comes from the connected player's owned, replicated character object. Ctrl+Insert reports a specific server identity/service/storage problem when possible; shortcut notices also appear in the BepInEx log without credentials. Ctrl+Home can obtain the host URL without waiting for character metadata. Set `Server / WebsiteUrl` to the public browser address (for example `http://your-host:19908/`); the HTTP bind prefix can remain `http://*:19908/` on a dedicated host. A wildcard is a listening address, not a browser URL.
+
+Sagas uploads are fragmented into less than 4 KiB of encoded RPC payload plus the accounted framing allowance, with a global minimum 250 ms send spacing and independent event/profile/map/artwork allowances. Steam checks separate unsent data from unacknowledged data, reserving queue headroom and retaining a total backlog ceiling. Other transports retain conservative queue gating. Logs report pressure and recovery; a brief pause is expected, while persistent pauses need the client and server logs. Portrait/map synchronization may take longer on busy connections. These changes have automated coverage; dedicated multiplayer and crossplay performance still require playtesting.

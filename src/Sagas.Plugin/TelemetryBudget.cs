@@ -5,6 +5,7 @@ namespace ValheimSagas;
 // snapshots or recorded events. All lanes yield to the game's existing queue.
 internal sealed class TelemetryBudget {
  internal const int Events=0, Profile=1, Map=2, Artwork=3;
+ internal static bool SteamHasHeadroom(int total,int unacknowledged,long queueMicroseconds) => total>=0&&unacknowledged>=0&&unacknowledged<=total&&total<=32768-4096&&total-unacknowledged<2048&&queueMicroseconds>=0&&queueMicroseconds<20000;
  internal const int MaximumPacketBytes=128000, QueueThreshold=8192;
  static readonly int[] Rates={8192,4096,3072,8192};
  readonly double[] credits=new double[4];

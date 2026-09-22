@@ -15,7 +15,7 @@ public sealed class MediaChunk {
 // Called on the game thread. The authenticated owner is supplied by the RPC receiver, never the client payload.
 public sealed class MediaTransfer {
  public const int ChunkBytes=64*1024, MaximumTransfers=16;
- public const double ExpirySeconds=600;
+ public const double ExpirySeconds=1200;
  sealed class Transfer {
   public string World="",Id="";
   public byte[] Bytes=Array.Empty<byte>();
