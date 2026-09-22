@@ -15,13 +15,13 @@ Your adventures, remembered: a standalone Valheim mod with a server-hosted websi
 - **Sagas:** persistent personal and server stories with a separate recorded-facts ledger. The host must configure OpenRouter first; no template stories are generated.
 - **Make it yours:** boxed, full-screen or full-screen scrolling scenery. Your personal login can select backgrounds up to your recorded boss progression; everyone sees the saved selection. New browsers default to full-screen scroll.
 
-![World Atlas with colored personal icons, a fanned pin group and a last-known Viking marker](https://raw.githubusercontent.com/pendulumgames/ValheimSagas/main/docs/screenshots/atlas.png)
+![World Atlas with day/night dial, colored personal icons, a fanned pin group and a last-known Viking marker](https://raw.githubusercontent.com/pendulumgames/ValheimSagas/main/docs/screenshots/atlas.png)
 
 Statistics support all history, 30 minutes, 1/6/12 hours, 1/3/7 days and custom dates. Live presence and last-known equipment are independent of the selected time window. Drops, verified earned collections and unknown pickups remain distinct; repeat pickups and bonus loot rolls cannot create extra kills.
 
 ![Server rankings including optional Nemesis boss kills](https://raw.githubusercontent.com/pendulumgames/ValheimSagas/main/docs/screenshots/leaderboard.png)
 
-Screenshots show an isolated copy of recorded playtest data, with display names replaced for publication. The atlas shows saved playtest exploration, a last-known Viking marker, colored personal icons and a fanned group connected to its true locations. One Viking owns these pins, so they share that Viking's color. The Nemesis leaderboard is shown honestly with no recorded victories yet. These are website captures, not evidence that every multiplayer integration has been verified.
+Screenshots show an isolated copy of recorded playtest data, with display names replaced for publication. The atlas shows saved playtest exploration, a last-known Viking marker, colored personal icons and a fanned group connected to its true locations. One Viking owns these pins, so they share that Viking's color. The day/night dial uses a labeled example day/countdown because the offline snapshot has no live world clock. The Nemesis leaderboard is shown honestly with no recorded victories yet. These are website captures, not evidence that every multiplayer integration has been verified.
 
 ## Install and open
 

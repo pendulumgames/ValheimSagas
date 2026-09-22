@@ -192,3 +192,9 @@ Updated atlas screenshot uses an isolated copy of the closed Test profile's save
 ### 0.3.26 ? landscape zoom limit
 
 Plugin build: zero errors, two existing reference warnings. Focused browser suites passed: clusters, heatmap (16), map details (19), Viking map (19) and atlas layout. New assertions verify the 20m scale bar via cluster double-click, normal/keyboard zoom and direct draw constraints; 40m opening/50m closing with a stable intermediate band; nearly coincident pins remain selectable. Existing fade, gather, collision, reduced-motion and mobile checks remain passing. No core/gameplay behavior changed and the full backend suite was not rerun. In-game playtest remains pending.
+
+### 0.3.26 publication artwork refresh
+
+Atlas screenshot recaptured and visually reviewed with the production day/night dial and countdown. Terrain/pins/position come from the same isolated playtest copy; the clock alone uses a clearly labeled example because live clock state is not persisted. Both READMEs disclose this. No runtime code changed.
+
+Packaging requirements rechecked against https://hexium.gg/packaging and https://wiki.thunderstore.io/mods/creating-a-package: both accept this ZIP layout; Hexium accepts Thunderstore-compatible packages and strips the BepInExPack_Valheim dependency itself. Upload as a client-and-server mod. The release remains a preview: a fresh two-client dedicated-server transport/performance test and Linux-host acceptance are still outstanding; real credentialed OpenRouter execution is not part of automated verification.

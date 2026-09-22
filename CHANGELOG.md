@@ -2,6 +2,8 @@
 
 ## 0.3.26
 
+- Refresh the README atlas image with the day/night dial and real-time countdown visible (labeled example clock on recorded offline playtest data).
+
 - Cap atlas zoom at 20 m on the 100-pixel scale bar across wheel, buttons, keyboard and cluster zoom.
 - Spread nearby pins around 40 m and gather them at 50 m, with separate thresholds to avoid flickering. Manual cluster opening, exact-position lines and close-pin selection remain available.
 
