@@ -25,14 +25,17 @@ public sealed partial class SagaStore {
  public int CompletedBossCount(string world,string player){lock(gate)return db.GetCollection("bossReceipts").Count(Query.EQ("owner",Key(world,player)));}
 
  // Only the authenticated game connection may call issuance. Store a high-entropy
- // token hash, never the credential itself. One active credential per character/world.
- public string RotatePlayerLogin(string world,string player){lock(gate){
+ // token hash, never the credential itself. Up to 32 active credentials per character/world; issuing another does not log out other browsers.
+ public string IssuePlayerLogin(string world,string player){lock(gate){
   if(!Players(world).Any(p=>p.PlayerId==player))throw new ArgumentException("Character not recorded yet.");
   var bytes=new byte[32];using(var rng=RandomNumberGenerator.Create())rng.GetBytes(bytes);
   var token="sagas_"+BitConverter.ToString(bytes).Replace("-","").ToLowerInvariant();
-  db.GetCollection("playerLogins").Upsert(new BsonDocument{{"_id",Key(world,player)},{"world",world},{"player",player},{"hash",LoginHash(token)}});return token;
+  var logins=db.GetCollection("playerLogins");
+  var rows=logins.Find(Query.And(Query.EQ("world",world),Query.EQ("player",player))).OrderBy(x=>x.ContainsKey("created")?x["created"].AsDateTime:DateTime.MinValue).ToArray();
+  foreach(var row in rows.Take(Math.Max(0,rows.Length-31)))logins.Delete(row["_id"]);
+  logins.Insert(new BsonDocument{{"_id",Guid.NewGuid().ToString("N")},{"world",world},{"player",player},{"created",DateTime.UtcNow},{"hash",LoginHash(token)}});return token;
  }}
- public void RevokePlayerLogin(string world,string player){lock(gate)db.GetCollection("playerLogins").Delete(Key(world,player));}
+ public void RevokePlayerLogin(string world,string player){lock(gate)db.GetCollection("playerLogins").DeleteMany(Query.And(Query.EQ("world",world),Query.EQ("player",player)));}
  static string LoginHash(string token){using var hash=SHA256.Create();return Convert.ToBase64String(hash.ComputeHash(Encoding.UTF8.GetBytes(token)));}
  public PlayerLoginIdentity? AuthenticatePlayer(string token){
   if(token==null||token.Length!=70||!token.StartsWith("sagas_",StringComparison.Ordinal)||token.Skip(6).Any(c=>!(c>='0'&&c<='9'||c>='a'&&c<='f')))return null;

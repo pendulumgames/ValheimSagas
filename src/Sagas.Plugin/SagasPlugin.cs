@@ -14,7 +14,7 @@ using Newtonsoft.Json;
 using UnityEngine;
 namespace ValheimSagas;
 
-[BepInPlugin("org.valheimsagas.collector", "Valheim Sagas", "0.3.27")]
+[BepInPlugin("org.valheimsagas.collector", "Valheim Sagas", "0.3.28")]
 [BepInDependency("_shudnal.ConfigurationManager", BepInDependency.DependencyFlags.SoftDependency)]
 [BepInDependency("org.bepinex.plugins.jewelcrafting", BepInDependency.DependencyFlags.SoftDependency)]
 [BepInDependency("randyknapp.mods.epicloot", BepInDependency.DependencyFlags.SoftDependency)]
@@ -35,7 +35,7 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
  readonly HashSet<ZRpc> registered=new HashSet<ZRpc>(); readonly Dictionary<long,string> online=new Dictionary<long,string>();
  readonly Dictionary<string,SagaEvent> pending=new Dictionary<string,SagaEvent>();
  readonly Dictionary<ZRpc,(float start,int count)> rates=new Dictionary<ZRpc,(float,int)>();
- readonly HashSet<string> sentCells=new HashSet<string>(); int mapCursor; bool importing=true; float nextTick; string activeWorld=""; string lastLocalId=""; string journalId=""; int retryCursor;
+ readonly HashSet<string> sentCells=new HashSet<string>(); int mapCursor,nearMapCursor; bool historyMapTurn; bool importing=true; float nextTick; string activeWorld=""; string lastLocalId=""; string journalId=""; int retryCursor;
  readonly ConcurrentQueue<Action> committed=new ConcurrentQueue<Action>();
  readonly Dictionary<string,float> nextWarning=new Dictionary<string,float>();
  string positionLogKey="";int startupTraceTicks;bool profileTraceRecorded;
@@ -46,7 +46,7 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
  readonly Dictionary<string,int> mediaCursors=new Dictionary<string,int>();
  readonly TelemetryBudget telemetryBudget=new TelemetryBudget();
  readonly Dictionary<string,float> retryAfter=new Dictionary<string,float>();
- Packet? outboundProfile; float nextUpload; int uploadLane;
+ Packet? outboundProfile; float nextUpload,nextMapImport; int uploadLane;
  void Awake() {
   Instance=this; SetupMapDetails(); SetupLogin(); SetupWebsiteOverlay(); requireToken=BindSetting("Server","RequireViewerToken",false,"True: private viewing requires ViewerToken. False: anyone who can reach the website may view shared data without a token. Does not change network binding or player sharing preferences."); artwork=new RuntimeArt(Warn); serverName=BindSetting("Server","DisplayName","","Website server name override; blank uses the Valheim server name, then the world name."); serverAddress=BindSetting("Server","AdvertisedAddress","","Optional server IP/hostname and port displayed to website viewers. No automatic public-IP discovery.");
   host=BindSetting("Server","EnableWebsite",true,"Start the private HTTP service only when hosting a world.");
@@ -85,6 +85,7 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
   if(Time.unscaledTime>=nextTick){nextTick=Time.unscaledTime+3;RunStage("world update",Tick);}
   RunStage("SLS capture slice",RefreshSls);
   RunStage("map pin capture slice",PumpMapDetails);
+  if(Time.unscaledTime>=nextMapImport&&Player.m_localPlayer&&World!=""&&World==activeWorld){nextMapImport=Time.unscaledTime+.25f;RunStage("exploration scan",()=>SyncMap(Player.m_localPlayer));}
   if(Time.unscaledTime>=nextUpload){nextUpload=Time.unscaledTime+.1f;RunStage("paced uploads",PumpUploads);}
  }
  void Warn(string stage,Exception e) {if(nextWarning.TryGetValue(stage,out var next)&&Time.unscaledTime<next)return;nextWarning[stage]=Time.unscaledTime+60;Logger.LogWarning("Sagas "+stage+" failed (repeated errors suppressed for 60 seconds): "+e);}
@@ -99,7 +100,7 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
   if(activeWorld!=World||!ZNet.instance||World==""){telemetryBudget.Reset(Time.unscaledTime);retryAfter.Clear();outboundProfile=null;}
   if(!ZNet.instance || World=="") { RuntimeTerrain.Clear(); outbox?.Finish(pending.Values.ToArray());outbox=null; StopService(); activeWorld="";registered.Clear();online.Clear();pending.Clear();outgoingWires.Clear();wireReceiver.Clear();fragmentRates.Clear();mediaTransfer.Clear();mediaCursors.Clear();return; }
   using var startupTrace=new StartupTrace(activeWorld!=World||startupTraceTicks<2,"world",message=>Logger.LogInfo(message));
-  if(activeWorld!=World) {startupTraceTicks=0;profileTraceRecorded=false;outbox?.Finish(pending.Values.ToArray());StopService();service=null;activeWorld=World;nextSlsRefresh=0;mediaTransfer.Clear();mediaCursors.Clear();knownCharacters.Clear();registered.Clear();online.Clear();pending.Clear();outgoingWires.Clear();wireReceiver.Clear();fragmentRates.Clear();sentCells.Clear();tileVersions.Clear();fullyMapped.Clear();RuntimeTerrain.Clear();pendingMedia.Clear();sentMedia.Clear();artwork?.Clear();mapCursor=0;importing=true;pendingMaps.Clear();journalId="";outbox=null;}
+  if(activeWorld!=World) {startupTraceTicks=0;profileTraceRecorded=false;outbox?.Finish(pending.Values.ToArray());StopService();service=null;activeWorld=World;nextSlsRefresh=0;mediaTransfer.Clear();mediaCursors.Clear();knownCharacters.Clear();registered.Clear();online.Clear();pending.Clear();outgoingWires.Clear();wireReceiver.Clear();fragmentRates.Clear();sentCells.Clear();tileVersions.Clear();fullyMapped.Clear();RuntimeTerrain.Clear();pendingMedia.Clear();sentMedia.Clear();artwork?.Clear();mapCursor=0;nearMapCursor=0;historyMapTurn=false;importing=true;pendingMaps.Clear();journalId="";outbox=null;}
   startupTraceTicks++;startupTrace.Mark("world reset");
   if(ZNet.instance.IsServer() && service==null && Time.unscaledTime>=nextServiceStart) {
    try {
@@ -135,7 +136,7 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
   if(service!=null&&EnvMan.instance)service.UpdateClock(WorldClock.Sample(World,EnvMan.instance.GetDay(),EnvMan.instance.GetDayFraction(),ZNet.instance.GetTimeSeconds(),EnvMan.instance.m_dayLengthSec,Time.timeScale,ZNet.instance.GetNrOfPlayers()>0,EnvMan.instance.IsTimeSkipping()));
   var player=Player.m_localPlayer;
   var nextJournal=player&&player.GetPlayerID()!=0?(ZNet.instance.IsServer()?"host-":"")+Identity(player.GetPlayerID()):ZNet.instance.IsServer()?"server":"";
-  if(nextJournal!=""&&journalId!=nextJournal){outbox?.Finish(pending.Values.ToArray());if(journalId!="")pending.Clear();ResetMapDetails();sentCells.Clear();tileVersions.Clear();fullyMapped.Clear();RuntimeTerrain.Clear();pendingMedia.Clear();sentMedia.Clear();artwork?.Clear();pendingMaps.Clear();mapCursor=0;importing=true;journalId=nextJournal;RunStage("outbox startup",()=>{outbox=new Outbox(data.Value,World+"-"+journalId,message=>Logger.LogWarning(message));foreach(var e in outbox.Load().Where(e=>e.World==World&&SagaService.ValidEvent(e)).Take(4096))pending[e.Id]=e;});}
+  if(nextJournal!=""&&journalId!=nextJournal){outbox?.Finish(pending.Values.ToArray());if(journalId!="")pending.Clear();ResetMapDetails();sentCells.Clear();tileVersions.Clear();fullyMapped.Clear();RuntimeTerrain.Clear();pendingMedia.Clear();sentMedia.Clear();artwork?.Clear();pendingMaps.Clear();mapCursor=0;nearMapCursor=0;historyMapTurn=false;importing=true;journalId=nextJournal;RunStage("outbox startup",()=>{outbox=new Outbox(data.Value,World+"-"+journalId,message=>Logger.LogWarning(message));foreach(var e in outbox.Load().Where(e=>e.World==World&&SagaService.ValidEvent(e)).Take(4096))pending[e.Id]=e;});}
   startupTrace.Mark("outbox initialization");
 
   if(player && player.GetPlayerID()!=0) {
@@ -146,7 +147,7 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
    if(positionLogKey!=positionKey){positionLogKey=positionKey;Logger.LogInfo("Website position sharing: "+(!sharePosition.Value?"hidden by Sagas 'Allow website position sharing' permission.":!publicPosition?"hidden; enable 'Visible to other players' on Valheim's map to show your marker.":"enabled by Valheim's map visibility setting.")+" Coordinates are not written to this log.");}
    RunStage("local presence",()=>service?.TouchPresence(World,lastLocalId,player.GetPlayerName(),ZNet.instance.IsReferencePositionPublic()));
    RunStage("equipment snapshot",()=>outboundProfile=new Packet{Player=Snapshot(player)});
-   RunStage("exploration scan",()=>SyncMap(player));
+
   }
   startupTrace.Mark("player snapshot and exploration");
   foreach(var key in retryAfter.Where(x=>x.Value<Time.unscaledTime-60).Select(x=>x.Key).ToArray())retryAfter.Remove(key);
@@ -240,16 +241,18 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
   var map=Minimap.instance;var bits=exploredField.GetValue(map) as BitArray;if(bits==null)return;
   // Every exported sample is personally known; shader capture never exports cartography-only terrain.
   var batch=new ExplorationBatch{World=World,PlayerId=Identity(p.GetPlayerID()),Imported=importing};
-  const int width=ExplorationScan.Width;var budget=1600;var payloadBytes=0;bool full=false;
+  const int width=ExplorationScan.Width;var budget=256;var payloadBytes=0;bool full=false;
   // Show nearby explored terrain immediately; continue bounded whole-world import below.
   var pos=p.transform.position;
-  foreach(var cell in ExplorationScan.Nearby(pos.x,pos.z)){AddCell(cell.X,cell.Z);if(batch.Cells.Count>=64||full)break;}
+  historyMapTurn=!historyMapTurn;
+  if(!historyMapTurn){var nearby=ExplorationScan.Nearby(pos.x,pos.z).ToArray();for(int n=0;n<nearby.Length&&!full;n++){var cell=nearby[nearMapCursor++%nearby.Length];AddCell(cell.X,cell.Z);}nearMapCursor%=nearby.Length;}
   while(budget-->0 && batch.Cells.Count<64&&!full) {
    var cx=mapCursor%width-width/2;var cz=mapCursor/width-width/2;mapCursor++;if(mapCursor>=width*width){mapCursor=0;importing=false;}
    AddCell(cx,cz);
   }
   void AddCell(int cx,int cz) {
-   if(payloadBytes>74000){full=true;return;}var keyCell=cx+":"+cz;if(fullyMapped.Contains(keyCell))return;var pixels=RuntimeTerrain.Capture(map,bits,cx,cz);if(pixels==""){if(RuntimeTerrainShader.Pending)full=true;return;}var rgba=Convert.FromBase64String(pixels);using var tileHash=SHA256.Create();var signature=Convert.ToBase64String(tileHash.ComputeHash(rgba));if(tileVersions.TryGetValue(keyCell,out var previous)&&previous==signature)return;payloadBytes+=pixels.Length;if(payloadBytes>74000)full=true;tileVersions[keyCell]=signature;if(Enumerable.Range(0,rgba.Length/4).All(i=>rgba[i*4+3]==255))fullyMapped.Add(keyCell);
+   if(payloadBytes>74000){full=true;return;}var keyCell=cx+":"+cz;if(fullyMapped.Contains(keyCell))return;var pixels=RuntimeTerrain.Capture(map,bits,cx,cz);if(pixels==""){if(RuntimeTerrainShader.Pending)full=true;return;}full=true; // Bound work even when a partially explored tile has not changed.
+   var rgba=Convert.FromBase64String(pixels);using var tileHash=SHA256.Create();var signature=Convert.ToBase64String(tileHash.ComputeHash(rgba));if(tileVersions.TryGetValue(keyCell,out var previous)&&previous==signature)return;payloadBytes+=pixels.Length;if(payloadBytes>74000)full=true;tileVersions[keyCell]=signature;if(Enumerable.Range(0,rgba.Length/4).All(i=>rgba[i*4+3]==255))fullyMapped.Add(keyCell);
    var wx=(cx+.5f)*64;var wz=(cz+.5f)*64;
    batch.Cells.Add(new MapCell{X=cx,Z=cz,Biome="Explored terrain",Height=0,TerrainPixels=pixels});sentCells.Add(keyCell);full=true; // One terrain tile per paced packet.
   }

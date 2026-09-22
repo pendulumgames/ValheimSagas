@@ -20,10 +20,10 @@ public static partial class MonoEntry {
     service.Explore(new ExplorationBatch{World="synthetic",PlayerId="p",Cells=new System.Collections.Generic.List<MapCell>{new MapCell{X=0,Z=0,Biome="Meadows"}}});
     for(int i=0;i<12;i++)service.TryEvent(new SagaEvent{Id="synthetic-"+i,World="synthetic",PlayerId="p",Kind="kill",Name="Boar",Prefab="Boar",Utc=DateTime.UtcNow,Stars=i%3,X=32,Z=32});
     if(!service.Flush())throw new Exception("Flush timed out.");
-    var personal=service.Store.RotatePlayerLogin("synthetic","p");
+    var personal=service.Store.IssuePlayerLogin("synthetic","p");
     if(service.Store.AuthenticatePlayer(personal)?.PlayerId!="p")throw new Exception("Personal login crypto failed.");
     if((string?)Fetch(prefix,"api/session",personal,false)["playerId"]!="p")throw new Exception("Personal login HTTP failed.");
-    var rotated=service.Store.RotatePlayerLogin("synthetic","p");Fetch(prefix,"api/session",personal,false,401);Fetch(prefix,"api/session",rotated,false);
+    var rotated=service.Store.IssuePlayerLogin("synthetic","p");Fetch(prefix,"api/session",personal,false,401);Fetch(prefix,"api/session",rotated,false);
     service.Store.RevokePlayerLogin("synthetic","p");Fetch(prefix,"api/session",rotated,false,401);
     report.WriteLine("PASS actual Mono personal login RNG, SHA256 hashing, authenticated session, rotation and revocation");
     if(!(bool)Fetch(prefix,"api/access","",false)["requiresToken"]!)throw new Exception("Private mode discovery incorrect.");

@@ -41,7 +41,7 @@ service.Store.WorldName(loginWorld,"Synthetic login trials");
 foreach(var id in new[]{"login-champion","login-novice"})service.UpdatePlayer(new PlayerSnapshot{World=loginWorld,PlayerId=id,Name=id=="login-champion"?"Synthetic Champion":"Synthetic Novice",ShareProfile=true});
 foreach(var boss in new[]{"Eikthyr","gd_king","Bonemass","Dragon","GoblinKing","SeekerQueen","Fader"})service.TryEvent(new SagaEvent{Id="login-boss-"+boss,World=loginWorld,PlayerId="login-champion",PlayerName="Synthetic Champion",Kind="kill",Boss=true,Prefab=boss,Name=boss,Utc=now.AddMinutes(-5),Source="synthetic"});
 service.Flush();
-File.WriteAllText(Path.Combine(root,"synthetic-logins.json"),System.Text.Json.JsonSerializer.Serialize(new{world=loginWorld,champion=service.Store.RotatePlayerLogin(loginWorld,"login-champion"),novice=service.Store.RotatePlayerLogin(loginWorld,"login-novice")}));
+File.WriteAllText(Path.Combine(root,"synthetic-logins.json"),System.Text.Json.JsonSerializer.Serialize(new{world=loginWorld,champion=service.Store.IssuePlayerLogin(loginWorld,"login-champion"),novice=service.Store.IssuePlayerLogin(loginWorld,"login-novice")}));
 service.Flush();Console.WriteLine("SYNTHETIC FIXTURE ONLY — http://127.0.0.1:9847/\nMember token: "+token+"\nCtrl+C to stop.");
 using var quit=new ManualResetEventSlim();Console.CancelKeyPress+=(s,e)=>{e.Cancel=true;quit.Set();};
 while(!quit.Wait(5000)){foreach(var p in service.Store.Players("synthetic-midgard")){p.Online=true;service.UpdatePlayer(p);}}

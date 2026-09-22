@@ -23,9 +23,18 @@ static class NetworkReliabilityChecks {
   }
   check(sent.All(x=>x>0),"All fragment lanes make progress under concurrent load");
   check(completed>0&&completed<MediaTransfer.ExpirySeconds,"Maximum portrait can complete during saturated traffic and pressure pauses");
+  var terrainJson=Newtonsoft.Json.JsonConvert.SerializeObject(new {terrainPixels=Convert.ToBase64String(Enumerable.Range(0,16384).Select(i=>(byte)(i%4==3?255:i%16)).ToArray())});
+  var compressed=WireCompression.Encode(terrainJson);check(compressed.Compressed&&compressed.Bytes.Length<terrainJson.Length/4,"Synthetic repetitive terrain compresses without raising bandwidth");
+  check(System.Text.Encoding.UTF8.GetString(WireCompression.Decode(compressed.Bytes,true)!)==terrainJson,"Compression preserves all terrain pixels and fog exactly");
+  using(var bomb=new System.IO.MemoryStream()){
+   using(var deflate=new System.IO.Compression.DeflateStream(bomb,System.IO.Compression.CompressionLevel.Fastest,true)){var oversized=new byte[WireTransfer.Maximum+1];deflate.Write(oversized);}
+   check(WireCompression.Decode(bomb.ToArray(),true)==null,"Decompression expansion bounded before oversized allocation");
+  }
   var transfer=new WireTransfer();var bytes=Enumerable.Range(0,128000).Select(x=>(byte)x).ToArray();var id=Guid.NewGuid().ToString("N");int count=(bytes.Length+WireTransfer.Chunk-1)/WireTransfer.Chunk;
   byte[]? result=null;
   for(int i=0;i<count;i++) {var part=new WirePart{Id=id,Index=i,Count=count,Data=bytes.Skip(i*WireTransfer.Chunk).Take(WireTransfer.Chunk).ToArray()};check(System.Text.Encoding.UTF8.GetByteCount(Newtonsoft.Json.JsonConvert.SerializeObject(part))+128<4096,"Every encoded fragment fits small wire budget");result=transfer.Accept("peer",part,i*.3);if(i<count-1)check(result==null,"Partial packets never applied");}
+  var packedResult=transfer.Accept("compressed",new WirePart{Id=Guid.NewGuid().ToString("N"),Compressed=true,Count=1,Index=0,Data=compressed.Bytes},0);
+  check(packedResult!=null&&System.Text.Encoding.UTF8.GetString(packedResult)==terrainJson,"Compressed upload completes through production assembler");
   check(result!=null&&result.SequenceEqual(bytes),"Maximum packet reassembles exactly");
   check(transfer.Accept("bad",new WirePart{Id=id,Index=0,Count=100000,Data=new byte[1]},0)==null,"Unbounded fragment count rejected");
   transfer.Clear();var first=new WirePart{Id=id,Index=0,Count=2,Data=new byte[2400]};var last=new WirePart{Id=id,Index=1,Count=2,Data=new byte[1]};

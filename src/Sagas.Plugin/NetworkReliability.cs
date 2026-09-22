@@ -6,10 +6,10 @@ using Steamworks;
 using UnityEngine;
 namespace ValheimSagas;
 public sealed partial class SagasPlugin {
- const string FragmentRpc="Sagas.Wire.V3";
+ const string FragmentRpc="Sagas.Wire.V4";
  readonly System.Collections.Generic.Dictionary<ZRpc,(float start,int count)> fragmentRates=new System.Collections.Generic.Dictionary<ZRpc,(float start,int count)>();
  readonly WireTransfer wireReceiver=new WireTransfer();
- sealed class PendingWire { public Packet Packet=null!; public byte[] Bytes=null!; public string Id=Guid.NewGuid().ToString("N"); public int Index,Lane; }
+ sealed class PendingWire { public Packet Packet=null!; public System.Threading.Tasks.Task<WirePayload> Preparation=null!; public string Id=Guid.NewGuid().ToString("N"); public int Index,Lane; }
  readonly System.Collections.Generic.Dictionary<int,PendingWire> outgoingWires=new System.Collections.Generic.Dictionary<int,PendingWire>();
  int wireTurn;
  static readonly System.Reflection.FieldInfo? steamConnection=AccessTools.Field(typeof(ZSteamSocket),"m_con");
@@ -39,21 +39,24 @@ public sealed partial class SagasPlugin {
   return QueueResult(total,total,peer.m_socket.GetType().Name+" conservative queue measurement");
  }
  void BeginWire(ZNetPeer peer,Packet packet,string json,int lane){
-  outgoingWires[lane]=new PendingWire{Packet=packet,Bytes=Encoding.UTF8.GetBytes(json),Lane=lane};
+  outgoingWires[lane]=new PendingWire{Packet=packet,Preparation=System.Threading.Tasks.Task.Run(()=>WireCompression.Encode(json)),Lane=lane};
  }
  void PumpWire(){
   var peer=ZNet.instance.GetServerPeer();if(peer==null||!peer.IsReady())return;
   for(int n=0;n<4;n++){
    int lane=(wireTurn+n)%4;if(!outgoingWires.TryGetValue(lane,out var wire))continue;
+   if(!wire.Preparation.IsCompleted)continue;
+   if(wire.Preparation.IsFaulted||wire.Preparation.IsCanceled){outgoingWires.Remove(lane);Warn("upload compression",new InvalidOperationException("Upload preparation failed; retained events will retry."));continue;}
+   var prepared=wire.Preparation.Result;var bytes=prepared.Bytes;
    var packet=wire.Packet;
    if(((packet.Media!=null||packet.MediaChunk!=null)&&!shareProfile.Value)||((packet.Exploration!=null||packet.Pins!=null)&&!shareMap.Value)||(packet.Pins!=null&&!sharePins.Value)||(packet.Player!=null&&(packet.Player.ShareProfile!=shareProfile.Value||packet.Player.ShareMap!=shareMap.Value||packet.Player.SharePins!=sharePins.Value))){outgoingWires.Remove(lane);continue;}
-   int length=Math.Min(WireTransfer.Chunk,wire.Bytes.Length-wire.Index*WireTransfer.Chunk);
+   int length=Math.Min(WireTransfer.Chunk,bytes.Length-wire.Index*WireTransfer.Chunk);
    if(!telemetryBudget.Ready(lane,4096,Time.unscaledTime,UploadQueue(peer)))continue;
-   var data=new byte[length];Array.Copy(wire.Bytes,wire.Index*WireTransfer.Chunk,data,0,length);
-   var json=JsonConvert.SerializeObject(new WirePart{Id=wire.Id,Lane=lane,Index=wire.Index,Count=(wire.Bytes.Length+WireTransfer.Chunk-1)/WireTransfer.Chunk,Data=data});
+   var data=new byte[length];Array.Copy(bytes,wire.Index*WireTransfer.Chunk,data,0,length);
+   var json=JsonConvert.SerializeObject(new WirePart{Id=wire.Id,Compressed=prepared.Compressed,Lane=lane,Index=wire.Index,Count=(bytes.Length+WireTransfer.Chunk-1)/WireTransfer.Chunk,Data=data});
    if(!telemetryBudget.TrySpend(lane,Encoding.UTF8.GetByteCount(json)+128,Time.unscaledTime,UploadQueue(peer)))continue;
    peer.m_rpc.Invoke(FragmentRpc,json);wire.Index++;wireTurn=(lane+1)%4;
-   if(wire.Index*WireTransfer.Chunk>=wire.Bytes.Length)outgoingWires.Remove(lane);
+   if(wire.Index*WireTransfer.Chunk>=bytes.Length)outgoingWires.Remove(lane);
    break;
   }
  }

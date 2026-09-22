@@ -1,3 +1,10 @@
+## 0.3.28
+
+- Allow up to32 concurrent personal login credentials per character/world. Issuing a code no longer invalidates another browser; Ctrl+End explicitly revokes all. Server stores hashes only.
+- Remember browser logins across tabs/restarts, synchronize same-browser tabs, and recover from rejected tokens: public viewing retries anonymously; private viewing returns to login. Chrome and Steam still require separate initial sign-ins.
+- Losslessly compress upload payloads on a worker before bounded V4 fragmentation. Bound decompression output; retain global pacing, per-lane byte allowances and gameplay pressure gates. Requires server and clients updated together.
+- Run bounded map capture independently from the three-second profile tick, alternate nearby/history scans, and limit unchanged partial-tile work to prevent one edge tile blocking history import.
+
 ## 0.3.27
 
 - Fix dedicated-server identity resolution using the ready peer's owned Player ZDO; reject mismatched ownership, non-player objects and conflicting IDs. Apply consistently to logins, telemetry, presence and Nemesis lookup.

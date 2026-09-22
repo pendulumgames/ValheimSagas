@@ -21,8 +21,8 @@ public sealed partial class SagasPlugin {
  }
  void ClearLoginClipboard(){if(clipboardCredential!=""&&GUIUtility.systemCopyBuffer==clipboardCredential)GUIUtility.systemCopyBuffer="";clipboardCredential="";}
  void SetupLogin(){
-  loginShortcut=BindSetting("Website Login","CopyLoginToken",new KeyboardShortcut(KeyCode.Insert,KeyCode.LeftControl),"While playing, generate a personal website login and copy it to your clipboard. Replaces your previous token for this character/world. Never printed or saved locally.");
-  revokeShortcut=BindSetting("Website Login","RevokeLoginToken",new KeyboardShortcut(KeyCode.End,KeyCode.LeftControl),"While playing, revoke your personal website login for this character/world.");
+  loginShortcut=BindSetting("Website Login","CopyLoginToken",new KeyboardShortcut(KeyCode.Insert,KeyCode.LeftControl),"While playing, generate a personal website login and copy it to your clipboard. Keeps your other browser logins active. Never printed or saved locally.");
+  revokeShortcut=BindSetting("Website Login","RevokeLoginToken",new KeyboardShortcut(KeyCode.End,KeyCode.LeftControl),"While playing, revoke all your personal website logins for this character/world.");
  }
  void LoginNotice(string message){Logger.LogInfo(message);if(Player.m_localPlayer)Player.m_localPlayer.Message(MessageHud.MessageType.Center,message);}
  void UpdateLogin(){
@@ -35,7 +35,7 @@ public sealed partial class SagasPlugin {
   if(ZNet.instance.IsServer()){
    if(service==null){LoginNotice("Sagas is still starting. Try again shortly.");loginNonce="";return;}
    service.TouchPresence(World,loginPlayer,Player.m_localPlayer.GetPlayerName());service.Flush();
-   try{if(revoke)service.Store.RevokePlayerLogin(World,loginPlayer);AcceptLogin(loginNonce,revoke?"":service.Store.RotatePlayerLogin(World,loginPlayer));}
+   try{if(revoke)service.Store.RevokePlayerLogin(World,loginPlayer);AcceptLogin(loginNonce,revoke?"":service.Store.IssuePlayerLogin(World,loginPlayer));}
    catch{loginNonce="";LoginNotice("Sagas could not update your login. Try again shortly.");}
   }else{
    var peer=ZNet.instance.GetServerPeer();if(peer==null||!peer.IsReady()){loginNonce="";return;}
@@ -58,7 +58,7 @@ public sealed partial class SagasPlugin {
    var worldForLogin=World;
    System.Threading.Tasks.Task.Run(()=>{
     string response;
-    try{if(!loginService.Flush())throw new InvalidOperationException();if(revoke)loginService.Store.RevokePlayerLogin(worldForLogin, id);response=revoke?"":loginService.Store.RotatePlayerLogin(worldForLogin,id);}
+    try{if(!loginService.Flush())throw new InvalidOperationException();if(revoke)loginService.Store.RevokePlayerLogin(worldForLogin, id);response=revoke?"":loginService.Store.IssuePlayerLogin(worldForLogin,id);}
     catch{response="!storage";}
     committed.Enqueue(()=>{loginBusy.Remove(rpc);if(ZNet.instance&&World==worldForLogin&&peer.IsReady()&&PeerPlayerId(peer)==playerId){rpc.Invoke(LoginResponse,nonce+":"+response);if(response=="!storage")Logger.LogWarning("Sagas login failed: credential storage unavailable.");}});
    });
@@ -72,9 +72,9 @@ public sealed partial class SagasPlugin {
   if(nonce!=loginNonce||Time.unscaledTime>loginUntil||World!=loginWorld||!Player.m_localPlayer||Identity(Player.m_localPlayer.GetPlayerID())!=loginPlayer)return;
   loginNonce="";
   if(credential.StartsWith("!",StringComparison.Ordinal)){LoginNotice(credential=="!identity"?"Sagas is waiting for your character identity. Try again shortly.":credential=="!service"?"The server Sagas service is not ready.":credential=="!busy"?"Your previous Sagas login request is still processing. Try again shortly.":"The server could not save your Sagas login. Ask the host to check the server log.");return;}
-  if(credential==""){if(clipboardCredential!=""&&GUIUtility.systemCopyBuffer==clipboardCredential)GUIUtility.systemCopyBuffer="";clipboardCredential="";LoginNotice("Sagas personal login revoked.");return;}
+  if(credential==""){if(clipboardCredential!=""&&GUIUtility.systemCopyBuffer==clipboardCredential)GUIUtility.systemCopyBuffer="";clipboardCredential="";LoginNotice("All personal Sagas logins revoked.");return;}
   if(credential.Length!=70||!credential.StartsWith("sagas_",StringComparison.Ordinal))return;
   GUIUtility.systemCopyBuffer=credential;clipboardCredential=credential;clipboardUntil=Time.unscaledTime+120;
-  LoginNotice("Sagas login copied. Paste into website Login within 2 minutes. Previous token revoked.");
+  LoginNotice("Sagas login copied. Paste into website Login within 2 minutes. Other browser logins remain active.");
  }
 }

@@ -98,7 +98,7 @@ Map sharing defaults on for new configurations. Profile, portrait and position s
 
 The header shows **Login** when signed out. After login, it shows your saved Viking portrait (or an initial when no portrait is available). Click the icon for **Saga Settings** or **Log out**. Shared server tokens show a read-only account; Saga Settings explains how to switch to a personal login.
 
-While playing, press **Left Ctrl + Insert** to copy a personal login token, then paste it into the website's **Login** dialog. This replaces the previous token for that character/world. **Left Ctrl + End** revokes it. A personal login enables owner-only scenery and storyteller settings; the shared viewer token does not grant ownership. Tokens are stored in the browser tab session and sent in Authorization headers, never in profile URLs.
+While playing, press **Left Ctrl + Insert** to copy a personal login token, then paste it into the website's **Login** dialog. Generating another code keeps existing logins active (up to 32 per character/world; the oldest are removed at the limit). **Left Ctrl + End** revokes all of that Viking's logins. A personal login enables owner-only scenery and storyteller settings; the shared viewer token does not grant ownership. Tokens are remembered in that browser until logout and are shared between its tabs. Chrome, Steam overlay and your phone each need an initial login; they do not share browser storage. Tokens are stored locally in the browser and sent in Authorization headers, never in profile URLs.
 
 Scenery progression follows recorded credit: Meadows initially; Eikthyr unlocks Black Forest, Elder unlocks Swamp, Bonemass unlocks Mountains, Moder unlocks Plains, Yagluth unlocks Mistlands, Queen unlocks Ashlands, and Fader unlocks Deep North. Tracking cannot reconstruct unrecorded boss kills from before installation.
 
@@ -152,7 +152,7 @@ Story prompts use relevant recorded events, career totals, bosses and credited t
 
 Back up `BepInEx/config/ValheimSagas` with the host stopped, including `sagas.db` and `personal-lore.key` if present. The key file is required to decrypt saved personal OpenRouter credentials. Do not share backups, configs or tokens publicly. Uninstalling the plugin does not delete recorded history.
 
-**0.3.27 is a preview release verified with automated checks.** It includes performance fixes for SLS/gear snapshots and staged, change-triggered portrait capture with asynchronous GPU readback and background image processing; fresh local and dedicated-server playtests must confirm frame-time improvements. Automated tests use labeled synthetic fixtures; real credentialed OpenRouter generation, two-client multiplayer acceptance and Linux hosting still require testing. Unresolved attackers and uncertain loot provenance stay unattributed rather than being guessed. Fight durations are observed telemetry, and carried gold is a snapshot, not a lifetime earnings counter.
+**0.3.28 is a preview release verified with automated checks.** It includes performance fixes for SLS/gear snapshots and staged, change-triggered portrait capture with asynchronous GPU readback and background image processing; fresh local and dedicated-server playtests must confirm frame-time improvements. Automated tests use labeled synthetic fixtures; real credentialed OpenRouter generation, two-client multiplayer acceptance and Linux hosting still require testing. Unresolved attackers and uncertain loot provenance stay unattributed rather than being guessed. Fight durations are observed telemetry, and carried gold is a snapshot, not a lifetime earnings counter.
 
 ## License
 
@@ -204,10 +204,15 @@ Statistics use the latest shared profiles to detect Epic Loot and Jewelcrafting,
 On first launch after this update, the original Ctrl+F8/F9/F10 defaults migrate to Ctrl+Insert/End/Home respectively; custom shortcuts are preserved. You can change them again in F1. Loot notifications no longer have a configuration toggle.
 
 
-### Dedicated multiplayer update (0.3.27)
+### Dedicated multiplayer update (0.3.28)
 
-Update **both the dedicated server and every Sagas client** to 0.3.27. This update introduces small, paced transport fragments; older servers cannot receive the new upload format. Restart each game/server after replacing plugin files. Existing configuration and recorded data are preserved.
+Update **both the dedicated server and every Sagas client** to 0.3.28. This update introduces compressed, small, paced transport fragments; older servers cannot receive the new upload format. Restart each game/server after replacing plugin files. Existing configuration and recorded data are preserved.
 
 Dedicated-server character identity now comes from the connected player's owned, replicated character object. Ctrl+Insert reports a specific server identity/service/storage problem when possible; shortcut notices also appear in the BepInEx log without credentials. Ctrl+Home can obtain the host URL without waiting for character metadata. Set `Server / WebsiteUrl` to the public browser address (for example `http://your-host:19908/`); the HTTP bind prefix can remain `http://*:19908/` on a dedicated host. A wildcard is a listening address, not a browser URL.
 
 Sagas uploads are fragmented into less than 4 KiB of encoded RPC payload plus the accounted framing allowance, with a global minimum 250 ms send spacing and independent event/profile/map/artwork allowances. Steam checks separate unsent data from unacknowledged data, reserving queue headroom and retaining a total backlog ceiling. Other transports retain conservative queue gating. Logs report pressure and recovery; a brief pause is expected, while persistent pauses need the client and server logs. Portrait/map synchronization may take longer on busy connections. These changes have automated coverage; dedicated multiplayer and crossplay performance still require playtesting.
+
+
+Map imports use lossless background compression and a bounded capture pass up to four times per second, alternating nearby terrain with previously explored areas. Only one tile is captured per pass and at most two map packets await acknowledgment; network byte limits and gameplay backpressure remain in force. Large initial imports are gradual. Compression changes transport size only, preserving map detail and fog of war. Cartography-only exploration remains excluded.
+
+A rejected or revoked browser token is removed automatically. Public servers resume anonymous map/statistics viewing; private servers return to the login prompt. Logging out in one browser does not revoke other browsers. Use Ctrl+End in game when you want to revoke every login.

@@ -10,19 +10,24 @@ static class PlayerLoginChecks {
   const string shared="synthetic-shared-login-token-123456";var url="http://127.0.0.1:"+port+"/";string saved="";
   using(var service=new SagaService(new(){DataDirectory=path,ListenPrefix=url,RequireViewerToken=true,ViewerToken=shared,World="w"})){
    service.Start();foreach(var id in new[]{"owner","locked","teammate","progress"})service.Store.Player(new(){World="w",PlayerId=id,Name=id});
-   var first=service.Store.RotatePlayerLogin("w","owner");saved=service.Store.RotatePlayerLogin("w","owner");var locked=service.Store.RotatePlayerLogin("w","locked");
+   var first=service.Store.IssuePlayerLogin("w","owner");saved=service.Store.IssuePlayerLogin("w","owner");var locked=service.Store.IssuePlayerLogin("w","locked");
    check(first!=saved&&saved.Length==70,"Personal tokens use independent 256-bit random credentials");
-   check(service.Store.AuthenticatePlayer(first)==null&&service.Store.AuthenticatePlayer(saved)?.PlayerId=="owner","Rotation invalidates previous login immediately");
+   check(service.Store.AuthenticatePlayer(first)?.PlayerId=="owner"&&service.Store.AuthenticatePlayer(saved)?.PlayerId=="owner","New login preserves existing browser authority");
+   service.Store.Player(new(){World="w",PlayerId="sessions",Name="Synthetic sessions"});
+   var credentials=new List<string>();for(int i=0;i<34;i++){credentials.Add(service.Store.IssuePlayerLogin("w","sessions"));System.Threading.Thread.Sleep(2);}
+   check(credentials.Count(t=>service.Store.AuthenticatePlayer(t)!=null)==32,"Browser credential count is bounded");
+   check(service.Store.AuthenticatePlayer(credentials.Last())?.PlayerId=="sessions","Most recently issued browser credential remains valid");
+   service.Store.RevokePlayerLogin("w","sessions");check(credentials.All(t=>service.Store.AuthenticatePlayer(t)==null),"Revoke all covers every device credential");
    using var client=new HttpClient{Timeout=TimeSpan.FromSeconds(10)};
    async Task<JObject> Request(string route,string token,int code=200,string? body=null){using var req=new HttpRequestMessage(body==null?HttpMethod.Get:HttpMethod.Post,url+route);if(token!="")req.Headers.Authorization=new("Bearer",token);if(body!=null)req.Content=new StringContent(body,Encoding.UTF8,"application/json");using var response=await client.SendAsync(req);check((int)response.StatusCode==code,"Login HTTP "+route+" status "+code);return JObject.Parse(await response.Content.ReadAsStringAsync());}
-   await Request("api/session", "",401);await Request("api/session",first,401);
+   await Request("api/session", "",401);await Request("api/session",first,200);
    check((await Request("api/session",shared))["playerId"]!.Type==JTokenType.Null,"Shared token has no character authority");
    check((string?)(await Request("api/session",saved))["playerId"]=="owner","Personal session derives owner from bearer");
    var otherSession=await Request("api/session?world=other",saved);check((string?)otherSession["playerId"]=="owner"&&(string?)otherSession["world"]=="w","Personal identity remains bound to credential world while browsing another world");
    await Request("api/profile-background",shared,403,"{\"world\":\"w\",\"biome\":\"plains\"}");
    await Request("api/profile-background",locked,403,"{\"world\":\"w\",\"biome\":\"plains\"}");
    check(!new SagaOptions().RequireViewerToken,"New server options default to public viewing");
-   var progress=service.Store.RotatePlayerLogin("w","progress");
+   var progress=service.Store.IssuePlayerLogin("w","progress");
    check((await Request("api/session",progress))["allowedBackgrounds"]!.Values<string>().SequenceEqual(new[]{"automatic","meadows"}),"New Viking may choose Meadows or automatic");
    await Request("api/profile-background",progress,200,"{\"world\":\"w\",\"biome\":\"meadows\"}");
    service.Store.AddEvent(new(){World="w",Id="progress-eikthyr",PlayerId="progress",Kind="kill",Boss=true,Prefab="Eikthyr",Utc=DateTime.UtcNow});
@@ -60,7 +65,7 @@ static class PlayerLoginChecks {
    service.Start();check(service.Store.AuthenticatePlayer(saved)?.PlayerId=="owner","Personal token persists through server restart");
    using var client=new HttpClient{Timeout=TimeSpan.FromSeconds(10)};using var anonymous=await client.GetAsync(url+"api/session");check(anonymous.StatusCode==HttpStatusCode.OK,"Public viewing needs no personal login");
    client.DefaultRequestHeaders.Authorization=new("Bearer","invalid");using var bad=await client.GetAsync(url+"api/session");check(bad.StatusCode==HttpStatusCode.Unauthorized,"Public mode rejects invalid supplied credential");
-   service.Store.RevokePlayerLogin("w","owner");check(service.Store.AuthenticatePlayer(saved)==null,"Explicit revocation removes login authority");
+   var additional=service.Store.IssuePlayerLogin("w","owner");service.Store.RevokePlayerLogin("w","owner");check(service.Store.AuthenticatePlayer(additional)==null,"Revoke removes all browser credentials");check(service.Store.AuthenticatePlayer(saved)==null,"Explicit revocation removes login authority");
   }
   check(!Encoding.UTF8.GetString(File.ReadAllBytes(Path.Combine(path,"sagas.db"))).Contains(saved),"Database never persists plaintext personal credential");
  }
