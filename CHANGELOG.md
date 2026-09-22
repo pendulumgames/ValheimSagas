@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.26
+
+- Cap atlas zoom at 20 m on the 100-pixel scale bar across wheel, buttons, keyboard and cluster zoom.
+- Spread nearby pins around 40 m and gather them at 50 m, with separate thresholds to avoid flickering. Manual cluster opening, exact-position lines and close-pin selection remain available.
+
 ## 0.3.25
 
 - Move default shortcuts away from Moments and Valheim function keys: Ctrl+Home opens the Steam website, Ctrl+Insert copies a personal login, Ctrl+End revokes it. One-time migration changes only the old default combinations; custom bindings are preserved.

@@ -168,9 +168,10 @@ document.addEventListener('pointerover',e=>{const b=e.target.closest('[data-gear
 const canvas=$('map'),ctx=canvas.getContext('2d'),view={x:0,z:0,scale:.5,width:1,height:1};
 const biomes={meadows:'#71826a',blackforest:'#365c4b',swamp:'#625d38',mountain:'#a6b5b6',plains:'#b29d64',mistlands:'#7a738b',ashlands:'#9d5148',deepnorth:'#b9d7e1',ocean:'#284a5c',unknown:'#52616a'};
 // A 12 km radius includes the normal world edge and a navigation margin.
-const WORLD_VIEW_RADIUS=12000;
+// Scale bar is 100 CSS pixels: 5 px/m = 20 m at maximum zoom.
+const WORLD_VIEW_RADIUS=12000,MAX_MAP_SCALE=5,PIN_FAN_OPEN_SCALE=2.5,PIN_FAN_CLOSE_SCALE=2;
 function minimumMapScale(){return Math.max(1,Math.min(view.width,view.height))/(WORLD_VIEW_RADIUS*2);}
-function constrainMapView(){view.scale=Math.max(minimumMapScale(),Math.min(15,view.scale));const maxX=Math.max(0,WORLD_VIEW_RADIUS-view.width/(2*view.scale)),maxZ=Math.max(0,WORLD_VIEW_RADIUS-view.height/(2*view.scale));view.x=maxX?Math.max(-maxX,Math.min(maxX,view.x)):0;view.z=maxZ?Math.max(-maxZ,Math.min(maxZ,view.z)):0;}
+function constrainMapView(){view.scale=Math.max(minimumMapScale(),Math.min(MAX_MAP_SCALE,view.scale));const maxX=Math.max(0,WORLD_VIEW_RADIUS-view.width/(2*view.scale)),maxZ=Math.max(0,WORLD_VIEW_RADIUS-view.height/(2*view.scale));view.x=maxX?Math.max(-maxX,Math.min(maxX,view.x)):0;view.z=maxZ?Math.max(-maxZ,Math.min(maxZ,view.z)):0;}
 function screen(x,z){return [(x-view.x)*view.scale+view.width/2,(view.z-z)*view.scale+view.height/2];}
 function world(x,y){return [(x-view.width/2)/view.scale+view.x,view.z-(y-view.height/2)/view.scale];}
 function visibleMarkers(){return (state.data?.players||[]).filter(p=>Number.isFinite(p.x)&&Number.isFinite(p.z)&&(p.online?$('onlineMarkers').checked:$('offlineMarkers').checked)&&(!state.markerPlayers.length||state.markerPlayers.includes(p.playerId)));}
@@ -205,7 +206,7 @@ function drawHeat(context,heat,peaks,intensity){context.save();context.globalCom
 function heatEventsAt(x,y){return heatBuckets(visibleEvents()).filter(h=>{const p=screen(h.x,h.z);return Math.hypot(p[0]-x,p[1]-y)<=heatRadius();}).flatMap(h=>h.events);}
 function positionInspect(x,y){const popup=$('mapInspect');popup.style.left=Math.max(8,Math.min(view.width-popup.offsetWidth-8,x+14))+'px';popup.style.top=Math.max(8,Math.min(view.height-popup.offsetHeight-8,y+14))+'px';}
 function inspectEvents(events){const groups=new Map();for(const e of events){const key=[e.kind,e.prefab||e.name,e.quality,e.rarity,e.stars,JSON.stringify(e.sockets||[])].join('|'),g=groups.get(key)||{...e,total:0};g.total+=e.kind==='kill'?1:Number(e.amount)||0;groups.set(key,g);}return [...groups.values()].slice(0,8).map(e=>`<p><strong style="color:${rarityColor(e.rarity,e.rarityColor||e.socketColor)}">${esc(e.name||e.prefab)} &times;${number(e.total)}</strong><br><small>${e.kind==='kill'?number(e.stars)+' stars':esc(e.rarity||'Ordinary')+' / Quality '+number(e.quality)} / ${esc(e.kind)}</small>${e.sockets?.length?'<br><small>Jewelcrafting \u00b7 '+esc(socketSummary(e))+'<br>'+e.sockets.map(s=>esc(s.name||s.prefab||'Empty socket')).join(' \u00b7 ')+'</small>':''}</p>`).join('')+(groups.size>8?'<small>Showing 8 of '+groups.size+' grouped entries.</small>':'');}
-function zoom(factor,x=view.width/2,y=view.height/2){if(factor<1)expandedPinGroup='';$('mapInspect').hidden=true;const before=world(x,y);view.scale=Math.max(minimumMapScale(),Math.min(15,view.scale*factor));const after=world(x,y);view.x+=before[0]-after[0];view.z+=before[1]-after[1];drawMap();}
+function zoom(factor,x=view.width/2,y=view.height/2){if(factor<1)expandedPinGroup='';$('mapInspect').hidden=true;const before=world(x,y);view.scale=Math.max(minimumMapScale(),Math.min(MAX_MAP_SCALE,view.scale*factor));const after=world(x,y);view.x+=before[0]-after[0];view.z+=before[1]-after[1];drawMap();}
 // Map icons and host daylight load independently of terrain and statistics.
 let mapPins=[],pinContext='',pinDue=0,pinRequest=0,clockSnapshot=null,receivedClock=null,clockReceivedAt=0,clockInitialAge=0;
 const pinImages=new Map(),pinImagePending=new Set(),pinImageRetry=new Map();
@@ -213,7 +214,7 @@ function mapDetailsContext(){return state.filter.world+'|'+state.mapPlayers.join
 async function refreshMapDetails(force=false){
  const context=mapDetailsContext(),world=state.filter.world;
  syncPinOwnerWorld();renderPinOwners();
- if(context!==pinContext){pinContext=context;mapPins=[];selectedMapPin=null;expandedPinGroup='';lastClusterClick=null;pinMotions.clear();pinImages.clear();pinDue=0;clockSnapshot=null;drawMap();}
+ if(context!==pinContext){pinContext=context;mapPins=[];selectedMapPin=null;expandedPinGroup='';lastClusterClick=null;automaticPinFans=false;pinMotions.clear();pinImages.clear();pinDue=0;clockSnapshot=null;drawMap();}
  const now=Date.now();
  const clockWork=api('/api/world-clock',{world}).then(d=>{if(context===mapDetailsContext()){clockSnapshot=d.clock;receivedClock=d.clock;clockReceivedAt=performance.now();clockInitialAge=Math.max(0,(Date.parse(d.serverUtc)-Date.parse(d.clock?.utc))/1000)||0;renderWorldClock();}}).catch(()=>{if(context===mapDetailsContext()){clockSnapshot=null;renderWorldClock();}});
  if(force||now>=pinDue){pinDue=now+15000;const request=++pinRequest;try{const data=await api('/api/map-icons',{world});if(context===mapDetailsContext()&&request===pinRequest){mapPins=data.pins||[];$('pinStatus').textContent=mapPins.length?number(mapPins.length)+' discovered icons shared.':'No discovered icons shared yet.';drawMap();}}catch(e){if(context===mapDetailsContext()&&request===pinRequest){mapPins=[];$('pinStatus').textContent='Map icons unavailable. Retrying shortly.';drawMap();}}}
@@ -235,7 +236,7 @@ function requestPinImage(p){
  pinImagePending.add(key);const context=mapDetailsContext(),world=state.filter.world;
  fetchMedia(world,p.playerId,p.iconId,key).then(async url=>{const image=new Image();image.src=url;await image.decode();if(context===mapDetailsContext()){if(pinImages.size>=128)pinImages.delete(pinImages.keys().next().value);pinImages.set(key,image);}}).catch(()=>{if(pinImageRetry.size>256)pinImageRetry.clear();pinImageRetry.set(key,Date.now()+30000);}).finally(()=>{pinImagePending.delete(key);requestAnimationFrame(drawMap);});
 }
-let pinLayout=[],selectedMapPin=null,pinSelectionAt=0,pinFrame=0,expandedPinGroup='',lastClusterClick=null;
+let pinLayout=[],selectedMapPin=null,pinSelectionAt=0,pinFrame=0,expandedPinGroup='',lastClusterClick=null,automaticPinFans=false;
 const pinMotions=new Map();let pinHitPoints=[];
 function pinIdentity(p){return [p.playerId,p.x,p.z,p.type,p.name,p.personal].join('|');}
 function clusterIdentity(g){return g.pins.map(pinIdentity).sort().join(';');}
@@ -251,7 +252,7 @@ function pinMotion(key,x,y,opacity,realX,realY){
 function zoomPinCluster(group){
  const xs=group.pins.map(p=>p.x),zs=group.pins.map(p=>p.z),dx=Math.max(...xs)-Math.min(...xs),dz=Math.max(...zs)-Math.min(...zs);
  view.x=(Math.max(...xs)+Math.min(...xs))/2;view.z=(Math.max(...zs)+Math.min(...zs))/2;
- view.scale=Math.min(15,Math.max(minimumMapScale(),Math.min((view.width-180)/Math.max(dx,1),(view.height-180)/Math.max(dz,1))));
+ view.scale=Math.min(MAX_MAP_SCALE,Math.max(minimumMapScale(),Math.min((view.width-180)/Math.max(dx,1),(view.height-180)/Math.max(dz,1))));
  expandedPinGroup=clusterIdentity(group);$('mapInspect').hidden=true;drawMap();
 }
 // Screen-space spatial buckets keep clustering independent of network feeds.
@@ -279,12 +280,15 @@ function showPinCluster(group,x,y){
  panel.querySelectorAll('[data-cluster-pin]').forEach(button=>button.onclick=()=>{const p=group.pins[Number(button.dataset.clusterPin)];view.x=p.x;view.z=p.z;view.scale=Math.max(view.scale,2);drawMap();showMapPin(p,view.width/2,view.height/2);});positionInspect(x,y);
 }
 function placePinFans(groups){
+ // Separate thresholds keep small zoom adjustments from opening/closing repeatedly.
+ if(view.scale>=PIN_FAN_OPEN_SCALE)automaticPinFans=true;
+ else if(view.scale<=PIN_FAN_CLOSE_SCALE)automaticPinFans=false;
  // Reserve badge/single-icon centers before placing any fan. This prevents
  // neighboring fans from covering one another or unrelated locations.
  const occupied=groups.map(g=>({x:g.x,y:g.y})).concat(visibleMarkers().map(p=>{const [x,y]=screen(p.x,p.z);return {x,y};}));
  for(const g of groups){
   const count=g.pins.length;g.expanded=false;g.fan=[];
-  if(count<2||count>12||!(expandedPinGroup===clusterIdentity(g)||(view.scale>=4&&groups.length<50)))continue;
+  if(count<2||count>12||!(expandedPinGroup===clusterIdentity(g)||(automaticPinFans&&groups.length<50)))continue;
   const reserved=occupied.length,preferred=Math.max(54,count*9);
   for(let i=0;i<count;i++){
    let found=null;

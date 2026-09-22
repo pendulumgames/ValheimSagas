@@ -152,7 +152,7 @@ Story prompts use relevant recorded events, career totals, bosses and credited t
 
 Back up `BepInEx/config/ValheimSagas` with the host stopped, including `sagas.db` and `personal-lore.key` if present. The key file is required to decrypt saved personal OpenRouter credentials. Do not share backups, configs or tokens publicly. Uninstalling the plugin does not delete recorded history.
 
-**0.3.25 is a preview release verified with automated checks.** It includes performance fixes for SLS/gear snapshots and staged, change-triggered portrait capture with asynchronous GPU readback and background image processing; fresh local and dedicated-server playtests must confirm frame-time improvements. Automated tests use labeled synthetic fixtures; real credentialed OpenRouter generation, two-client multiplayer acceptance and Linux hosting still require testing. Unresolved attackers and uncertain loot provenance stay unattributed rather than being guessed. Fight durations are observed telemetry, and carried gold is a snapshot, not a lifetime earnings counter.
+**0.3.26 is a preview release verified with automated checks.** It includes performance fixes for SLS/gear snapshots and staged, change-triggered portrait capture with asynchronous GPU readback and background image processing; fresh local and dedicated-server playtests must confirm frame-time improvements. Automated tests use labeled synthetic fixtures; real credentialed OpenRouter generation, two-client multiplayer acceptance and Linux hosting still require testing. Unresolved attackers and uncertain loot provenance stay unattributed rather than being guessed. Fight durations are observed telemetry, and carried gold is a snapshot, not a lifetime earnings counter.
 
 ## License
 
@@ -176,7 +176,7 @@ The atlas leads the World page, followed by Online Vikings and event statistics;
 
 ### Map icons and optional-mod statistics
 
-Click a nearby-pin group to spread up to 12 icons and browse its locations. Double-click it, or use **Zoom into group**, to zoom closer. At high zoom, close pins fan out automatically when space permits; fine lines connect them to their real coordinates. Zoom out to gather them again. Larger or crowded groups keep a scrollable picker. Selecting an individual location briefly highlights its true position, then fades. Game icons retain their original colors; **Color by Viking** applies only to personal pins and Viking markers.
+Click a nearby-pin group to spread up to 12 icons and browse its locations. Double-click it, or use **Zoom into group**, to zoom closer. Zoom stops at 20 m on the scale bar. Close pins fan out around 40 m when space permits and gather again around 50 m when zooming out; fine lines connect them to their real coordinates. Zoom out to gather them again. Larger or crowded groups keep a scrollable picker. Selecting an individual location briefly highlights its true position, then fades. Game icons retain their original colors; **Color by Viking** applies only to personal pins and Viking markers.
 
 Statistics use the latest shared profiles to detect Epic Loot and Jewelcrafting, including offline snapshots. Epic Loot adds rarity discoveries and bounty completions. Jewelcrafting adds equipped gems and total equipped socket capacity, including empty sockets. These loadout counts are independent of the time filter, exclude hotbar duplicates and containers, and do not measure combat power. SLS Nemesis statistics follow the host's installed/enabled integration. No optional mod is required.
 
