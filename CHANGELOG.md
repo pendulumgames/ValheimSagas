@@ -1,3 +1,8 @@
+## 0.3.31
+
+- Default personal map-pin sharing on for new configurations; preserve existing saved choices and the independent browser layer toggle.
+- Clarify public/private website settings, optional shared viewer credentials, dedicated wildcard binding, and the OpenRouter daily request-count limit. No configuration keys are renamed or removed.
+
 ## 0.3.30
 
 - Fix severe website map stalls when zoomed out over large explored worlds. Terrain now uses cached overview chunks with bounded, on-demand close-up detail instead of repeatedly decoding thousands of individual tiles.

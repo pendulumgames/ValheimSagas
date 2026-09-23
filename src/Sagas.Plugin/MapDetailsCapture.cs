@@ -18,7 +18,7 @@ public sealed partial class SagasPlugin {
  static readonly FieldInfo pinPixelField=AccessTools.Field(typeof(Minimap),"m_pixelSize");
  double pinScanMaximum;int pinExportCount;
  List<MapPin>? scanningPins;int pinCursor,pinSourceCount;float nextPinScan,nextPinResync;string pinOwner="",pinSignature="";bool pinConsent;Task<(string Signature,Packet[] Packets)>? pinBuild;int pinEpoch,buildingPinEpoch;bool pinUploadTurn;
- void SetupMapDetails(){sharePins=BindSetting("Privacy","SharePlayerPins",false,"Share your own manually placed map pins with website viewers. Off by default. Requires ShareMap. Personal pins can reveal marked locations outside explored terrain. Pins copied from another Viking's cartography are excluded.");pinArt=new RuntimeArt(Warn);}
+ void SetupMapDetails(){sharePins=BindSetting("Privacy","SharePlayerPins",true,"Share your own manually placed map pins with website viewers. On by default for new configs; existing choices are preserved. Requires ShareMap. Personal pins can reveal marked locations outside explored terrain. Pins copied from another Viking's cartography are excluded.");pinArt=new RuntimeArt(Warn);}
  void ResetMapDetails(){pinEpoch++;scanningPins=null;pinCursor=0;pinOwner="";pinSignature="";nextPinScan=0;nextPinResync=0;pendingPinPackets.Clear();pinMediaSent.Clear();pinArt?.Clear();}
  bool SendMapDetails(){pinUploadTurn=!pinUploadTurn;if(!pinUploadTurn)return false;foreach(var packet in pendingPinPackets.Values)if(Send(packet))return true;return false;}
  void PumpMapDetails(){

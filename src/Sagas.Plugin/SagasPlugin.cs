@@ -14,7 +14,7 @@ using Newtonsoft.Json;
 using UnityEngine;
 namespace ValheimSagas;
 
-[BepInPlugin("org.valheimsagas.collector", "Valheim Sagas", "0.3.30")]
+[BepInPlugin("org.valheimsagas.collector", "Valheim Sagas", "0.3.31")]
 [BepInDependency("_shudnal.ConfigurationManager", BepInDependency.DependencyFlags.SoftDependency)]
 [BepInDependency("org.bepinex.plugins.jewelcrafting", BepInDependency.DependencyFlags.SoftDependency)]
 [BepInDependency("randyknapp.mods.epicloot", BepInDependency.DependencyFlags.SoftDependency)]
@@ -49,15 +49,15 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
  Packet? outboundProfile; float nextUpload,nextMapImport; int uploadLane;
  void Awake() {
   Instance=this; SetupMapDetails(); SetupLogin(); SetupWebsiteOverlay(); requireToken=BindSetting("Server","RequireViewerToken",false,"True: private viewing requires ViewerToken. False: anyone who can reach the website may view shared data without a token. Does not change network binding or player sharing preferences."); artwork=new RuntimeArt(Warn); serverName=BindSetting("Server","DisplayName","","Website server name override; blank uses the Valheim server name, then the world name."); serverAddress=BindSetting("Server","AdvertisedAddress","","Optional server IP/hostname and port displayed to website viewers. No automatic public-IP discovery.");
-  host=BindSetting("Server","EnableWebsite",true,"Start the private HTTP service only when hosting a world.");
+  host=BindSetting("Server","EnableWebsite",true,"Start the website only when hosting a world. RequireViewerToken controls public versus private viewing.");
   data=BindSetting("Server","DataDirectory",Path.Combine(Paths.ConfigPath,"ValheimSagas"),"Persistent database path; back up separately from world saves.");
-  prefix=BindSetting("Server","ListenPrefix","http://127.0.0.1:8877/","Loopback by default. Use HTTPS reverse proxy for remote access.");
-  token=BindSetting("Server","ViewerToken",Guid.NewGuid().ToString("N")+Guid.NewGuid().ToString("N"),"Private member credential; never synced to game clients.");
+  prefix=BindSetting("Server","ListenPrefix","http://127.0.0.1:8877/","Local access by default. For a dedicated host, use http://*:19908/ with your allocated web port and a trailing slash. Set WebsiteUrl to the reachable public address. This setting does not open firewall ports. An HTTPS reverse proxy is optional.");
+  token=BindSetting("Server","ViewerToken",Guid.NewGuid().ToString("N")+Guid.NewGuid().ToString("N"),"Shared read-only viewing credential used when RequireViewerToken is true. Personal player logins are separate. Never synced to game clients.");
   lore=BindSetting("Lore","EnableOpenRouter",true,"Send selected narrative facts to OpenRouter. Free routing by default; paid models require AllowPaidModels. No coordinates or account IDs.");
   key=BindSetting("Lore","OpenRouterKey","","Server only. Prefer OPENROUTER_API_KEY environment variable.");
   model=BindSetting("Lore","Model","openrouter/free","OpenRouter model ID or @preset/name from the key owner account. Defaults to openrouter/free. Paid routes require AllowPaidModels. Manage pricing/provider limits in your OpenRouter preset or account.");
   allowPaidLore=BindSetting("Lore","AllowPaidModels",false,"Allow the host key to pay for personal and server sagas using Model. False enforces zero token prices, including presets. Restart host after changing.");
-  daily=BindSetting("Lore","DailyBudget",20,"Maximum external requests per UTC day.");
+  daily=BindSetting("Lore","DailyBudget",20,"Maximum OpenRouter requests per UTC day, including retries; this is a request count, not a dollar budget.");
   cooldown=BindSetting("Lore","CooldownMinutes",180,"Minimum chapter interval per character.");
   milestones=BindSetting("Lore","MilestoneEvents",20,"Ordinary event count before a chapter; notable events may qualify earlier.");
   retention=BindSetting("Server","RetentionDays",0,"Zero retains all detailed history. Positive values prune old events; dedup ledger remains.");
