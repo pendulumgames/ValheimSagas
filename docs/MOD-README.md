@@ -217,3 +217,7 @@ The atlas now loads a compact world overview in small batches, then requests det
 Install the update on the host and refresh open website or Steam-overlay tabs. Keep clients on the current release as usual; 0.3.30 does not change the 0.3.29 game upload protocol. No new configuration, port or dependency is required. Dedicated hosts still use `http://*:19908/` (or their allocated port) for `ListenPrefix`, and a real public address for `WebsiteUrl`.
 
 Synthetic full-world checks covered 76,648 terrain cells and 1,000 pins, with optional 40,000 SLS squares and 5,000 heat-map events. Results and limitations are documented in [map performance](https://github.com/pendulumgames/ValheimSagas/blob/main/docs/MAP-PERFORMANCE.md). These browser tests do not replace a dedicated-server playtest.
+
+### Saga storytelling (0.3.32)
+
+Saga chapters use selected recorded moments to tell a connected Norse-inspired story. AI fiction remains labeled separately from recorded evidence. Writing improvements apply to future chapters; existing stories are preserved without automatic regeneration.
