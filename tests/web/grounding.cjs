@@ -11,7 +11,7 @@ module.exports=async(page,output)=>{
       await page.evaluate(()=>scrollTo({top:0,behavior:'instant'}));
       for(const biome of biomes){
         const result=await page.evaluate(async biome=>{
-          state.busy=true;const p=state.data.players.find(p=>p.playerId===state.profile);p.profileBiome=biome;renderProfile();await loadMedia(p.playerId);
+          state.busy=true;worldDue=Infinity;appliedPresence=++presenceSerial;const p=state.data.players.find(p=>p.playerId===state.profile);p.profileBiome=biome;renderProfile();await loadMedia(p.playerId);
           const img=document.querySelector('.armory-symbol img');await img.decode();renderBackdrop();
           const full=backdropMode!=='boxed',target=full?$('profileBackdrop'):$('loadout'),r=img.getBoundingClientRect(),t=target.getBoundingClientRect(),fit=Math.min(r.width/img.naturalWidth,r.height/img.naturalHeight),h=img.naturalHeight*fit;
           const foot=r.top+(r.height-h)/2+h*(1-1/42),size=target.style.getPropertyValue('--ground-size').split(' ').map(parseFloat),pos=target.style.getPropertyValue('--ground-position').split(' ').map(parseFloat),paintGround=t.top+pos[1]+size[1]*biomeGround[$('loadout').dataset.biome];

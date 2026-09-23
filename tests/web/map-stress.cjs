@@ -16,7 +16,7 @@ const {chromium}=require('playwright'),fs=require('node:fs'),path=require('node:
    document.querySelectorAll('dialog[open]').forEach(d=>d.close());
    document.body.dataset.page='world';$('worldPage').hidden=false;
    canvas.style.cssText='width:2000px;height:1000px;max-width:none';
-   state.busy=true;state.filter.world='synthetic-stress';state.data={world:state.filter.world,events:[],players:[]};state.fit=false;
+   state.busy=true;worldDue=Infinity;appliedPresence=++presenceSerial;state.filter.world='synthetic-stress';state.data={world:state.filter.world,events:[],players:[]};state.fit=false;
    $('personalPinsLayer').checked=$('gamePinsLayer').checked=true;$('killLayer').checked=$('lootLayer').checked=false;
    // Current stream overview format. Exact exploration is supplied separately;
    // detailed 64x64 tiles are fetched only around the viewport by the application.

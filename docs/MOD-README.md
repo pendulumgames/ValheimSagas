@@ -10,9 +10,11 @@ Your adventures, remembered: a standalone Valheim mod with a server-hosted websi
 
 - **World Atlas:** Valheim terrain captured at runtime, textured brown fog of war, personal or combined exploration, named player markers, online/offline filters and separate kill/loot heat maps.
 - **Vikings:** persisted equipped-character portraits, game item icons, detailed hover/focus/tap tooltips, resistances, gear effects and personal statistics. Shared portraits and equipment remain available after logout while the host website is running.
+- **Adventure recap:** recent boss victories, notable finds, losses and new saga chapters since your last visit on this browser. First visits cover the past day.
+- **Trophy hall and comparisons:** first recorded boss victories, shared teams and eligible fastest fights; compare two Vikings using every supported time filter.
 - **Leaderboards:** boss progression and credited teams, observed fight times, kills and stars, rarity discoveries, carried gold and optional Epic Loot bounties.
 - **Optional SLS enhancements:** host-colored zone squares that follow SLS fog settings, hover levels above 1, current Nemesis scores and distinct Nemesis boss-kill rankings.
-- **Sagas:** persistent personal and server stories with a separate recorded-facts ledger. The host must configure OpenRouter first; no template stories are generated.
+- **Sagas:** persistent personal and server stories with a separate recorded-facts ledger. Explore recorded chapter moments on the atlas when their locations are shared and discovered. The host must configure OpenRouter first; no template stories are generated.
 - **Make it yours:** boxed, full-screen or full-screen scrolling scenery. Your personal login can select backgrounds up to your recorded boss progression; everyone sees the saved selection. New browsers default to full-screen scroll.
 
 ![World Atlas with day/night dial, colored personal icons, a fanned pin group and a last-known Viking marker](https://raw.githubusercontent.com/pendulumgames/ValheimSagas/main/docs/screenshots/atlas.png)
@@ -221,3 +223,15 @@ Synthetic full-world checks covered 76,648 terrain cells and 1,000 pins, with op
 ### Saga storytelling (0.3.32)
 
 Saga chapters use selected recorded moments to tell a connected Norse-inspired story. AI fiction remains labeled separately from recorded evidence. Writing improvements apply to future chapters; existing stories are preserved without automatic regeneration.
+
+### Independent atlas loading and version checks (0.3.33)
+
+The existing overview/detail map renderer is preserved. World identity, player presence and terrain now load independently of historical statistics; a slow statistics request no longer holds up the atlas. Expand Connection details to see feed status and server/website versions. Transient failures keep last-received terrain visible; world or sharing changes still clear the relevant cached information.
+
+**Upgrade the complete package, including the `web` folder**, on the host. Replacing only DLLs leaves the old website running. New hosts warn in the log about missing/mixed website files; current browsers also show a mismatch warning. Preserve your configuration and recorded data, restart, and reload browser/Steam tabs. Update all clients to the same version, as version matching is enabled by default.
+
+Statistics reuse a bounded history cache and append newly recorded events. Filters still calculate exact retained totals; the displayed event list remains capped at 5,000. Synthetic benchmarks are not dedicated-server performance guarantees.
+
+The World recap follows a per-world bookmark on this browser, independent of statistics filters. Mark caught up starts a new recap period. Trophy hall and Compare Vikings share the Hall of Renown time filter: first victory means first retained victory in that selected period. Boss participation includes recorded teammates; ordinary kills use finishing-blow credit. Unmeasured and incomplete multi-phase fights are excluded from fastest times.
+
+Valheim Moments media sharing is not enabled yet. Its optional integration requires an identity-aware, consent-based export interface in Moments; see the [integration assessment](https://github.com/pendulumgames/ValheimSagas/blob/main/docs/VALHEIM-MOMENTS-INTEGRATION.md). No extra mod is required for Sagas.

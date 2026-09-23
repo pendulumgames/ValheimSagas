@@ -1,7 +1,8 @@
-param([string]$Version='0.3.32')
+param([string]$Version='0.3.33')
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
 Set-Location $root
+& (Join-Path $PSScriptRoot 'stamp-web.ps1') -Version $Version
 $binary=Join-Path $root 'src/Sagas.Plugin/bin/Release/netstandard2.1'
 if(!(Test-Path (Join-Path $binary 'ValheimSagas.dll'))){throw 'Run scripts/build.ps1 first.'}
 . (Join-Path $PSScriptRoot 'web-artwork.ps1')

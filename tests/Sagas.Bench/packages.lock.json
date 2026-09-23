@@ -4,8 +4,8 @@
     "net10.0": {
       "LiteDB": {
         "type": "Transitive",
-        "resolved": "5.0.21",
-        "contentHash": "ykJ7ffFl7P9YQKR/PLci6zupiLrsSCNkOTiw6OtzntH7d2kCYp5L1+3a/pksKgTEHcJBoPXFtg7VZSGVBseN9w=="
+        "resolved": "5.0.20",
+        "contentHash": "/tUhRpJvx1sXJni7cbXPpctFHH1vifoJlg/QB+Cw22IYWqzbC3MAMOy/11limMHmZSPk6NU6JRA+lwqLy2f1Xw=="
       },
       "Newtonsoft.Json": {
         "type": "Transitive",
@@ -15,7 +15,7 @@
       "sagas.core": {
         "type": "Project",
         "dependencies": {
-          "LiteDB": "[5.0.21, )",
+          "LiteDB": "[5.0.20, )",
           "Newtonsoft.Json": "[13.0.3, )"
         }
       }

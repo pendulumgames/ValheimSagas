@@ -11,6 +11,10 @@ if(args.Contains("--website-only")){Console.WriteLine($"PASS {assertions} websit
 if(args.Contains("--jewel-only")){await JewelcraftingChecks.Run(root,Check);Console.WriteLine($"PASS {assertions} website and Jewelcrafting assertions.");Directory.Delete(root,true);return;}
 if(args.Contains("--north-only")){NorthBossChecks.Run(root,Check);Console.WriteLine($"PASS {assertions} North boss and directory metadata assertions.");Directory.Delete(root,true);return;}
 if(args.Contains("--offline-media-only")){await OfflineMediaChecks.Run(root,Check);Console.WriteLine($"PASS {assertions} deferred/offline portrait assertions.");Directory.Delete(root,true);return;}
+AnalyticsDeliveryChecks.Run(root,Check);
+if(args.Contains("--analytics-only")){Console.WriteLine($"PASS {assertions} analytics delivery checks.");Directory.Delete(root,true);return;}
+AdventureChecks.Run(root,Check);
+if(args.Contains("--adventures-only")){Console.WriteLine($"PASS {assertions} adventure assertions.");Directory.Delete(root,true);return;}
 WebsiteSetupChecks.Run(Check);
 if(args.Contains("--website-setup-only")){Console.WriteLine($"PASS {assertions} website setup checks.");Directory.Delete(root,true);return;}
 if(args.Contains("--map-details-only")){MapDetailsChecks.Run(root,Check);await MapDetailsHttpChecks.Run(root,Check);VikingMapChecks.Run(root,Check);Console.WriteLine($"PASS {assertions} map detail assertions.");Directory.Delete(root,true);return;}

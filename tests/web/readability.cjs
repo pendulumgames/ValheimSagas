@@ -6,7 +6,7 @@ if(!/^http:\/\/(127\.0\.0\.1|localhost):\d+\/$/.test(url))throw Error('Tests req
 try{const page=await browser.newPage({viewport:{width:1440,height:1050}});await page.addInitScript(()=>sessionStorage.setItem('sagas.viewer','synthetic-development-token-only'));
 await page.goto(url+'#profile/fixture-0');await page.waitForFunction(()=>state.profileData?.stats&&!state.busy);await page.waitForLoadState('networkidle');
 // Freeze polling while intentionally changing the synthetic presence snapshot.
-await page.evaluate(()=>{state.busy=true;const p=state.data.players.find(p=>p.playerId===state.profile);p.hotbar=p.gear.map((g,i)=>({...g,hotbarSlot:i+1}));p.online=true;p.lastSeenUtc=new Date().toISOString();renderProfile();});
+await page.evaluate(()=>{state.busy=true;worldDue=Infinity;appliedPresence=++presenceSerial;const p=state.data.players.find(p=>p.playerId===state.profile);p.hotbar=p.gear.map((g,i)=>({...g,hotbarSlot:i+1}));p.online=true;p.lastSeenUtc=new Date().toISOString();renderProfile();});
 assert.equal(await page.locator('#characterStatus .profile-presence.online').textContent(),'Online now');
 await page.evaluate(()=>{const p=state.data.players.find(p=>p.playerId===state.profile);p.lastSeenUtc=new Date(Date.now()-60000).toISOString();renderProfile();});
 assert.equal(await page.locator('#characterStatus .profile-presence.delayed').textContent(),'Online / syncing');

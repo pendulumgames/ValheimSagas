@@ -2,7 +2,7 @@ using ValheimSagas;
 // This host is an isolated synthetic fixture harness, never a game-telemetry substitute.
 var root=Path.GetFullPath(args.Length>0?args[0]:".dev/fixture");
 var token="synthetic-development-token-only";
-using var service=new SagaService(new SagaOptions{DataDirectory=root,WebDirectory=Path.GetFullPath("src/Sagas.Web"),ListenPrefix="http://127.0.0.1:9847/",RequireViewerToken=true,ViewerToken=token,World="synthetic-midgard",Synthetic=true,LoreEnabled=true,OpenRouterKey="synthetic-never-sent-to-openrouter",LoreMilestoneEvents=3,LoreCooldownMinutes=1,Log=Console.WriteLine},new HttpClient(new SyntheticLoreHandler()));
+using var service=new SagaService(new SagaOptions{ServerVersion="0.3.33",DataDirectory=root,WebDirectory=Path.GetFullPath("src/Sagas.Web"),ListenPrefix="http://127.0.0.1:9847/",RequireViewerToken=true,ViewerToken=token,World="synthetic-midgard",Synthetic=true,LoreEnabled=true,OpenRouterKey="synthetic-never-sent-to-openrouter",LoreMilestoneEvents=3,LoreCooldownMinutes=1,Log=Console.WriteLine},new HttpClient(new SyntheticLoreHandler()));
 service.Start();
 var names=new[]{"Astrid Ashwalker","Bjorn of the Pines"};var now=DateTime.UtcNow;
 for(int p=0;p<2;p++) {

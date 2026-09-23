@@ -1,3 +1,16 @@
+## 0.3.33
+
+> **Install the whole package on the host, including `web`, then restart and reload browser tabs.** Keep configuration/data. Server and clients must match because version enforcement remains enabled by default. Updating only DLLs can leave the old slow website renderer running.
+
+- Preserve the existing scalable atlas renderer; load world/presence/terrain independently of historical statistics. Show individual feed status and keep last-known terrain during transient failures.
+- Add server/website version and JavaScript-integrity checks, a browser mismatch banner and one host startup warning for stale/mixed web files.
+- Reuse bounded cached retained history with incremental new events, exact period counts, retention invalidation and fresh sharing checks. Bound event coordinate checks to displayed events and reuse discovery masks.
+- Add a World adventure recap, per-browser/world visit bookmark, new chapter links and notable recorded moments.
+- Add Trophy hall and Compare Vikings views inside the Hall of Renown, using its existing time filters. Show recorded first teams and eligible fastest times without inventing solo credit or incomplete fight durations.
+- Link saga chapters to shared, explored recorded event locations. Narrative prose never determines coordinates.
+- Guard delayed statistics/profile responses against overwriting newer presence or reviving revoked profile data; bound overlapping detail requests.
+- Moments integration investigated and planned, not shipped: a capture-time identity/consent export interface is required in Moments. No new captures or mandatory mod dependencies. Host diagnostics downloads, epithets and Steam achievements are excluded.
+
 ## 0.3.32
 
 > **Upgrade warning:** Update the server **and every joining client to the same Sagas version**, then restart. `RequireMatchingVersion` now defaults to `true`; missing or mismatched clients cannot join. Clients without the new handshake may only see Valheim's generic incompatible-version error—check the server log for the Sagas requirement. A host can explicitly set `RequireMatchingVersion = false` to permit mixed/missing clients, with potentially incomplete telemetry.

@@ -1,6 +1,7 @@
 index.html
 style.css
 app.js
+version.json
 favicon.svg
 biomes/grounded/meadows-1920.webp
 biomes/grounded/meadows-2560.webp

@@ -38,14 +38,14 @@ public sealed partial class SagaStore : IDisposable {
   if(e.Kind=="collect"&&string.IsNullOrEmpty(e.Provenance))return false;
   // Collection IDs use a stable provenance ID. Quantity is capped by the actual emitted drop,
   // so partial stacks/repeated pickup reports can never mint additional earned loot.
-  db.BeginTrans();try {
+  var added=new List<SagaEvent>();db.BeginTrans();try {
    if(e.Kind=="collect" && !string.IsNullOrEmpty(e.Provenance)) {
     string pid=Key(e.World,e.Provenance);var ledger=db.GetCollection("provenance");var p=ledger.FindById(pid);
     if(p==null) {
      // A client can observe pickup before the owning client's drop reaches the server.
      // Persist both receipt and pending payload in one commit before allowing an ACK.
      var pending=Wrap(id,e.World,e.PlayerId,e,e.Utc);pending["provenance"]=pid;
-     db.GetCollection("pendingCollections").Insert(pending);seen.Insert(new BsonDocument{{"_id",id}});db.Commit();return true;
+     db.GetCollection("pendingCollections").Insert(pending);seen.Insert(new BsonDocument{{"_id",id}});db.Commit();RememberWorld(e.World);return true;
     }
     if(p["dropped"].AsInt32<=p["collected"].AsInt32) {seen.Insert(new BsonDocument{{"_id",id}});db.Commit();return false;}
     e.Amount=Math.Min(e.Amount,p["dropped"].AsInt32-p["collected"].AsInt32);if(p.ContainsKey("json"))CopyLootMetadata(e,Read<SagaEvent>(p));p["collected"]=p["collected"].AsInt32+e.Amount;ledger.Update(p);
@@ -58,15 +58,15 @@ public sealed partial class SagaStore : IDisposable {
     var pending=db.GetCollection("pendingCollections");int remaining=e.Amount;
     foreach(var row in pending.Find(Query.EQ("provenance",pid)).OrderBy(d=>d["utc"].AsDateTime).ThenBy(d=>d["_id"].AsString,StringComparer.Ordinal).ToArray()) {
      var collected=Read<SagaEvent>(row);CopyLootMetadata(collected,e);collected.Amount=Math.Min(collected.Amount,remaining);
-     if(collected.Amount>0) {remaining-=collected.Amount;db.GetCollection("events").Insert(Wrap(row["_id"].AsString,collected.World,collected.PlayerId,collected,collected.Utc));}
+     if(collected.Amount>0) {remaining-=collected.Amount;db.GetCollection("events").Insert(Wrap(row["_id"].AsString,collected.World,collected.PlayerId,collected,collected.Utc));added.Add(collected);}
      pending.Delete(row["_id"]);
     }
     entry["collected"]=e.Amount-remaining;ledger.Update(entry);
    }
-   seen.Insert(new BsonDocument{{"_id",id}});db.GetCollection("events").Insert(Wrap(id,e.World,e.PlayerId,e,e.Utc));RecordBossReceipt(e);db.Commit();return true;
+   seen.Insert(new BsonDocument{{"_id",id}});db.GetCollection("events").Insert(Wrap(id,e.World,e.PlayerId,e,e.Utc));RecordBossReceipt(e);db.Commit();added.Add(e);AppendAnalytics(e.World,added);return true;
   }catch{db.Rollback();throw;}
  }}
- public void Player(PlayerSnapshot p){lock(gate){AssignProfileSlug(p);AssignMapColor(p);db.GetCollection("players").Upsert(Wrap(Key(p.World,p.PlayerId),p.World,p.PlayerId,p,p.Utc));}}
+ public void Player(PlayerSnapshot p){lock(gate){RememberWorld(p.World);AssignProfileSlug(p);AssignMapColor(p);db.GetCollection("players").Upsert(Wrap(Key(p.World,p.PlayerId),p.World,p.PlayerId,p,p.Utc));}}
  public void Explore(ExplorationBatch b) {lock(gate) {db.BeginTrans();try {foreach(var c in b.Cells){var cells=db.GetCollection("cells");var id=Key(b.World,b.PlayerId,c.X.ToString(),c.Z.ToString());var old=cells.FindById(id);cells.Upsert(new BsonDocument{{"_id",id},{"world",b.World},{"player",b.PlayerId},{"imported",b.Imported||(old!=null&&old["imported"].AsBoolean)},{"json",JsonConvert.SerializeObject(c)}});IndexMapCell(id,b.World,b.PlayerId,c,b.Imported||(old!=null&&old["imported"].AsBoolean));}db.Commit();}catch{db.Rollback();throw;}}}
  static void CopyLootMetadata(SagaEvent collected,SagaEvent drop){collected.Prefab=drop.Prefab;collected.Name=drop.Name;collected.ItemType=drop.ItemType;collected.Quality=drop.Quality;collected.Rarity=drop.Rarity;collected.RarityColor=drop.RarityColor;collected.Effects=new List<string>(drop.Effects);collected.Source=drop.Source;collected.Sockets=drop.Sockets;collected.SocketColor=drop.SocketColor;}
  public List<SagaEvent> Events(string world, TimeWindow w, HashSet<string>? players=null){lock(gate)return new[]{"events","statistics"}.SelectMany(c=>db.GetCollection(c).Find(Query.And(Query.EQ("world",world),Query.Between("utc",w.From,w.To)))).Select(Read<SagaEvent>).Where(e=>w.Contains(e.Utc)&&(players==null||players.Contains(e.PlayerId))).ToList();}
@@ -78,10 +78,10 @@ public sealed partial class SagaStore : IDisposable {
   if(statisticsDays>0){var cutoff=now.AddDays(-statisticsDays);foreach(var name in new[]{"events","statistics"})changed+=db.GetCollection(name).DeleteMany(Query.LT("utc",cutoff));var previous=StatisticsSince;if(!previous.HasValue||cutoff>previous.Value)db.GetCollection("meta").Upsert(new BsonDocument{{"_id","statisticsSince"},{"utc",cutoff}});}
   // Dedup IDs/provenance and pending unmatched collections remain durable; they must never
   // reset collection ceilings. Completed saga factual ledgers survive event retention.
-  db.Commit();return changed;
+  db.Commit();if(changed>0)InvalidateAnalytics();return changed;
  }catch{db.Rollback();throw;}}}
  public List<PlayerSnapshot> Players(string world){lock(gate)return db.GetCollection("players").Find(Query.EQ("world",world)).Select(Read<PlayerSnapshot>).ToList();}
- public string[] Worlds(){lock(gate)return db.GetCollection("players").FindAll().Select(d=>d["world"].AsString).Concat(db.GetCollection("events").FindAll().Select(d=>d["world"].AsString)).Distinct().OrderBy(x=>x).ToArray();}
+ public string[] Worlds(){lock(gate){EnsureWorldIndex();return indexedWorlds!.OrderBy(x=>x,StringComparer.Ordinal).ToArray();}}
  public List<MapCell> Cells(string world,HashSet<string> players){lock(gate)return db.GetCollection("cells").Find(Query.EQ("world",world)).Where(d=>players.Contains(d["player"].AsString)).Select(Read<MapCell>).GroupBy(c=>Key(c.X.ToString(),c.Z.ToString())).Select(g=>TerrainTile.Union(g)).ToList();}
  public bool Imported(string world,HashSet<string> players){lock(gate)return db.GetCollection("cells").Find(Query.EQ("world",world)).Any(d=>players.Contains(d["player"].AsString)&&d["imported"].AsBoolean);}
  public List<SagaChapter> Chapters(string world){lock(gate)return db.GetCollection("chapters").Find(Query.EQ("world",world)).Select(Read<SagaChapter>).OrderBy(c=>c.Utc).ToList();}

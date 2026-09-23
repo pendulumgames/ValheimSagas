@@ -17,7 +17,7 @@ public sealed partial class SagaService {
   var players=store.Players(world).Where(p=>p.ShareProfile&&(selected==null||selected.Contains(p.PlayerId))).ToDictionary(p=>p.PlayerId,StringComparer.Ordinal);
   // Query the complete retained statistical ledger, never State's 5,000-row display subset.
   // Contributor credit can belong to a selected participant even when another player finished.
-  var events=store.Events(world,window);
+  var events=store.AnalyticsHistory(world).Where(e=>window.Contains(e.Utc)).ToArray();
   LeaderboardPerson Person(string id)=>new LeaderboardPerson{PlayerId=id,Name=players[id].Name};
   var bossEvents=events.Where(e=>e.Kind=="kill"&&e.Boss&&!e.NemesisBoss&&!BossCatalog.IntermediatePhase(e.Prefab)).Select(e=>{
    var identity=BossIdentity(e);var team=e.Contributors.Concat(new[]{e.PlayerId}).Where(id=>!string.IsNullOrEmpty(id)&&players.ContainsKey(id)).Distinct(StringComparer.Ordinal).Select(Person).OrderBy(p=>p.Name,StringComparer.Ordinal).ThenBy(p=>p.PlayerId,StringComparer.Ordinal).ToArray();

@@ -1,6 +1,7 @@
 using System;
 namespace ValheimSagas;
 public sealed class SagaOptions { public string ServerName {get;set;} = "Valheim fellowship"; public string ServerAddress {get;set;} = "";
+ public string ServerVersion {get;set;} = "";
  public string DataDirectory {get;set;} = "sagas-data";
  public string WebDirectory {get;set;} = "web";
  public string ListenPrefix {get;set;} = "http://127.0.0.1:9847/";

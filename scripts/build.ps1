@@ -7,6 +7,7 @@ param(
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
 Set-Location $root
+& (Join-Path $PSScriptRoot 'stamp-web.ps1')
 foreach($file in @((Join-Path $GameManaged 'assembly_valheim.dll'),(Join-Path $BepInExCore 'BepInEx.dll'))) { if(!(Test-Path -LiteralPath $file)){throw "Missing local game reference: $file"} }
 dotnet build src/Sagas.Plugin/Sagas.Plugin.csproj -c Release -p:RestoreLockedMode=true "-p:GameManaged=$GameManaged" "-p:BepInExCore=$BepInExCore"
 if($LASTEXITCODE -ne 0){throw 'Plugin build failed'}

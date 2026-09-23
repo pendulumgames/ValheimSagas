@@ -14,7 +14,7 @@ using Newtonsoft.Json;
 using UnityEngine;
 namespace ValheimSagas;
 
-[BepInPlugin("org.valheimsagas.collector", "Valheim Sagas", "0.3.32")]
+[BepInPlugin("org.valheimsagas.collector", "Valheim Sagas", "0.3.33")]
 [BepInDependency("_shudnal.ConfigurationManager", BepInDependency.DependencyFlags.SoftDependency)]
 [BepInDependency("org.bepinex.plugins.jewelcrafting", BepInDependency.DependencyFlags.SoftDependency)]
 [BepInDependency("randyknapp.mods.epicloot", BepInDependency.DependencyFlags.SoftDependency)]
@@ -107,7 +107,7 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
     if(serviceStartup.Poll()){var ready=serviceStartup.Current!;service=ready.Service;foreach(var id in ready.Characters)knownCharacters.Add(id);Logger.LogInfo("Sagas background service startup completed in "+ready.Milliseconds.ToString("F1",CultureInfo.InvariantCulture)+" ms (worker time).");LogWebsiteSetup();}
     else if(!serviceStartup.Busy){
      // Snapshot all Unity/configuration values before entering the worker.
-     var options=new SagaOptions{DataDirectory=data.Value,WebDirectory=Path.Combine(Path.GetDirectoryName(Info.Location)!,"web"),ListenPrefix=host.Value?ListenAddress():"",ViewerToken=token.Value,RequireViewerToken=requireToken.Value,World=World,WorldName=ZNet.instance.GetWorldName(),ServerName=WebsiteServerName(),ServerAddress=serverAddress.Value,SlsInstalled=SlsAdapter.Installed,LoreEnabled=lore.Value,LoreModel=model.Value,LoreAllowPaid=allowPaidLore.Value,LoreUseAccountPricing=true,LoreDailyBudget=Math.Max(0,daily.Value),LoreCooldownMinutes=Math.Max(1,cooldown.Value),LoreMilestoneEvents=Math.Max(1,milestones.Value),RetentionDays=Math.Max(0,retention.Value),StatisticsRetentionDays=statisticsRetention.Value<=0?0:Math.Max(retention.Value,statisticsRetention.Value),Log=message=>Logger.LogWarning(message),OpenRouterKey=Environment.GetEnvironmentVariable("OPENROUTER_API_KEY")??key.Value};
+     var options=new SagaOptions{ServerVersion=Info.Metadata.Version.ToString(),DataDirectory=data.Value,WebDirectory=Path.Combine(Path.GetDirectoryName(Info.Location)!,"web"),ListenPrefix=host.Value?ListenAddress():"",ViewerToken=token.Value,RequireViewerToken=requireToken.Value,World=World,WorldName=ZNet.instance.GetWorldName(),ServerName=WebsiteServerName(),ServerAddress=serverAddress.Value,SlsInstalled=SlsAdapter.Installed,LoreEnabled=lore.Value,LoreModel=model.Value,LoreAllowPaid=allowPaidLore.Value,LoreUseAccountPricing=true,LoreDailyBudget=Math.Max(0,daily.Value),LoreCooldownMinutes=Math.Max(1,cooldown.Value),LoreMilestoneEvents=Math.Max(1,milestones.Value),RetentionDays=Math.Max(0,retention.Value),StatisticsRetentionDays=statisticsRetention.Value<=0?0:Math.Max(retention.Value,statisticsRetention.Value),Log=message=>Logger.LogWarning(message),OpenRouterKey=Environment.GetEnvironmentVariable("OPENROUTER_API_KEY")??key.Value};
      serviceStartup.Begin(()=>{var timer=System.Diagnostics.Stopwatch.StartNew();var created=new SagaService(options);try{created.Start();return new StartedService{Service=created,Characters=created.Store.Players(options.World).Select(p=>p.PlayerId).ToArray(),Milliseconds=timer.Elapsed.TotalMilliseconds};}catch{created.Dispose();throw;}});
     }
    }catch(Exception e){nextServiceStart=Time.unscaledTime+60;Warn("background service startup",e);}

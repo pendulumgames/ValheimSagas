@@ -1,4 +1,4 @@
-param([string]$Package='artifacts/ValheimSagas-0.3.32.zip')
+param([string]$Package='artifacts/ValheimSagas-0.3.33.zip')
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
 if(![IO.Path]::IsPathRooted($Package)){$Package=Join-Path $root $Package}
@@ -24,6 +24,7 @@ $cases=[ordered]@{
  'duplicate-inventory'={param($z) $text=Get-ZipText $z 'SHA256SUMS.txt';Set-ZipText $z 'SHA256SUMS.txt' ($text+"`n"+$text.Split("`n")[0])}
  'tampered-dll'={param($z) Set-ZipText $z 'BepInEx/plugins/ValheimSagas/Sagas.Core.dll' 'tampered synthetic package fixture'}
  'invalid-icon'={param($z) Set-ZipText $z 'icon.png' 'invalid png fixture'}
+ 'mixed-website-version'={param($z) Set-ZipText $z 'BepInEx/plugins/ValheimSagas/web/version.json' '{"version":"0.0.1","appSha256":"stale"}'}
  'invalid-manifest'={param($z) Set-ZipText $z 'manifest.json' '{}'}
  'missing-public-screenshot'={param($z) Set-ZipText $z 'README.md' '# Synthetic negative test'}
 }

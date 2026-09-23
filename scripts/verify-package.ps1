@@ -31,6 +31,12 @@ try {
  if($manifest.website_url -cne 'https://github.com/pendulumgames/ValheimSagas'){throw 'Unexpected source repository URL'}
  if(!$manifest.description -or $manifest.description.Length -gt 250){throw 'Description must contain 1 to 250 characters'}
  if(@($manifest.dependencies).Count -ne 1 -or $manifest.dependencies[0] -cne 'denikson-BepInExPack_Valheim-5.4.2350'){throw 'Unexpected dependency list'}
+ $webVersion=(Read-EntryText ($prefix+'web/version.json')) | ConvertFrom-Json
+ if($webVersion.version -cne $manifest.version_number){throw 'Website version and release manifest disagree'}
+ $appStream=$zip.GetEntry($prefix+'web/app.js').Open();$appHash=[Security.Cryptography.SHA256]::Create()
+ try{$actualAppHash=[BitConverter]::ToString($appHash.ComputeHash($appStream)).Replace('-','').ToLowerInvariant()}finally{$appStream.Dispose();$appHash.Dispose()}
+ if($webVersion.appSha256 -cne $actualAppHash){throw 'Website version manifest does not match actual JavaScript'}
+ if(!(Read-EntryText ($prefix+'web/app.js')).Contains("const WEBSITE_VERSION='$($manifest.version_number)';")){throw 'Executing website version does not match package'}
  $icon=$zip.GetEntry('icon.png').Open()
  try{
   $header=New-Object byte[] 24

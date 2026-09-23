@@ -140,3 +140,13 @@ Use isolated server/client profiles: matching0.3.32 clients join; missing Sagas,
 Open F1 with Shudnal ConfigurationManager: Sagas Server/Lore rows show S; privacy/shortcut rows show C. Server rows stay locked on a remote client, and unrelated mods' rows retain their own indicators. Server credentials/paths must not appear as remote-synchronized values.
 
 Fresh dedicated setup: WebsitePort=allocatedTCPport, ListenPrefix blank. Check the effective port/startup log and open IP:port. Verify direct-IP Ctrl+Home inference, explicit WebsiteUrl priority, advertised game-host/web-port separation, custom HTTPS URL and client override. Relay/join-code connections with no host must get clear URL guidance. Confirm old explicit prefixes are preserved, disabled/unavailable listeners produce actionable messages, and solo/local fresh config stays loopback. No firewall or panel port should be opened automatically.
+
+
+## 0.3.33 website and adventure acceptance
+
+1. With the game/server stopped, update all plugin DLLs AND the bundled web folder. Preserve configuration/database. Match server/client versions, restart and reload tabs. Connection details should show Server0.3.33 / Website0.3.33 without mismatch warning. Deliberately mixed files are covered by isolated tests, not something to do on a live host.
+2. On a dedicated world, verify terrain and online Vikings appear independently of statistics. Record actual state/stream endpoint timings and check dragging remains responsive. Synthetic desktop timings do not establish dedicated performance.
+3. Leave/revisit World in the same browser and another browser. Confirm per-world recap bookmark, first-visit24h label and Mark caught up. New chapters should link to the appropriate Viking or server saga.
+4. Open Leaderboard > Trophy hall and Compare Vikings. Exercise all time filters/custom dates. Check a known team kill, an untimed older kill, Nemesis vs vanilla bosses, and optional Epic Loot absence. First recorded refers to the selected period.
+5. Open a saga's Explore recorded moments. Only retained events with shared discovered coordinates can be selected. Verify centering and empty-state behavior. Revoke profile/map sharing while a second browser is viewing; ensure private story/locations clear and late replies cannot restore them.
+6. Moments integration is deferred: no screenshots/clips are imported in0.3.33. Implement and test its separately documented export contract before enabling that feature.
