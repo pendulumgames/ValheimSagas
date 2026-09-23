@@ -19,6 +19,8 @@ if(args.Contains("--player-login-only")){await PlayerLoginChecks.Run(root,Check)
 if(args.Contains("--profile-biomes-only")){await ProfileBiomeChecks.Run(root,Check);Console.WriteLine($"PASS {assertions} profile biome and static-route assertions.");Directory.Delete(root,true);return;}
 if(args.Contains("--media-only")){await MediaTransferChecks.Run(root,Check);Console.WriteLine($"PASS {assertions} high resolution media assertions.");Directory.Delete(root,true);return;}
 if(args.Contains("--network-only")){NetworkReliabilityChecks.Run(Check);TelemetryBudgetChecks.Run(Check);Console.WriteLine($"PASS {assertions} network assertions.");Directory.Delete(root,true);return;}
+MapDeliveryChecks.Run(root,Check);
+if(args.Contains("--map-delivery-only")){Console.WriteLine($"PASS {assertions} map delivery assertions.");Directory.Delete(root,true);return;}
 LootMetadataChecks.Run(root,Check);
 SlsCaptureChecks.Run(Check);
 TelemetryBudgetChecks.Run(Check);

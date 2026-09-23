@@ -1,0 +1,13 @@
+const {chromium}=require('playwright'),fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const source=fs.readFileSync(path.resolve(__dirname,'../../src/Sagas.Web/app.js'),'utf8');
+const code=source.slice(source.indexOf('class MapTerrain'),source.indexOf('let mapMetaDue'))+'\n'+source.slice(source.indexOf('async function loadMapDetail('),source.indexOf('function terrainTile('))+'\n'+source.split('\n').find(l=>l.startsWith('function terrainTile('));
+(async()=>{const browser=await chromium.launch({headless:true,executablePath:process.env.SAGAS_BROWSER_EXECUTABLE||(process.platform==='win32'?'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe':undefined)});try{const page=await browser.newPage();const result=await page.evaluate(async code=>{
+ const biomes={unknown:'#123456'},tileCache=new Map(),requestMapDraw=()=>{},requestMapDetail=()=>{},view={width:2000,height:1000,x:0,z:0,scale:.15},screen=(x,z)=>[x,z];let mapDetailBusy=false,mapStreamScope='scope',context='first',calls=0,delayed=null;const mapContext=()=>context,state={filter:{world:'synthetic'},mapPlayers:[],mapCells:new Map()};
+ for(let z=-50;z<=50;z++)for(let x=-100;x<=100;x++)state.mapCells.set(x+','+z,{x,z,terrainPixels:''});
+ const api=async(url,q)=>{calls++;const result={scope:mapStreamScope,cells:q.keys.split(';').map(key=>({...state.mapCells.get(key)}))};if(delayed){const d=delayed;delayed=null;await d;}return result;};
+ return await eval(code+`(async()=>{const checks={};for(let i=0;i<40;i++)await loadMapDetail();const settled=calls;await loadMapDetail();await loadMapDetail();checks.bounded=terrainAtlas.details.size===2048;checks.settles=calls===settled&&settled===32;
+ terrainAtlas.reset();let release;delayed=new Promise(r=>release=r);const pending=loadMapDetail();terrainAtlas.version++;state.mapCells.set('100,50',{x:100,z:50,terrainPixels:''});release();await pending;checks.unrelatedUpdate=terrainAtlas.details.size===64;
+ terrainAtlas.reset();delayed=new Promise(r=>release=r);const stale=loadMapDetail();state.mapCells.set('0,0',{x:0,z:0,terrainPixels:''});release();await stale;checks.changedTile=!terrainAtlas.details.has('0,0')&&terrainAtlas.details.size===63;
+ terrainAtlas.reset();delayed=new Promise(r=>release=r);const oldScope=loadMapDetail();context='second';release();await oldScope;checks.selectionRace=terrainAtlas.details.size===0;
+ return checks;})()`);
+ },code);for(const[key,value]of Object.entries(result))assert(value,key);console.log('PASS '+Object.keys(result).length+' detail working-set bounds, settled downloads, unrelated updates, changed-tile and selection-race checks.');}finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1});

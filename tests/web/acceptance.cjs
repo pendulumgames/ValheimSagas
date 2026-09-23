@@ -46,8 +46,9 @@ fs.mkdirSync(output, { recursive: true });
   assert(!request.url().includes(token), 'Credential never placed in URL');
   await page.screenshot({ path: path.join(output, 'desktop-overview.png'), fullPage: false });
   // First-sync regression: empty exploration must not consume the pending automatic fit.
+  await page.evaluate(async()=>{state.busy=true;while(mapStreamBusy)await new Promise(r=>setTimeout(r,10));clearTimeout(mapStreamTimer);});
   let terrainReady=false;
-  await page.route('**/api/map?**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({cellSize:64,cells:terrainReady?[{x:120,z:-95,biome:'Meadows'}]:[]})}));
+  await page.route('**/api/map-stream?**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({scope:'synthetic-delayed-map',cursor:'1',reset:true,more:false,cellSize:64,cells:terrainReady?[{x:120,z:-95,biome:'Meadows'}]:[]})}));
   await page.evaluate(async()=>{state.fit=true;await refreshMap();});
   await page.locator('.masthead nav a[href="#world"]').click();
   await page.waitForFunction(()=>!document.querySelector('#atlas').hidden);
@@ -57,8 +58,9 @@ fs.mkdirSync(output, { recursive: true });
   const fitted=await page.evaluate(()=>({point:screen(120.5*64,-94.5*64),width:view.width,height:view.height,fit:state.fit}));
   assert(fitted.point[0]>0&&fitted.point[0]<fitted.width&&fitted.point[1]>0&&fitted.point[1]<fitted.height,'First arriving faraway terrain automatically fitted alongside markers');
   assert.equal(fitted.fit,false,'Successful terrain fit consumed once');
-  await page.unroute('**/api/map?**');
+  await page.unroute('**/api/map-stream?**');
   await page.evaluate(async()=>{state.fit=true;await refreshMap();});
+  await page.evaluate(()=>state.busy=false);
   await page.locator('.masthead nav a[href="#world"]').click();
 
   for(const range of ['all','30m','1h','6h','12h','1d','3d','7d']) {

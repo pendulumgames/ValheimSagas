@@ -60,10 +60,10 @@ public sealed partial class SagaService {
   var result=new List<VisibleMapPin>();var gamePins=new Dictionary<string,VisibleMapPin>();
   foreach(var snapshot in store.Pins(world)){
    if(!owners.TryGetValue(snapshot.PlayerId,out var owner))continue;
-   var cells=store.Cells(world,new HashSet<string>{owner.PlayerId}).ToDictionary(c=>c.X+":"+c.Z);
+   var mapOwner=new HashSet<string>{owner.PlayerId};
    foreach(var pin in snapshot.Pins){
     if(pin.Personal&&!owner.SharePins)continue;
-    if(!pin.Personal&&(!cells.TryGetValue((int)Math.Floor(pin.X/64)+":"+(int)Math.Floor(pin.Z/64),out var cell)||!TerrainTile.Known(cell,pin.X,pin.Z)))continue;
+    if(!pin.Personal&&!store.KnownPoint(world,mapOwner,pin.X,pin.Z))continue;
     var key=pin.Type+":"+pin.X.ToString("R",System.Globalization.CultureInfo.InvariantCulture)+":"+pin.Z.ToString("R",System.Globalization.CultureInfo.InvariantCulture);
     var source=new MapPinSource{PlayerId=owner.PlayerId,Name=owner.Name,Color=owner.MapColor,IconId=pin.IconId};
     if(!pin.Personal&&gamePins.TryGetValue(key,out var shared)){if(!shared.Sources.Any(p=>p.PlayerId==owner.PlayerId))shared.Sources.Add(source);continue;}
@@ -76,7 +76,7 @@ public sealed partial class SagaService {
   if(!store.IsMapIcon(world,player,id))return false;
   var owner=store.Players(world).FirstOrDefault(p=>p.PlayerId==player&&p.ShareMap);if(owner==null)return false;
   var pins=store.Pins(world).FirstOrDefault(p=>p.PlayerId==player);if(pins==null)return false;
-  var cells=store.Cells(world,new HashSet<string>{player}).ToDictionary(c=>c.X+":"+c.Z);
-  return pins.Pins.Any(p=>p.IconId==id&&(!p.Personal||owner.SharePins)&&(p.Personal||cells.TryGetValue((int)Math.Floor(p.X/64)+":"+(int)Math.Floor(p.Z/64),out var cell)&&TerrainTile.Known(cell,p.X,p.Z)));
+  var mapOwner=new HashSet<string>{player};
+  return pins.Pins.Any(p=>p.IconId==id&&(!p.Personal||owner.SharePins)&&(p.Personal||store.KnownPoint(world,mapOwner,p.X,p.Z)));
  }
 }

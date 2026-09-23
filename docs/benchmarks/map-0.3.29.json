@@ -1,0 +1,133 @@
+{
+  "setup": {
+    "cells": 76648,
+    "pins": 1000,
+    "zones": 40000,
+    "synthetic": true,
+    "lazyPixels": true,
+    "viewport": "2560x1440",
+    "canvas": "2000x1000",
+    "terrainSide": 64
+  },
+  "browser": "153.0.4234.48",
+  "icons": [
+    {
+      "count": 0,
+      "groups": 0,
+      "ms": [
+        0.7,
+        0.1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "count": 400,
+      "groups": 5,
+      "ms": [
+        11.4,
+        5.4,
+        4.5,
+        5.4,
+        4.5,
+        4.3,
+        4.5,
+        4,
+        3.8,
+        5.1
+      ]
+    },
+    {
+      "count": 1000,
+      "groups": 1,
+      "ms": [
+        13.7,
+        11.6,
+        14.5,
+        11.9,
+        13.9,
+        12.3,
+        13.3,
+        11.4,
+        11.1,
+        12.2
+      ]
+    }
+  ],
+  "results": [
+    {
+      "sls": false,
+      "pins": 1000,
+      "frames": [
+        {
+          "ms": 43057,
+          "calls": 76648,
+          "misses": 76648,
+          "groups": 1
+        }
+      ],
+      "iconOnlyMs": [
+        14,
+        13.4,
+        15.6,
+        14.1,
+        12.2
+      ]
+    },
+    {
+      "sls": false,
+      "pins": 400,
+      "frames": [
+        {
+          "ms": 42758,
+          "calls": 76648,
+          "misses": 76648,
+          "groups": 10
+        }
+      ],
+      "iconOnlyMs": [
+        4.7,
+        5.2,
+        5.3,
+        4.8,
+        4.8
+      ]
+    },
+    {
+      "sls": false,
+      "pins": 0,
+      "frames": [
+        {
+          "ms": 43346,
+          "calls": 76648,
+          "misses": 76648,
+          "groups": 0
+        }
+      ],
+      "iconOnlyMs": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "sls": true,
+      "pins": 1000,
+      "timeoutMs": 45000
+    }
+  ],
+  "limitations": [
+    "Synthetic lazy pixel strings exclude HTTP/JSON payload and real-world memory costs.",
+    "Headless browser timings are not real-user FPS or GPU benchmarks.",
+    "Heatmaps disabled; half personal and half game pins; no external icon image requests.",
+    "One full redraw per case, with 45 second wall-time guard; later cases skipped on timeout. Icon-only samples use the production renderer."
+  ]
+}

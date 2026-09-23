@@ -20,7 +20,7 @@ public sealed partial class SagaStore : IDisposable {
   foreach(var c in new[]{"events","statistics","players","cells","chapters","serverchapters","media","mapPins","vikingColors"})db.GetCollection(c).EnsureIndex("world");
   db.GetCollection("statistics").EnsureIndex("utc");db.GetCollection("statistics").EnsureIndex("player");
   db.GetCollection("events").EnsureIndex("utc");db.GetCollection("events").EnsureIndex("player");
-  db.GetCollection("cells").EnsureIndex("player");
+  db.GetCollection("cells").EnsureIndex("player");InitializeMapIndex();
   db.GetCollection("pendingCollections").EnsureIndex("provenance");
   db.GetCollection("profileLinks").EnsureIndex("slug",true);
   db.GetCollection("bossReceipts").EnsureIndex("owner");
@@ -67,7 +67,7 @@ public sealed partial class SagaStore : IDisposable {
   }catch{db.Rollback();throw;}
  }}
  public void Player(PlayerSnapshot p){lock(gate){AssignProfileSlug(p);AssignMapColor(p);db.GetCollection("players").Upsert(Wrap(Key(p.World,p.PlayerId),p.World,p.PlayerId,p,p.Utc));}}
- public void Explore(ExplorationBatch b) {lock(gate) {db.BeginTrans();try {foreach(var c in b.Cells){var cells=db.GetCollection("cells");var id=Key(b.World,b.PlayerId,c.X.ToString(),c.Z.ToString());var old=cells.FindById(id);cells.Upsert(new BsonDocument{{"_id",id},{"world",b.World},{"player",b.PlayerId},{"imported",b.Imported||(old!=null&&old["imported"].AsBoolean)},{"json",JsonConvert.SerializeObject(c)}});}db.Commit();}catch{db.Rollback();throw;}}}
+ public void Explore(ExplorationBatch b) {lock(gate) {db.BeginTrans();try {foreach(var c in b.Cells){var cells=db.GetCollection("cells");var id=Key(b.World,b.PlayerId,c.X.ToString(),c.Z.ToString());var old=cells.FindById(id);cells.Upsert(new BsonDocument{{"_id",id},{"world",b.World},{"player",b.PlayerId},{"imported",b.Imported||(old!=null&&old["imported"].AsBoolean)},{"json",JsonConvert.SerializeObject(c)}});IndexMapCell(id,b.World,b.PlayerId,c,b.Imported||(old!=null&&old["imported"].AsBoolean));}db.Commit();}catch{db.Rollback();throw;}}}
  static void CopyLootMetadata(SagaEvent collected,SagaEvent drop){collected.Prefab=drop.Prefab;collected.Name=drop.Name;collected.ItemType=drop.ItemType;collected.Quality=drop.Quality;collected.Rarity=drop.Rarity;collected.RarityColor=drop.RarityColor;collected.Effects=new List<string>(drop.Effects);collected.Source=drop.Source;collected.Sockets=drop.Sockets;collected.SocketColor=drop.SocketColor;}
  public List<SagaEvent> Events(string world, TimeWindow w, HashSet<string>? players=null){lock(gate)return new[]{"events","statistics"}.SelectMany(c=>db.GetCollection(c).Find(Query.And(Query.EQ("world",world),Query.Between("utc",w.From,w.To)))).Select(Read<SagaEvent>).Where(e=>w.Contains(e.Utc)&&(players==null||players.Contains(e.PlayerId))).ToList();}
  public DateTime? StatisticsSince {get{lock(gate){var d=db.GetCollection("meta").FindById("statisticsSince");return d==null?(DateTime?)null:d["utc"].AsDateTime.ToUniversalTime();}}}

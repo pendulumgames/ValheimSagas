@@ -52,3 +52,6 @@ The atlas opens with option trays closed. `atlas-controls.cjs` opens each public
 `jewelcrafting.cjs` injects explicitly synthetic socketed gear into the local fixture, decodes a synthetic gem PNG, tests filled/empty slots and configured ranges, ring placement, mouse/keyboard/tap hotbar access, Epic Loot coexistence/palette priority, no-socket fallback, escaped text, distinct map socket loadouts and mobile width. No Jewelcrafting assets or real provider requests.
 
 `mod-awareness.cjs` verifies optional panels for vanilla, Epic Loot, Jewelcrafting and combined integrations. `map-clusters.cjs` additionally checks close-pin fan hit testing, actual double-click zoom, timed halo expiry, zoom-out gathering, adjacent fan separation and reduced motion.
+
+
+For large-world performance, run `node tests/web/map-stress.cjs .dev/map-stress0330.json` from the repository root. It uses the local production browser assets with synthetic 76,648-cell exploration and up to 1,000 pins, needs no DevHost, and blocks external requests. It prepares the overview in bounded slices before measuring twelve pan/zoom redraws per scenario, including SLS and heat maps. See `docs/MAP-PERFORMANCE.md` for limitations. The normal suite also includes `map-renderer.cjs` and `map-delivery.cjs` correctness/race checks.

@@ -1,3 +1,12 @@
+## 0.3.30
+
+- Fix severe website map stalls when zoomed out over large explored worlds. Terrain now uses cached overview chunks with bounded, on-demand close-up detail instead of repeatedly decoding thousands of individual tiles.
+- Stream exploration in small incremental pages; unchanged terrain is no longer downloaded every five seconds. Existing map records are indexed gradually, without changing worlds or character saves.
+- Preserve exact exploration checks for icons and events. Overview fog is conservative at partially explored edges; detailed terrain restores precise edges as it loads. Sharing changes reset cached map data.
+- Coalesce drag/wheel redraws, reuse SLS paths and fog masks, and cache heat-map gradients and event grouping. Keep pin clustering, player colors, separate layers and existing zoom limits.
+- Synthetic full-world benchmark (76,648 tiles): 1,000 markers improved from roughly 43 seconds per redraw to a 5.5 ms median. With 40,000 SLS squares and 5,000 events, median 9.1 ms / maximum 24.8 ms in the measured run. These are headless-browser timings, not dedicated-server or in-game acceptance.
+- Update the host's plugin and refresh open website/Steam-overlay tabs to load the matching website and API. No configuration changes are required.
+
 ## 0.3.29
 
 - Fix Sagas loot-tracking metadata preventing InventorySlots from stacking otherwise identical items. New provenance stays on the ground item's network object and is not copied into inventories or player redrops.

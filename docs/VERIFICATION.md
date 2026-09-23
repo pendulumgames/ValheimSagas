@@ -1,3 +1,11 @@
+# 0.3.30 large-world map verification
+
+Full release build passed with zero errors and two existing MSB3277 reference warnings. Automated checks passed: 2,772 Core assertions, 80 synthetic lore checks, 22,017 terrain checks, 1,557 portrait/lifecycle checks, 13 optional-adapter checks and 224 installed-assembly metadata checks. New delivery coverage includes bounded pages, incremental updates, legacy migration, restart, exact masks, sharing resets, HTTP authorization and detail bounds.
+
+The complete browser acceptance suite passed against an isolated synthetic DevHost, including desktop/mobile and optional-mod cases. Browser checks cover the existing UI plus chunk orientation, conservative fog, precise detail, cache invalidation, a settled 2,048-tile detail working set, concurrent updates and selection races. Full-world synthetic benchmark results and reproducible commands are in [MAP-PERFORMANCE.md](MAP-PERFORMANCE.md); raw results are in `docs/benchmarks`. The measured maximum for the final 1,000-pin / 40,000-zone / 5,000-event case was 24.8 ms. This is headless-browser evidence, not in-game or dedicated-host acceptance.
+
+No live host, profile or save was changed. Required next check: install host update, refresh browser/Steam tabs, allow existing map indexing, then pan/zoom with game/player pins, SLS and both heat maps; verify discovery edges and privacy selections during continued exploration.
+
 # 0.3.22 roster, presence and saga card verification
 
 September 21, 2026: build passed with zero errors and two existing MSB3277 warnings. Full backend suites passed: 2,555 Core assertions, 80 lore, 22,017 terrain, 1,557 portrait/lifecycle and 212 installed metadata checks. New checks verify that the boss checklist uses distinct authoritative receipts, rejects client-supplied completion keys, clears private progress and includes all eight canonical boss labels.

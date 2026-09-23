@@ -152,7 +152,7 @@ Story prompts use relevant recorded events, career totals, bosses and credited t
 
 Back up `BepInEx/config/ValheimSagas` with the host stopped, including `sagas.db` and `personal-lore.key` if present. The key file is required to decrypt saved personal OpenRouter credentials. Do not share backups, configs or tokens publicly. Uninstalling the plugin does not delete recorded history.
 
-**0.3.29 is a preview release verified with automated checks.** It includes performance fixes for SLS/gear snapshots and staged, change-triggered portrait capture with asynchronous GPU readback and background image processing; fresh local and dedicated-server playtests must confirm frame-time improvements. Automated tests use labeled synthetic fixtures; real credentialed OpenRouter generation, two-client multiplayer acceptance and Linux hosting still require testing. Unresolved attackers and uncertain loot provenance stay unattributed rather than being guessed. Fight durations are observed telemetry, and carried gold is a snapshot, not a lifetime earnings counter.
+**0.3.30 is a preview release verified with automated checks.** It includes performance fixes for SLS/gear snapshots and staged, change-triggered portrait capture with asynchronous GPU readback and background image processing; fresh local and dedicated-server playtests must confirm frame-time improvements. Automated tests use labeled synthetic fixtures; real credentialed OpenRouter generation, two-client multiplayer acceptance and Linux hosting still require testing. Unresolved attackers and uncertain loot provenance stay unattributed rather than being guessed. Fight durations are observed telemetry, and carried gold is a snapshot, not a lifetime earnings counter.
 
 ## License
 
@@ -204,9 +204,9 @@ Statistics use the latest shared profiles to detect Epic Loot and Jewelcrafting,
 On first launch after this update, the original Ctrl+F8/F9/F10 defaults migrate to Ctrl+Insert/End/Home respectively; custom shortcuts are preserved. You can change them again in F1. Loot notifications no longer have a configuration toggle.
 
 
-### Dedicated multiplayer update (0.3.29)
+### Dedicated multiplayer updates
 
-Update **both the dedicated server and every Sagas client** to 0.3.29. This update introduces compressed, small, paced transport fragments; older servers cannot receive the new upload format. Restart each game/server after replacing plugin files. Existing configuration and recorded data are preserved.
+Update **both the dedicated server and every Sagas client** to 0.3.30. Releases 0.3.28 and later use compressed, small, paced transport fragments; servers older than 0.3.28 cannot receive that upload format. Restart each game/server after replacing plugin files. Existing configuration and recorded data are preserved.
 
 Dedicated-server character identity now comes from the connected player's owned, replicated character object. Ctrl+Insert reports a specific server identity/service/storage problem when possible; shortcut notices also appear in the BepInEx log without credentials. Ctrl+Home can obtain the host URL without waiting for character metadata. Set `Server / WebsiteUrl` to the public browser address (for example `http://your-host:19908/`); the HTTP bind prefix can remain `http://*:19908/` on a dedicated host. A wildcard is a listening address, not a browser URL.
 
@@ -220,3 +220,12 @@ A rejected or revoked browser token is removed automatically. Public servers res
 ### Inventory stacking fix (0.3.29)
 
 Update the server and all Sagas clients, then restart. Sagas now keeps loot provenance on ground objects rather than inventory item metadata. Existing Sagas tags are removed automatically as character/container inventories load and items pass through inventory insertion checks. Open affected containers after updating; existing stacks may still need to be combined manually. Other mods' item metadata is preserved. No offline save editing is required. This fixes the verified InventorySlots metadata incompatibility; unrelated item restrictions still apply.
+
+
+### Large-world map performance (0.3.30)
+
+The atlas now loads a compact world overview in small batches, then requests detailed terrain around your view as you zoom in. Unchanged exploration is not downloaded again on every refresh. Existing exploration is indexed gradually on the host; no world or character-save conversion is needed. Partly explored overview edges remain conservatively fogged until precise detail arrives.
+
+Install the update on the host and refresh open website or Steam-overlay tabs. Keep clients on the current release as usual; 0.3.30 does not change the 0.3.29 game upload protocol. No new configuration, port or dependency is required. Dedicated hosts still use `http://*:19908/` (or their allocated port) for `ListenPrefix`, and a real public address for `WebsiteUrl`.
+
+Synthetic full-world checks covered 76,648 terrain cells and 1,000 pins, with optional 40,000 SLS squares and 5,000 heat-map events. Results and limitations are documented in [map performance](https://github.com/pendulumgames/ValheimSagas/blob/main/docs/MAP-PERFORMANCE.md). These browser tests do not replace a dedicated-server playtest.

@@ -9,11 +9,15 @@ static class MapDetailsHttpChecks {
   var o=new SagaOptions{DataDirectory=Path.Combine(root,"pins-http"),World="w",ListenPrefix=$"http://127.0.0.1:{port}/",RequireViewerToken=true,ViewerToken="synthetic-map-icon-member-token"};
   using var s=new SagaService(o);s.Start();using var client=new HttpClient{BaseAddress=new Uri(o.ListenPrefix)};
   check((await client.GetAsync("api/map-icons")).StatusCode==HttpStatusCode.Unauthorized&&(await client.GetAsync("api/world-clock")).StatusCode==HttpStatusCode.Unauthorized,"Map icon and clock endpoints obey private host authorization");
+  foreach(var route in new[]{"api/map-stream","api/map-detail?keys=0,0","api/map-meta"})check((await client.GetAsync(route)).StatusCode==HttpStatusCode.Unauthorized,"New map delivery endpoint enforces private host authorization");
   client.DefaultRequestHeaders.Authorization=new AuthenticationHeaderValue("Bearer",o.ViewerToken);
   var bytes=Convert.FromBase64String("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aB9sAAAAASUVORK5CYII=");var id=Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
   var p=new PlayerSnapshot{World="w",PlayerId="v",ShareMap=true,ShareProfile=false};s.UpdatePlayer(p);s.Explore(new(){World="w",PlayerId="v",Cells=new(){new(){X=0,Z=0}}});
   check(s.UploadMedia(new(){World="w",PlayerId="v",Id=id,Kind="map-icon",Png=bytes}),"Bounded map sprite accepted without a profile capture");
   var pins=new MapPins{World="w",PlayerId="v",Revision="one",Pins=new(){new(){X=2,Z=2,Type="Boss",IconId=id}}};s.UpdatePins(pins);s.UpdateClock(new(){World="w",Day=8,Fraction=.3f});s.Flush();
+  var stream=JObject.Parse(await client.GetStringAsync("api/map-stream"));check(stream["cells"]!.Count()==1&&stream["cells"]![0]!["explorationMask"]!=null,"Incremental HTTP map sends compact masked overview");
+  check((await client.GetAsync("api/map-detail?keys=0,0&side=7")).StatusCode==HttpStatusCode.BadRequest,"Invalid detail resolution rejected over HTTP");
+  check(JObject.Parse(await client.GetStringAsync("api/map-meta"))["sls"]!=null,"Separate map metadata endpoint is available");
   check(JObject.Parse(await client.GetStringAsync("api/map-icons"))["pins"]!.Count()==1,"Separate HTTP icon feed contains visible pin");
   check(JObject.Parse(await client.GetStringAsync("api/world-clock"))["clock"]!["day"]!.Value<int>()==8,"Separate HTTP clock feed contains host clock");
   string url="api/media/"+id+"?world=w&player=v";check((await client.GetByteArrayAsync(url)).SequenceEqual(bytes),"Runtime map sprite served independently of profile sharing");
