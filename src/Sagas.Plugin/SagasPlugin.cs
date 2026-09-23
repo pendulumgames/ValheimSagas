@@ -14,7 +14,7 @@ using Newtonsoft.Json;
 using UnityEngine;
 namespace ValheimSagas;
 
-[BepInPlugin("org.valheimsagas.collector", "Valheim Sagas", "0.3.31")]
+[BepInPlugin("org.valheimsagas.collector", "Valheim Sagas", "0.3.32")]
 [BepInDependency("_shudnal.ConfigurationManager", BepInDependency.DependencyFlags.SoftDependency)]
 [BepInDependency("org.bepinex.plugins.jewelcrafting", BepInDependency.DependencyFlags.SoftDependency)]
 [BepInDependency("randyknapp.mods.epicloot", BepInDependency.DependencyFlags.SoftDependency)]
@@ -48,10 +48,10 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
  readonly Dictionary<string,float> retryAfter=new Dictionary<string,float>();
  Packet? outboundProfile; float nextUpload,nextMapImport; int uploadLane;
  void Awake() {
-  Instance=this; SetupMapDetails(); SetupLogin(); SetupWebsiteOverlay(); requireToken=BindSetting("Server","RequireViewerToken",false,"True: private viewing requires ViewerToken. False: anyone who can reach the website may view shared data without a token. Does not change network binding or player sharing preferences."); artwork=new RuntimeArt(Warn); serverName=BindSetting("Server","DisplayName","","Website server name override; blank uses the Valheim server name, then the world name."); serverAddress=BindSetting("Server","AdvertisedAddress","","Optional server IP/hostname and port displayed to website viewers. No automatic public-IP discovery.");
+  Instance=this; SetupMapDetails(); SetupLogin(); SetupWebsiteOverlay(); SetupVersionEnforcement(); requireToken=BindSetting("Server","RequireViewerToken",false,"True: private viewing requires ViewerToken. False: anyone who can reach the website may view shared data without a token. Does not change network binding or player sharing preferences."); artwork=new RuntimeArt(Warn); serverName=BindSetting("Server","DisplayName","","Website server name override; blank uses the Valheim server name, then the world name."); serverAddress=BindSetting("Server","AdvertisedAddress","","Optional game-server IP/hostname and port displayed on the website. If WebsiteUrl is blank, a valid host here also supplies the website host (using the web listener port). No external public-IP lookup.");
   host=BindSetting("Server","EnableWebsite",true,"Start the website only when hosting a world. RequireViewerToken controls public versus private viewing.");
   data=BindSetting("Server","DataDirectory",Path.Combine(Paths.ConfigPath,"ValheimSagas"),"Persistent database path; back up separately from world saves.");
-  prefix=BindSetting("Server","ListenPrefix","http://127.0.0.1:8877/","Local access by default. For a dedicated host, use http://*:19908/ with your allocated web port and a trailing slash. Set WebsiteUrl to the reachable public address. This setting does not open firewall ports. An HTTPS reverse proxy is optional.");
+  prefix=BindSetting("Server","ListenPrefix","",new ConfigDescription("Advanced listener override. Leave blank to use WebsitePort: all interfaces on dedicated servers, loopback for local hosting. An existing saved prefix is preserved and overrides WebsitePort. Example: http://*:19908/ (trailing slash required). This is a bind address, not a browser URL.",null,"Advanced"));
   token=BindSetting("Server","ViewerToken",Guid.NewGuid().ToString("N")+Guid.NewGuid().ToString("N"),"Shared read-only viewing credential used when RequireViewerToken is true. Personal player logins are separate. Never synced to game clients.");
   lore=BindSetting("Lore","EnableOpenRouter",true,"Send selected narrative facts to OpenRouter. Free routing by default; paid models require AllowPaidModels. No coordinates or account IDs.");
   key=BindSetting("Lore","OpenRouterKey","","Server only. Prefer OPENROUTER_API_KEY environment variable.");
@@ -104,10 +104,10 @@ public sealed partial class SagasPlugin : BaseUnityPlugin {
   startupTraceTicks++;startupTrace.Mark("world reset");
   if(ZNet.instance.IsServer() && service==null && Time.unscaledTime>=nextServiceStart) {
    try {
-    if(serviceStartup.Poll()){var ready=serviceStartup.Current!;service=ready.Service;foreach(var id in ready.Characters)knownCharacters.Add(id);Logger.LogInfo("Sagas background service startup completed in "+ready.Milliseconds.ToString("F1",CultureInfo.InvariantCulture)+" ms (worker time).");}
+    if(serviceStartup.Poll()){var ready=serviceStartup.Current!;service=ready.Service;foreach(var id in ready.Characters)knownCharacters.Add(id);Logger.LogInfo("Sagas background service startup completed in "+ready.Milliseconds.ToString("F1",CultureInfo.InvariantCulture)+" ms (worker time).");LogWebsiteSetup();}
     else if(!serviceStartup.Busy){
      // Snapshot all Unity/configuration values before entering the worker.
-     var options=new SagaOptions{DataDirectory=data.Value,WebDirectory=Path.Combine(Path.GetDirectoryName(Info.Location)!,"web"),ListenPrefix=host.Value?prefix.Value:"",ViewerToken=token.Value,RequireViewerToken=requireToken.Value,World=World,WorldName=ZNet.instance.GetWorldName(),ServerName=WebsiteServerName(),ServerAddress=serverAddress.Value,SlsInstalled=SlsAdapter.Installed,LoreEnabled=lore.Value,LoreModel=model.Value,LoreAllowPaid=allowPaidLore.Value,LoreUseAccountPricing=true,LoreDailyBudget=Math.Max(0,daily.Value),LoreCooldownMinutes=Math.Max(1,cooldown.Value),LoreMilestoneEvents=Math.Max(1,milestones.Value),RetentionDays=Math.Max(0,retention.Value),StatisticsRetentionDays=statisticsRetention.Value<=0?0:Math.Max(retention.Value,statisticsRetention.Value),Log=message=>Logger.LogWarning(message),OpenRouterKey=Environment.GetEnvironmentVariable("OPENROUTER_API_KEY")??key.Value};
+     var options=new SagaOptions{DataDirectory=data.Value,WebDirectory=Path.Combine(Path.GetDirectoryName(Info.Location)!,"web"),ListenPrefix=host.Value?ListenAddress():"",ViewerToken=token.Value,RequireViewerToken=requireToken.Value,World=World,WorldName=ZNet.instance.GetWorldName(),ServerName=WebsiteServerName(),ServerAddress=serverAddress.Value,SlsInstalled=SlsAdapter.Installed,LoreEnabled=lore.Value,LoreModel=model.Value,LoreAllowPaid=allowPaidLore.Value,LoreUseAccountPricing=true,LoreDailyBudget=Math.Max(0,daily.Value),LoreCooldownMinutes=Math.Max(1,cooldown.Value),LoreMilestoneEvents=Math.Max(1,milestones.Value),RetentionDays=Math.Max(0,retention.Value),StatisticsRetentionDays=statisticsRetention.Value<=0?0:Math.Max(retention.Value,statisticsRetention.Value),Log=message=>Logger.LogWarning(message),OpenRouterKey=Environment.GetEnvironmentVariable("OPENROUTER_API_KEY")??key.Value};
      serviceStartup.Begin(()=>{var timer=System.Diagnostics.Stopwatch.StartNew();var created=new SagaService(options);try{created.Start();return new StartedService{Service=created,Characters=created.Store.Players(options.World).Select(p=>p.PlayerId).ToArray(),Milliseconds=timer.Elapsed.TotalMilliseconds};}catch{created.Dispose();throw;}});
     }
    }catch(Exception e){nextServiceStart=Time.unscaledTime+60;Warn("background service startup",e);}

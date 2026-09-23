@@ -18,6 +18,7 @@ public sealed partial class SagaService : IDisposable {
  readonly JsonSerializerSettings json=new JsonSerializerSettings{ContractResolver=new CamelCasePropertyNamesContractResolver(),DateTimeZoneHandling=DateTimeZoneHandling.Utc};
  readonly SemaphoreSlim httpSlots=new SemaphoreSlim(8); Task? writer,web,lore; HttpListener? listener; bool started,disposed; long rejected; string? failure; DateTime nextRetention=DateTime.MinValue; int gzipDisabled;
  public long Rejected=>Interlocked.Read(ref rejected);
+ public bool WebsiteListening=>listener!=null&&listener.IsListening;
  public SagaStore Store=>store;
  readonly System.Net.Http.HttpClient? loreClient;
  public SagaService(SagaOptions options,System.Net.Http.HttpClient? loreClient=null){this.loreClient=loreClient;this.options=options;diagnostics=new SagaDiagnostics(options);store=new SagaStore(options.DataDirectory);if(TextValid(options.World,100,true)&&TextValid(options.WorldName,200,true))store.WorldName(options.World,options.WorldName);queue=new BlockingCollection<Action>(Math.Max(64,options.QueueCapacity));}

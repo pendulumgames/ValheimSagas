@@ -24,6 +24,12 @@ void Property(MetadataReader r,TypeDefinition type,string property,string expect
 Inspect(Path.Combine(game,"com.rlabrecque.steamworks.net.dll"),r=>{Signature(r,"Steamworks.SteamFriends","ActivateGameOverlayToWebPage","String","Steamworks.EActivateGameOverlayToWebPageMode");Signature(r,"Steamworks.SteamUtils","IsOverlayEnabled");});
 Inspect(Path.Combine(game,"assembly_utils.dll"),r=>Signature(r,"Utils","RoundToInt","Single"));
 Inspect(Path.Combine(game,"assembly_valheim.dll"),r=>{
+ Signature(r,"ZNet","OnNewConnection","ZNetPeer");Method(r,"ZNet","OnNewConnection","peer");
+ Signature(r,"ZNet","RPC_ClientHandshake","ZRpc","Boolean","String");Method(r,"ZNet","RPC_ClientHandshake","rpc");
+ Signature(r,"ZNet","RPC_PeerInfo","ZRpc","ZPackage");Method(r,"ZNet","RPC_PeerInfo","rpc");
+ Signature(r,"ZNet","Disconnect","ZNetPeer");Method(r,"ZNet","Disconnect","peer");Signature(r,"ZNet","Shutdown","Boolean");
+ Signature(r,"ZNet","SetExternalError","ConnectionStatus");Signature(r,"FejdStartup","ShowConnectError","ConnectionStatus");
+ TypedField(r,"FejdStartup","m_connectionFailedPanel","UnityEngine.GameObject");TypedField(r,"FejdStartup","m_connectionFailedError","TMPro.TMP_Text");
  TypedField(r,"Minimap","m_pins","System.Collections.Generic.List`1<PinData>");TypedField(r,"Minimap","m_textureSize","Int32");TypedField(r,"Minimap","m_pixelSize","Single");TypedField(r,"Minimap","m_explored","System.Collections.BitArray");
  Signature(r,"EnvMan","GetDay");Signature(r,"EnvMan","GetDayFraction");Signature(r,"EnvMan","IsTimeSkipping");TypedField(r,"EnvMan","m_dayLengthSec","Int64");Signature(r,"ZNet","GetNrOfPlayers");
  var pinType=Type(r,"Minimap").GetNestedTypes().Select(r.GetTypeDefinition).Single(t=>r.GetString(t.Name)=="PinType");
@@ -122,7 +128,7 @@ if(File.Exists(epic))Inspect(epic,r=>{
 });
 Inspect(Path.Combine(plugins,"shudnal-ConfigurationManager","ConfigurationManager.dll"),r=>{
  Property(r,Type(r,"ConfigurationManager.ConfigSettingEntry"),"Entry","BepInEx.Configuration.ConfigEntryBase");
- Signature(r,"ConfigurationManager.ConfigSettingEntry","GetSynchronizationContent","ConfigurationManager.ConfigSynchronizationState","UnityEngine.Color");
+ Signature(r,"ConfigurationManager.ConfigurationManager","DrawSynchronizationIndicator","ConfigurationManager.SettingEntryBase","Boolean");
  Signature(r,"ConfigurationManager.ConfigSettingEntry","SetValue","Object");
  Method(r,"ConfigurationManager.ConfigSettingEntry","InitializeDynamicAttributeSources","tags");
 });

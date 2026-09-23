@@ -1,3 +1,11 @@
+# 0.3.32 version policy and host setup verification
+
+Inspected the actual installed Valheim, Steam/PlayFab transport, Jotunn/ConditionalConfigSync and Shudnal ConfigurationManager assemblies. Full build passed 2,811 Core assertions, 80 synthetic lore, 22,017 terrain, 1,557 portrait, 13 optional-adapter and 237 installed-signature checks. A final bind-address validation refinement was rebuilt and passed the focused 39-check website suite and 52-check version suite (these include shared setup assertions). Zero build errors; two existing MSB3277 warnings.
+
+Version enforcement registers before vanilla handshakes and gates PeerInfo before world admission; it does not alter vanilla packets. ConfigurationManager previously skipped the label function because the row was considered unsynchronized; Sagas now draws ownership labels at the row indicator entry point. Automatic URLs use the direct-join hostname only, never SteamID/PlayFab identity strings, with explicit public URL fallback. Server secrets are not synchronized.
+
+Game GUI and networking have not been executed in these checks. Dedicated missing/mismatched/matching-client, password-delay, Steam/crossplay and optional sync-mod interoperability tests, plus visual F1 S/C verification, remain required as listed in IN-GAME-TESTS.md. No browser assets changed in this release; the 0.3.30 full browser suite remains the latest UI acceptance evidence. No profiles, worlds or live hosts were modified.
+
 # 0.3.30 large-world map verification
 
 Full release build passed with zero errors and two existing MSB3277 reference warnings. Automated checks passed: 2,772 Core assertions, 80 synthetic lore checks, 22,017 terrain checks, 1,557 portrait/lifecycle checks, 13 optional-adapter checks and 224 installed-assembly metadata checks. New delivery coverage includes bounded pages, incremental updates, legacy migration, restart, exact masks, sharing resets, HTTP authorization and detail bounds.

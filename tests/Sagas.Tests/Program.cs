@@ -11,6 +11,8 @@ if(args.Contains("--website-only")){Console.WriteLine($"PASS {assertions} websit
 if(args.Contains("--jewel-only")){await JewelcraftingChecks.Run(root,Check);Console.WriteLine($"PASS {assertions} website and Jewelcrafting assertions.");Directory.Delete(root,true);return;}
 if(args.Contains("--north-only")){NorthBossChecks.Run(root,Check);Console.WriteLine($"PASS {assertions} North boss and directory metadata assertions.");Directory.Delete(root,true);return;}
 if(args.Contains("--offline-media-only")){await OfflineMediaChecks.Run(root,Check);Console.WriteLine($"PASS {assertions} deferred/offline portrait assertions.");Directory.Delete(root,true);return;}
+WebsiteSetupChecks.Run(Check);
+if(args.Contains("--website-setup-only")){Console.WriteLine($"PASS {assertions} website setup checks.");Directory.Delete(root,true);return;}
 if(args.Contains("--map-details-only")){MapDetailsChecks.Run(root,Check);await MapDetailsHttpChecks.Run(root,Check);VikingMapChecks.Run(root,Check);Console.WriteLine($"PASS {assertions} map detail assertions.");Directory.Delete(root,true);return;}
 if(args.Contains("--sls-only")){SlsChecks.Run(root,Check);Console.WriteLine($"PASS {assertions} SLS assertions.");Directory.Delete(root,true);return;}
 if(args.Contains("--nemesis-only")){NemesisChecks.Run(root,Check);Console.WriteLine($"PASS {assertions} Nemesis assertions.");Directory.Delete(root,true);return;}
@@ -19,6 +21,8 @@ if(args.Contains("--player-login-only")){await PlayerLoginChecks.Run(root,Check)
 if(args.Contains("--profile-biomes-only")){await ProfileBiomeChecks.Run(root,Check);Console.WriteLine($"PASS {assertions} profile biome and static-route assertions.");Directory.Delete(root,true);return;}
 if(args.Contains("--media-only")){await MediaTransferChecks.Run(root,Check);Console.WriteLine($"PASS {assertions} high resolution media assertions.");Directory.Delete(root,true);return;}
 if(args.Contains("--network-only")){NetworkReliabilityChecks.Run(Check);TelemetryBudgetChecks.Run(Check);Console.WriteLine($"PASS {assertions} network assertions.");Directory.Delete(root,true);return;}
+VersionPolicyChecks.Run(Check);
+if(args.Contains("--version-only")){Console.WriteLine($"PASS {assertions} version assertions.");Directory.Delete(root,true);return;}
 MapDeliveryChecks.Run(root,Check);
 if(args.Contains("--map-delivery-only")){Console.WriteLine($"PASS {assertions} map delivery assertions.");Directory.Delete(root,true);return;}
 LootMetadataChecks.Run(root,Check);

@@ -1,3 +1,12 @@
+## 0.3.32
+
+- Require an exact Sagas version match before joining by default; hosts can disable RequireMatchingVersion. Missing/mismatched versions are rejected before world admission, with named version errors where the client supports them.
+- Fix Shudnal ConfigurationManager S/C labels: draw ownership indicators at the row entry point, before its unsynchronized-setting visibility filter. Keep host settings locked and secrets unsynchronized.
+- Add WebsitePort for simplified dedicated setup. A blank advanced ListenPrefix binds all interfaces for dedicated servers and loopback for local hosting; existing overrides remain unchanged.
+- Resolve Ctrl+Home using an explicit WebsiteUrl first, then an advertised host or direct-IP connection plus the web port. Relay/join-code connections without a routable host receive clear custom-URL guidance; no external IP-discovery service is used.
+- Log effective website port, listener readiness, private/public mode and override/loopback setup issues. Hotkey failures distinguish disabled, starting, failed and invalid-URL cases.
+- Automated checks do not replace the dedicated version-handshake/crossplay and in-game F1 verification listed in IN-GAME-TESTS.md.
+
 ## 0.3.31
 
 - Default personal map-pin sharing on for new configurations; preserve existing saved choices and the independent browser layer toggle.

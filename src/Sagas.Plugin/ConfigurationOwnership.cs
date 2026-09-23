@@ -30,22 +30,27 @@ public sealed partial class SagasPlugin {
   try{
    var type=plugin.Instance.GetType().Assembly.GetType("ConfigurationManager.ConfigSettingEntry");
    managerEntry=type?.GetProperty("Entry",BindingFlags.Public|BindingFlags.Instance);
-   var content=type?.GetMethod("GetSynchronizationContent",BindingFlags.Instance|BindingFlags.NonPublic);
+   var indicator=plugin.Instance.GetType().GetMethod("DrawSynchronizationIndicator",BindingFlags.Static|BindingFlags.NonPublic);
    var set=type?.GetMethod("SetValue",BindingFlags.Instance|BindingFlags.NonPublic);
-   if(managerEntry==null||content==null||set==null){Logger.LogWarning("Sagas config ownership labels unavailable for this ConfigurationManager version; ownership descriptions still apply.");return;}
-   harmony!.Patch(content,postfix:new HarmonyMethod(typeof(SagasPlugin),nameof(ConfigOwnershipLabel)));
+   if(managerEntry==null||indicator==null||set==null){Logger.LogWarning("Sagas config ownership labels unavailable for this ConfigurationManager version; ownership descriptions still apply.");return;}
+   // The manager skips GetSynchronizationContent entirely for unsynchronized
+   // settings. Draw our ownership labels at the row's indicator entry point.
+   harmony!.Patch(indicator,prefix:new HarmonyMethod(typeof(SagasPlugin),nameof(ConfigOwnershipIndicator)));
    harmony.Patch(set,prefix:new HarmonyMethod(typeof(SagasPlugin),nameof(ConfigOwnershipEdit)));
   }catch(Exception e){Warn("configuration ownership UI",e);}
  }
  static ConfigEntryBase? OwnManagerEntry(object instance){
+  if(managerEntry?.DeclaringType==null||!managerEntry.DeclaringType.IsInstanceOfType(instance))return null;
   var entry=managerEntry?.GetValue(instance) as ConfigEntryBase;
   return entry!=null&&Instance!=null&&ReferenceEquals(entry.ConfigFile,Instance.Config)?entry:null;
  }
- static void ConfigOwnershipLabel(object __instance,ref GUIContent __result){
-  var entry=OwnManagerEntry(__instance);if(entry==null)return;
+ static GUIStyle? ownershipStyle;
+ static bool ConfigOwnershipIndicator(object __0){
+  var entry=OwnManagerEntry(__0);if(entry==null)return true;
   bool hostOwned=HostSetting(entry.Definition.Section);
-  __result.text=hostOwned?"<color=#D4B374>S</color>":"<color=#88C8A8>C</color>";
-  __result.tooltip=hostOwned?"Server / host-owned. Applied only on the machine hosting the world. Values and secrets are never synchronized. Locked while connected to another host. These are your local hosting settings, not a view of the remote server's config.":"Client-owned. Your privacy, notifications or login shortcut; never overridden by a host.";
+  var content=new GUIContent(hostOwned?"<color=#D4B374>S</color>":"<color=#88C8A8>C</color>",hostOwned?"Server / host-owned. Applied only on the machine hosting the world. Values and secrets are never synchronized. Locked while connected to another host. These are your local hosting settings, not a view of the remote server's config.":"Client-owned. Your privacy and login shortcuts; never overridden by a host.");
+  ownershipStyle=ownershipStyle??new GUIStyle(GUI.skin.label){richText=true,alignment=TextAnchor.MiddleCenter};
+  GUILayout.Label(content,ownershipStyle,GUILayout.Width(22));return false;
  }
  static bool ConfigOwnershipEdit(object __instance){var entry=OwnManagerEntry(__instance);return entry==null||!HostSetting(entry.Definition.Section)||!RemoteSession;}
 }

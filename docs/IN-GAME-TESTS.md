@@ -131,3 +131,12 @@ These changes are not yet in-game verified. Keep matching versions on host and c
 
 ## 0.3.29 inventory stacking acceptance
 Update all Sagas clients and the server; restart. Use isolated copies of an affected inventory/container, not production save edits. Check existing tagged creature drops, untagged older stacks, automatic pickup into a partial stack with no empty slots, manual drag stacking, quick-stack/container transfer, stack split and reload. Verify enchantments, sockets, quality and quantities remain unchanged. Test InventorySlots, AzuCraftyBoxes, ItemStacksItemWeights together and vanilla without optional mods. Newly dropped creature loot must record distinct drop/collection events once; player redrop/re-pickup must not add earned loot. Repeat with another client owning the ground object and a saved ground drop from 0.3.27. Uncertain auto-merged ground stacks should remain ordinary pickups.
+
+
+## 0.3.32 version gate and host setup acceptance
+
+Use isolated server/client profiles: matching0.3.32 clients join; missing Sagas,0.3.31 and a newer version are rejected before entering the world. Confirm the server log names the requirement and a handshake-capable client popup names both versions. Missing-mod clients necessarily show vanilla's incompatible-version error. Test enforcement disabled, a delayed password prompt, reconnect after rejection, Steam and crossplay, and the installed Jotunn/ConditionalConfigSync stack. Version announcements are not anti-cheat attestation.
+
+Open F1 with Shudnal ConfigurationManager: Sagas Server/Lore rows show S; privacy/shortcut rows show C. Server rows stay locked on a remote client, and unrelated mods' rows retain their own indicators. Server credentials/paths must not appear as remote-synchronized values.
+
+Fresh dedicated setup: WebsitePort=allocatedTCPport, ListenPrefix blank. Check the effective port/startup log and open IP:port. Verify direct-IP Ctrl+Home inference, explicit WebsiteUrl priority, advertised game-host/web-port separation, custom HTTPS URL and client override. Relay/join-code connections with no host must get clear URL guidance. Confirm old explicit prefixes are preserved, disabled/unavailable listeners produce actionable messages, and solo/local fresh config stays loopback. No firewall or panel port should be opened automatically.

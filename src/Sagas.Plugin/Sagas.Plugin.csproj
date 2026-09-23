@@ -5,4 +5,5 @@
 <ItemGroup><Reference Include="UnityEngine.ParticleSystemModule"><HintPath>$(GameManaged)/UnityEngine.ParticleSystemModule.dll</HintPath><Private>false</Private></Reference></ItemGroup>
 <ItemGroup><Reference Include="UnityEngine.IMGUIModule"><HintPath>$(GameManaged)/UnityEngine.IMGUIModule.dll</HintPath><Private>false</Private></Reference><Reference Include="UnityEngine.InputLegacyModule"><HintPath>$(GameManaged)/UnityEngine.InputLegacyModule.dll</HintPath><Private>false</Private></Reference></ItemGroup>
 <ItemGroup><Reference Include="com.rlabrecque.steamworks.net"><HintPath>$(GameManaged)/com.rlabrecque.steamworks.net.dll</HintPath><Private>false</Private></Reference></ItemGroup>
+<ItemGroup><Reference Include="UnityEngine.TextRenderingModule"><HintPath>$(GameManaged)/UnityEngine.TextRenderingModule.dll</HintPath><Private>false</Private></Reference></ItemGroup>
 </Project>

@@ -27,9 +27,9 @@ Screenshots show an isolated copy of recorded playtest data, with display names 
 
 1. Install BepInEx 5 and **Valheim Sagas on the host and every participating client**. Use the same release on each. In a mod manager, install the package; manually, extract its `BepInEx` folder into your profile/game installation. Keep the four plugin DLLs and `web` folder together.
 2. Start a world. A dedicated server is optional: a normal hosted or solo world starts the website on that computer. The website stops when the host closes the world/game.
-3. On the host computer, open **http://127.0.0.1:8877/**. New configurations allow public viewing without a viewer token. This does not expose a public internet port: the default binding remains loopback.
+3. On the host computer, open **http://127.0.0.1:8877/**. New configurations allow public viewing without a viewer token. Local hosting defaults to loopback; a new dedicated-server config listens on all interfaces using WebsitePort. Sagas does not open firewall/panel ports.
 4. Settings are in `BepInEx/config/org.valheimsagas.collector.cfg`. Existing saved settings are preserved on upgrade. Restart the host after changing server settings.
-5. For a dedicated host, use its allocated website TCP port and the wildcard listener described below. Visitors open `http://SERVER-IP:PORT/`. An HTTPS reverse proxy is optional for a domain and encrypted access; no separate website installation is required.
+5. For a dedicated host, set its allocated WebsitePort as described below. Visitors open `http://SERVER-IP:PORT/`. An HTTPS reverse proxy is optional for a domain and encrypted access; no separate website installation is required.
 
 All participating players need Sagas for full telemetry, portraits and exploration. Epic Loot, Jewelcrafting and Star Level System are optional. Game/Unity assemblies and runtime game assets are not bundled. Biome backgrounds are bundled as responsive WebP images for offline use; unused original PNG artwork is excluded from releases.
 
@@ -40,15 +40,24 @@ Stop the server and edit the existing `[Server]` entries in `BepInEx/config/org.
 ```ini
 [Server]
 EnableWebsite = true
-ListenPrefix = http://*:19908/
+WebsitePort = 19908
+ListenPrefix =
+WebsiteUrl =
+RequireMatchingVersion = true
 RequireViewerToken = false
 DisplayName =
 AdvertisedAddress =
 ```
 
-Restart the server, then open **`http://YOUR-SERVER-IP:19908/`**. Replace `19908` with your allocated website port. Keep the `http://` and trailing `/`; the wildcard `*` belongs in the configuration, not the browser address. `127.0.0.1` only accepts local requests and will not make the website accessible to remote players. The host must allow **TCP** on the chosen port; keep the Valheim game/query ports unchanged. You do not need to create a panel reverse proxy for direct IP access.
+Restart the server, then open **`http://YOUR-SERVER-IP:19908/`**. Replace `19908` with your allocated website TCP port. Leave the advanced `ListenPrefix` blank to use `WebsitePort`; new dedicated hosts bind all interfaces automatically. Existing saved prefixes are preserved: clear an old override when switching to simplified setup, or keep a working `http://*:19908/` prefix. The wildcard `*` is a bind address, never a browser address. The host panel/firewall must allow TCP on this web port; Valheim's game/query ports remain unchanged. No separate website install or reverse proxy is needed for direct IP access.
 
-With `DisplayName` blank, 0.3.9 reads the host's configured Valheim server name, falling back to its world name. Set `DisplayName = Your Fellowship` to override it. Set `AdvertisedAddress = YOUR-SERVER-IP:GAME-PORT` if you want the website to display the address players use to join Valheim. This display-only field does not configure the website listener; the game and website ports are usually different. Neither your public IP nor a panel hostname is discovered automatically. Restart after changing these settings.
+**Optional custom URL:** set `WebsiteUrl = https://sagas.example.com/` or `WebsiteUrl = http://YOUR-SERVER-IP:19908/`. This is the browser address advertised to Ctrl+Home; it does not change the listening port. With WebsiteUrl blank, direct-IP clients use their game connection's host plus the web listener port. Steam server-list/relay and crossplay join-code connections may not expose that IP: configure WebsiteUrl for a reliable address in those cases. No external public-IP lookup is performed. A personal WebsiteUrlOverride still takes priority.
+
+With `DisplayName` blank, Sagas uses the Valheim server name, then world name. `AdvertisedAddress = YOUR-SERVER-IP:GAME-PORT` displays the game address and, if WebsiteUrl is blank, supplies a website hostname with the separate web port. It does not change the listener. Startup logs report whether the listener started, its effective port, public/private viewing, an active override, loopback-only binding and the available browser address or missing URL guidance.
+
+**Version matching:** `RequireMatchingVersion = true` requires the same Sagas release on server and clients before world admission. The server log identifies missing/mismatched versions. Clients with the new handshake show the required and installed versions; a client without Sagas receives Valheim's standard incompatible-version error. Set this option false only if deliberately allowing missing/mixed clients and incomplete telemetry. This is compatibility checking, not anti-cheat attestation.
+
+In Shudnal's ConfigurationManager, Sagas rows show **S** for host-owned settings and **C** for personal client settings. S rows are locked while connected to another host. These are your machine's hosting values, not a copy of the remote host's config; secrets are never synchronized.
 
 Public viewing is enabled by `RequireViewerToken = false`; existing configurations are preserved on upgrade. For personal login and OpenRouter key submission over the internet, use an HTTPS reverse proxy so credentials are encrypted in transit.
 
@@ -152,7 +161,7 @@ Story prompts use relevant recorded events, career totals, bosses and credited t
 
 Back up `BepInEx/config/ValheimSagas` with the host stopped, including `sagas.db` and `personal-lore.key` if present. The key file is required to decrypt saved personal OpenRouter credentials. Do not share backups, configs or tokens publicly. Uninstalling the plugin does not delete recorded history.
 
-**0.3.31 is a preview release verified with automated checks.** It includes performance fixes for SLS/gear snapshots and staged, change-triggered portrait capture with asynchronous GPU readback and background image processing; fresh local and dedicated-server playtests must confirm frame-time improvements. Automated tests use labeled synthetic fixtures; real credentialed OpenRouter generation, two-client multiplayer acceptance and Linux hosting still require testing. Unresolved attackers and uncertain loot provenance stay unattributed rather than being guessed. Fight durations are observed telemetry, and carried gold is a snapshot, not a lifetime earnings counter.
+**0.3.32 is a preview release verified with automated checks.** It includes performance fixes for SLS/gear snapshots and staged, change-triggered portrait capture with asynchronous GPU readback and background image processing; fresh local and dedicated-server playtests must confirm frame-time improvements. Automated tests use labeled synthetic fixtures; real credentialed OpenRouter generation, two-client multiplayer acceptance and Linux hosting still require testing. Unresolved attackers and uncertain loot provenance stay unattributed rather than being guessed. Fight durations are observed telemetry, and carried gold is a snapshot, not a lifetime earnings counter.
 
 ## License
 
@@ -187,7 +196,7 @@ For browser checks, start `dotnet run --project src/Sagas.DevHost -c Release`, t
 
 Press **Ctrl+Home** while playing to open the website in the Steam overlay. Enable Steam Overlay for Valheim and launch the game through Steam (including Gale's usual Steam launch). Change or disable `Website Login / OpenWebsite` in F1. This uses Steam's browser; it does not embed a new browser or pause multiplayer. Close the overlay with your Steam overlay shortcut (normally Shift+Tab).
 
-Local hosts automatically use their `ListenPrefix` address/port (wildcard HTTP bindings become loopback for this shortcut). For dedicated servers, set **`Server / WebsiteUrl`** to the reachable website address, such as `http://example.com:19908/` or your HTTPS reverse-proxy URL. Keep `ListenPrefix = http://*:19908/` for a wildcard listener when appropriate; the public URL setting does not change binding or open ports. `AdvertisedAddress` is the displayed game-server address and is not assumed to be the web address. A player may set `Website Login / WebsiteUrlOverride` instead. Use a plain HTTP(S) address without credentials, query or fragment. The host sends only that public URL, on an authenticated, rate-limited hotkey request. No background URL polling.
+Local hosts automatically use their `ListenPrefix` address/port (wildcard HTTP bindings become loopback for this shortcut). For a custom domain or relay/crossplay connections, set **`Server / WebsiteUrl`** to the reachable website address, such as `http://example.com:19908/` or your HTTPS reverse-proxy URL. Use `WebsitePort = 19908` with a blank ListenPrefix on a dedicated host, or keep an explicit wildcard override; the public URL setting does not change binding or open ports. `AdvertisedAddress` is the displayed game-server address; its host can supply the automatic web address using the separate web port. A player may set `Website Login / WebsiteUrlOverride` instead. Use a plain HTTP(S) address without credentials, query or fragment. The host sends only that public URL, on an authenticated, rate-limited hotkey request. No background URL polling.
 
 Website login is separate in Steam's browser: use the Login button, and **Ctrl+Insert** to copy your personal login when needed. The shortcut never includes a viewer token or key in the URL and does not automatically log you in. If Steam Overlay is unavailable, Sagas displays an explanation; your ordinary browser remains available. Actual overlay operation needs an in-game test on your installation.
 
@@ -206,7 +215,7 @@ On first launch after this update, the original Ctrl+F8/F9/F10 defaults migrate 
 
 ### Dedicated multiplayer updates
 
-Update **both the dedicated server and every Sagas client** to 0.3.31. Releases 0.3.28 and later use compressed, small, paced transport fragments; servers older than 0.3.28 cannot receive that upload format. Restart each game/server after replacing plugin files. Existing configuration and recorded data are preserved.
+Update **both the dedicated server and every Sagas client** to 0.3.32. Releases 0.3.28 and later use compressed, small, paced transport fragments; servers older than 0.3.28 cannot receive that upload format. Restart each game/server after replacing plugin files. Existing configuration and recorded data are preserved.
 
 Dedicated-server character identity now comes from the connected player's owned, replicated character object. Ctrl+Insert reports a specific server identity/service/storage problem when possible; shortcut notices also appear in the BepInEx log without credentials. Ctrl+Home can obtain the host URL without waiting for character metadata. Set `Server / WebsiteUrl` to the public browser address (for example `http://your-host:19908/`); the HTTP bind prefix can remain `http://*:19908/` on a dedicated host. A wildcard is a listening address, not a browser URL.
 
