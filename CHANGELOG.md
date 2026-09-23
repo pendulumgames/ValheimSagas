@@ -1,5 +1,9 @@
 ## 0.3.32
 
+> **Upgrade warning:** Update the server **and every joining client to the same Sagas version**, then restart. `RequireMatchingVersion` now defaults to `true`; missing or mismatched clients cannot join. Clients without the new handshake may only see Valheim's generic incompatible-version error—check the server log for the Sagas requirement. A host can explicitly set `RequireMatchingVersion = false` to permit mixed/missing clients, with potentially incomplete telemetry.
+>
+> **Website setup change:** New dedicated-server configs with a blank `ListenPrefix` listen on all interfaces using `WebsitePort`; public viewing remains the default. Existing saved listener overrides and privacy choices are preserved. Clear an old `ListenPrefix` only when intentionally switching to the new port-based setup. Sagas does not open firewall/panel ports. Relay/crossplay joins may still need an explicit `WebsiteUrl`.
+
 - Require an exact Sagas version match before joining by default; hosts can disable RequireMatchingVersion. Missing/mismatched versions are rejected before world admission, with named version errors where the client supports them.
 - Fix Shudnal ConfigurationManager S/C labels: draw ownership indicators at the row entry point, before its unsynchronized-setting visibility filter. Keep host settings locked and secrets unsynchronized.
 - Add WebsitePort for simplified dedicated setup. A blank advanced ListenPrefix binds all interfaces for dedicated servers and loopback for local hosting; existing overrides remain unchanged.
