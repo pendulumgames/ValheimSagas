@@ -1,4 +1,4 @@
-param([string]$Package='artifacts/ValheimSagas-0.3.33.zip')
+param([string]$Package='artifacts/ValheimSagas-0.3.36.zip')
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
 if(![IO.Path]::IsPathRooted($Package)){$Package=Join-Path $root $Package}
@@ -17,6 +17,7 @@ function Get-ZipText($archive,$name){
  try{return $reader.ReadToEnd()}finally{$reader.Dispose()}
 }
 $cases=[ordered]@{
+ 'seeded-story-database'={param($z) Set-ZipText $z 'BepInEx/config/ValheimSagas/sagas.db' 'synthetic test story database'}
  'unexpected-private-file'={param($z) Set-ZipText $z 'BepInEx/config/private.cfg' 'fixture'}
  'duplicate-file'={param($z) $e=$z.CreateEntry('README.md');$s=$e.Open();$s.Dispose()}
  'traversal-path'={param($z) Set-ZipText $z '../secret.txt' 'fixture'}

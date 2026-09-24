@@ -27,5 +27,10 @@ function Assert-WebArtworkSizes($Sizes) {
    $ratio=$nextRatio
   }
  }}
+ foreach($boss in @('eikthyr','elder','bonemass','moder','yagluth','queen','fader','kall-monument')){
+  $asset="bosses/$boss.webp"
+  if(!$Sizes.ContainsKey($asset) -or $Sizes[$asset].Width -ne 1024 -or $Sizes[$asset].Height -ne 1536){throw "Missing or invalid boss illustration: $asset"}
+ }
+ Write-Host 'PASS trophy artwork: eight 1024x1536 WebP illustrations.'
  Write-Host 'PASS responsive artwork: 24 WebP files; 1920/2560/3840 widths and matching aspect ratios.'
 }

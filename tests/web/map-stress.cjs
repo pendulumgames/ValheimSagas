@@ -8,7 +8,7 @@ const {chromium}=require('playwright'),fs=require('node:fs'),path=require('node:
   await page.addInitScript(()=>{window.setInterval=()=>0;window.requestAnimationFrame=()=>0;window.ResizeObserver=class{observe(){}};});
   await page.route('**/*',route=>{
    const name=new URL(route.request().url()).pathname;
-   if(!['/','/app.js','/style.css','/favicon.svg'].includes(name))return route.fulfill({status:404,body:'Synthetic benchmark: network disabled'});
+   if(!['/','/app.js','/journey.js','/journey.css','/style.css','/favicon.svg'].includes(name))return route.fulfill({status:404,body:'Synthetic benchmark: network disabled'});
    return route.fulfill({path:path.resolve('src/Sagas.Web',name==='/'?'index.html':name.slice(1)),contentType:name.endsWith('.js')?'application/javascript':name.endsWith('.css')?'text/css':name.endsWith('.svg')?'image/svg+xml':'text/html'});
   });
   await page.goto('http://sagas-benchmark.invalid');

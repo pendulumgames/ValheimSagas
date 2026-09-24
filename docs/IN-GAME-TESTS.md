@@ -150,3 +150,31 @@ Fresh dedicated setup: WebsitePort=allocatedTCPport, ListenPrefix blank. Check t
 4. Open Leaderboard > Trophy hall and Compare Vikings. Exercise all time filters/custom dates. Check a known team kill, an untimed older kill, Nemesis vs vanilla bosses, and optional Epic Loot absence. First recorded refers to the selected period.
 5. Open a saga's Explore recorded moments. Only retained events with shared discovered coordinates can be selected. Verify centering and empty-state behavior. Revoke profile/map sharing while a second browser is viewing; ensure private story/locations clear and late replies cannot restore them.
 6. Moments integration is deferred: no screenshots/clips are imported in0.3.33. Implement and test its separately documented export contract before enabling that feature.
+
+
+## 0.3.34 trophy hall acceptance
+
+- With the complete matching package installed, open Leaderboard > Trophy hall. Confirm earned trophies and shared teams match recorded victories; unrecorded bosses remain mist-shrouded.
+- Switch to a period without a previous boss victory. Its trophy should remain revealed while period counters/records become empty. A private Viking's evidence should not reveal public trophies by itself.
+- Compare a higher-star slower victory with a lower-star faster one: the highest-star and fastest sections must retain their own teams, dates and durations. Untimed highest-star victories must not borrow another encounter's time.
+- Kall should display a symbolic frozen monument and no incomplete multi-phase fight duration. Unknown modded bosses should show a neutral rune.
+- Confirm both selected Vikings remain visually distinct in Compare Vikings on desktop/mobile; portraits should load when available.
+- Check a newly recorded first victory reveals once, ordinary polling does not replay it, and reduced-motion preference suppresses the animation.
+
+## 0.3.35 saga journeys
+
+1. Update matching client/server packages including the complete web directory; reload browser and Steam overlay tabs.
+2. With an existing AI chapter, enable Sagas in the atlas toolbar. Select its marker or list entry, then open Read the full saga. Test entry from both Viking and server saga chapters.
+3. Check the boss/biome banner, chapter excerpt and recorded facts. Play/pause, replay, scrub, speed and participant switching should work. Camera following is optional; dragging or zooming releases it.
+4. Check sharing withdrawal, personal/combined map filters and an empty/no-location chapter. Hidden locations and profiles must not reappear after polling, world switching, or a delayed reply.
+5. Watch a large-map replay while panning and zooming, then scroll to the full story or switch tabs; offscreen replay pauses. Validate desktop, phone and Steam overlay interaction and reduced-motion preferences.
+6. Verify artwork is thematic and trail gaps remain for separate Vikings, long gaps and distant events. These connections are not sampled footsteps or proof of a route walked.
+
+Browser/fixture checks are completed separately; these game/dedicated/Steam-overlay acceptance steps still require real testing.
+
+
+## 0.3.36 story scenes
+- Configure the host's chosen OpenRouter route and generate a NEW chapter from adventures. Verify each scene has a distinct title/passage and the full chapter matches those passages. No old chapter should be converted or regenerated. Confirm provider request usage: one request for chapter/scenes/biography, except existing failure retries.
+- Open Sagas: check the Viking name or Server saga below each title. Explore a new chapter, select scenes and replay; artwork and passage should advance together. Boss-kill scene markers should be larger with rounded double borders.
+- Revoke a contributing player's map/profile sharing and refresh; unsupported scene locations must disappear, with a broken trail where appropriate. Compare desktop, mobile and Steam overlay.
+- Test chapters are local development data only; do not copy the Test profile database to a production server. The release archive contains no database or fixtures.

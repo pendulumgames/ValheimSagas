@@ -13,7 +13,7 @@ if(args.Contains("--north-only")){NorthBossChecks.Run(root,Check);Console.WriteL
 if(args.Contains("--offline-media-only")){await OfflineMediaChecks.Run(root,Check);Console.WriteLine($"PASS {assertions} deferred/offline portrait assertions.");Directory.Delete(root,true);return;}
 AnalyticsDeliveryChecks.Run(root,Check);
 if(args.Contains("--analytics-only")){Console.WriteLine($"PASS {assertions} analytics delivery checks.");Directory.Delete(root,true);return;}
-AdventureChecks.Run(root,Check);
+AdventureChecks.Run(root,Check);JourneyChecks.Run(root,Check);
 if(args.Contains("--adventures-only")){Console.WriteLine($"PASS {assertions} adventure assertions.");Directory.Delete(root,true);return;}
 WebsiteSetupChecks.Run(Check);
 if(args.Contains("--website-setup-only")){Console.WriteLine($"PASS {assertions} website setup checks.");Directory.Delete(root,true);return;}

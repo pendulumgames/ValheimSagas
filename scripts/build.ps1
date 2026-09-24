@@ -21,6 +21,8 @@ if(!$SkipTests) {
   dotnet run --project tests/Sagas.InventoryChecks -c Release -- $InventorySlotsDll
   if($LASTEXITCODE -ne 0){throw 'Installed InventorySlots stacking checks failed'}
  }
+ node --check src/Sagas.Web/journey.js
+ if($LASTEXITCODE -ne 0){throw 'Journey JavaScript check failed'}
  node --check src/Sagas.Web/app.js
  if($LASTEXITCODE -ne 0){throw 'Website JavaScript check failed'}
 }

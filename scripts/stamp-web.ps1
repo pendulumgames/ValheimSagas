@@ -1,4 +1,4 @@
-param([string]$Version='0.3.33')
+param([string]$Version='0.3.36')
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
 $app=Join-Path $root 'src/Sagas.Web/app.js'

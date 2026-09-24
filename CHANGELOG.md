@@ -1,3 +1,40 @@
+## 0.3.36 - A story told through places
+
+> Update the complete host package, including `web`, and matching clients. Exact version matching is enabled by default. Preserve configuration and data, restart, and refresh browser tabs.
+
+- New Viking and server sagas generate up to six connected story scenes in the same request as the biography. Each scene carries its own title, passage and validated evidence references; the full chapter consists of those passages. Target three to six scenes, fewer for sparse evidence.
+- Selecting or replaying a scene changes the story passage and recorded biome/boss artwork. Rounded marker frames echo the story panel; boss-kill scenes have larger, double-bordered major markers. Chapter buttons identify the Viking or server.
+- All map locations and boss status come from server records. Unavailable/private scene evidence hides the scene and breaks the trail. The AI never supplies coordinates. Existing chapters remain unchanged: no conversion, regeneration or additional provider calls.
+- Generation remains queued and cached, with existing credentials and routing controls. Output allowance rises from 1,000 to 2,000 tokens for the structured story; paid opt-in and OpenRouter preset/account pricing behavior stay unchanged. Invalid scene output is rejected; a valid text-only response can remain readable without scene fabrication.
+- Add a working saga screenshot at the top of both release READMEs. Its example story/events are labeled. No test database, seeded saga, game assets or development host ships.
+
+## 0.3.34
+
+> Install the complete package, including `web`, on the host and use matching client/server versions. Preserve configuration and data, restart, and refresh browser tabs.
+
+- Replace numbered boss cards with eight original transparent illustrations, layered ornamental SVG frames and static, weighted mist over unrevealed silhouettes. Kall uses a symbolic frozen monument, preserving his appearance as a mystery. No game assets are bundled.
+- Reveal a trophy when a shared victory becomes known, with a brief transition that respects reduced-motion settings. Ordinary refreshes do not replay it.
+- Keep trophy unlocks independent of the selected period, using permanent known-boss receipts plus retained shared victory evidence. Private profiles do not unlock public trophies.
+- Add highest-star encounter records with their own team/date/duration. Ties prefer the shortest valid duration at the highest star tier; absent durations stay absent. Overall fastest fights remain separate. Kall phase-only timing stays excluded.
+- Reorganize Viking comparisons into distinct portrait columns, centered measure labels, larger values and responsive layouts.
+- Bundle eight alpha-preserving 1024x1536 WebP illustrations (about 5.2 MiB total), served locally with lazy loading. No CDN, API key, runtime capture or new dependency is required.
+- Animated saga journeys and dedicated chapter pages remain planned; existing recorded chapter map links are unchanged in this release.
+
+
+## 0.3.35 - Follow the saga
+
+- Curate each journey to six meaningful highlights, favoring boss encounters, rare discoveries and biome variety over repetitive records. Preserve privacy and journey breaks through omitted moments. Separate crowded markers with location spokes, move playback above navigation, and fit the chapter into the clear map area. Moment artwork follows its recorded biome and boss, clearing boss art when moving on.
+
+- Journey connections now form gentle, zoom-stable curves; the replay arrow follows their tangent. Curves remain clipped to explored terrain and preserve recorded endpoints and breaks.
+- Sagas toolbar selection follows the open tray rather than remaining highlighted when its layer is enabled.
+
+- New independent Sagas atlas layer with chapter markers, an ornate framed story panel, original local boss/biome imagery, chronological recorded moments and a full chapter journey page. Open a chapter from the map or either Viking/server saga.
+- Gold journey replay supports play/pause, restart, scrubbing, speed selection, a participant perspective and optional camera following. Manual panning releases camera following. Replay pauses offscreen or in a hidden tab; reduced motion removes the moving arrow.
+- Animation uses its own transparent canvas, not a terrain redraw on every frame. The separate chapter index is lazy, paged and capped; each journey contains up to six curated highlights from retained shared locations.
+- Privacy is enforced in the server endpoints and stale browser responses are discarded. Different Vikings, hidden/missing event gaps, intervals over 30 minutes and jumps over 1,200 metres break connections. Connections indicate recorded event order, not a tracked walking path. Imagery and story excerpts remain distinguishable from event evidence; no new provider calls are required.
+- Install the complete matching package on clients and server, including the new journey.js and journey.css website files. Refresh open website tabs. This release does not change gameplay capture hooks or require any optional loot/zone mod.
+
+
 ## 0.3.33
 
 > **Install the whole package on the host, including `web`, then restart and reload browser tabs.** Keep configuration/data. Server and clients must match because version enforcement remains enabled by default. Updating only DLLs can leave the old slow website renderer running.

@@ -1,4 +1,4 @@
-param([string]$Path = 'artifacts/ValheimSagas-0.3.17.zip')
+param([string]$Path = 'artifacts/ValheimSagas-0.3.36.zip')
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
 if(![IO.Path]::IsPathRooted($Path)){$Path=Join-Path $root $Path}
@@ -45,7 +45,7 @@ try {
   if([BitConverter]::ToString($header,16,8) -ne '00-00-01-00-00-00-01-00'){throw 'Icon must be 256 x 256'}
  }finally{$icon.Dispose()}
  $readme=Read-EntryText 'README.md'
- foreach($shot in @('character','atlas','leaderboard')){
+ foreach($shot in @('character','atlas','leaderboard','saga')){
   $url="https://raw.githubusercontent.com/pendulumgames/ValheimSagas/main/docs/screenshots/$shot.png"
   if(!$readme.Contains($url)){throw "README missing public screenshot URL: $shot"}
  }

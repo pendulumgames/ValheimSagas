@@ -33,7 +33,11 @@ public sealed class MapCell { public int X {get;set;} public int Z {get;set;} pu
 public sealed class ExplorationBatch {
  public string World {get;set;} = ""; public string PlayerId {get;set;} = ""; public bool Imported {get;set;} public int CellSize {get;set;} = 64; public List<MapCell> Cells {get;set;} = new List<MapCell>();
 }
+public sealed class SagaScene {
+ public string Title {get;set;}=""; public string Text {get;set;}=""; public List<string> EventIds {get;set;}=new List<string>();
+}
 public sealed class SagaChapter {
+ public List<SagaScene> Scenes {get;set;}=new List<SagaScene>();
  public List<string> MapParticipants {get;set;} = new List<string>();
  public string Scope {get;set;} = "character"; public List<SagaParticipant> Participants {get;set;} = new List<SagaParticipant>();
  public string ServerBio {get;set;} = ""; public string ServerBioModel {get;set;} = "local-template";

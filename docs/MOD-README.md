@@ -1,10 +1,16 @@
 # Valheim Sagas
 
+![Saga journey with scene passages, rounded map markers and a prominent boss encounter](https://raw.githubusercontent.com/pendulumgames/ValheimSagas/main/docs/screenshots/saga.png)
+
+*An illustrative saga in the working website: example story and events over copied playtest terrain. Example clock; no test stories or world data are included in the mod.*
+
 **Every Viking has a story.**
 
 Your adventures, remembered: a standalone Valheim mod with a server-hosted website, a living 2D atlas, character armories, leaderboards and optional AI-written sagas.
 
 ![Viking profile with saved portrait, equipment, Nemesis score and compact Appearance control](https://raw.githubusercontent.com/pendulumgames/ValheimSagas/main/docs/screenshots/character.png)
+
+The **Trophy hall** now features original boss illustrations, ornate Norse frames and fog-shrouded silhouettes until a shared victory is recorded. Trophy unlocks persist across time filters; first victories, highest-star encounters and fastest measured fights show separate evidence for the selected period. Highest-star ties prefer the shortest complete timing at that same star level. Kall uses a spoiler-free frozen monument, and incomplete multi-phase times remain unranked. **Compare Vikings** places each Viking in a distinct portrait column with shared stat labels between them.
 
 ## Explore your fellowship
 
@@ -235,3 +241,15 @@ Statistics reuse a bounded history cache and append newly recorded events. Filte
 The World recap follows a per-world bookmark on this browser, independent of statistics filters. Mark caught up starts a new recap period. Trophy hall and Compare Vikings share the Hall of Renown time filter: first victory means first retained victory in that selected period. Boss participation includes recorded teammates; ordinary kills use finishing-blow credit. Unmeasured and incomplete multi-phase fights are excluded from fastest times.
 
 Valheim Moments media sharing is not enabled yet. Its optional integration requires an identity-aware, consent-based export interface in Moments; see the [integration assessment](https://github.com/pendulumgames/ValheimSagas/blob/main/docs/VALHEIM-MOMENTS-INTEGRATION.md). No extra mod is required for Sagas.
+
+### Follow a saga through the atlas
+
+Open **Sagas** in the map toolbar to enable chapter markers. Select a chapter for its framed story panel, thematic boss/biome illustration and recorded moments. **Read the full saga** opens a dedicated journey page; **Explore recorded moments** on Viking and server chapters leads there too.
+
+Use play/pause, the timeline slider, replay speed and **Follow journey** to revisit the moments. Dragging or zooming the map releases camera following. A participant selector appears for shared adventures. The gold connections show the order of recorded moments, not exact footsteps; gaps, different Vikings, long intervals and distant locations stay disconnected. Only shared, explored evidence is shown. Chapters without retained locations can still be read.
+
+Journeys use existing AI chapters and bundled illustrations, with no additional OpenRouter calls or generated-image charges. The host still needs OpenRouter configured for new sagas. Update the complete web folder along with the plugin for this release.
+
+New sagas unfold as up to six story scenes, each with its own passage, evidence-linked location and biome or boss artwork. Play follows the scenes along a curved trail; major boss encounters receive larger markers. Chapter lists identify the Viking or server. The full chapter is made from those same passages. Existing chapters stay unchanged and retain their recorded-highlight presentation; no conversion or automatic regeneration occurs.
+
+Scenes and biography use one bounded OpenRouter request (up to 2,000 output tokens); there is no request per map marker. The server validates reference aliases against supplied evidence and never accepts AI-generated coordinates. If a model returns a valid older text-only response, it remains readable without invented scenes. Existing key, budget, free-model and paid-preset controls remain in force.

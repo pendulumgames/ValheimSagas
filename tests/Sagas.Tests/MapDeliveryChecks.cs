@@ -30,5 +30,22 @@ static class MapDeliveryChecks {
   string legacy=Path.Combine(root,"map-delivery-legacy");using(var store=new SagaStore(legacy)){store.Player(new(){World="world",PlayerId="a",ShareMap=true});store.Explore(new(){World="world",PlayerId="a",Cells=Enumerable.Range(0,300).Select(x=>new MapCell{X=x,Z=0}).ToList()});}
   using(var db=new LiteDatabase(Path.Combine(legacy,"sagas.db"))){db.DropCollection("mapOverview");db.GetCollection("meta").Delete("mapOverviewMigration");}
   using(var store=new SagaStore(legacy)){check(store.MigrateMapPage(),"Legacy migration reports pending rows");check(store.MapPage("world",new(){"a"},0).Cells.Count==128,"Legacy migration converts at most128 tiles");check(store.MigrateMapPage()&&!store.MigrateMapPage(),"Legacy migration completes in bounded batches");check(store.MapDetail("world",new(){"a"},new[]{(299,0)},64).Count==1,"Legacy detail remains available during migration");}
+  // Exercise complete coverage for mixed signed coordinates and reversed updates.
+  string shuffled=Path.Combine(root,"map-mixed-migration");
+  using(var store=new SagaStore(shuffled)){store.Player(new(){World="mixed",PlayerId="p",ShareMap=true});store.Explore(new(){World="mixed",PlayerId="p",Cells=Enumerable.Range(0,512).Select(i=>new MapCell{X=i%2==0?i/2:-i/2-1,Z=i%7-3}).ToList()});}
+  using(var db=new LiteDatabase(Path.Combine(shuffled,"sagas.db"))){db.DropCollection("mapOverview");db.GetCollection("meta").Delete("mapOverviewMigration");}
+  using(var store=new SagaStore(shuffled)){
+   int batches=0;while(store.MigrateMapPage()&&batches<10)batches++;
+   check(batches==4,"Mixed signed coordinate migration advances in ordered bounded pages");
+   long cursor2=0;var seen=new HashSet<string>();int pages=0;bool pending=true;
+   while(pending&&pages++<10){var page=store.MapPage("mixed",new(){"p"},cursor2);foreach(var cell in page.Cells)seen.Add(cell.X+","+cell.Z);check(page.Cursor>cursor2||!page.More,"Overview cursor strictly advances when more rows exist");cursor2=page.Cursor;pending=page.More;}
+   check(seen.Count==512&&!pending,"All mixed signed legacy coordinates delivered without skipped or repeated batches");
+   // Updating existing rows preserves storage order but reverses revision order.
+   store.Explore(new(){World="mixed",PlayerId="p",Cells=Enumerable.Range(0,300).Reverse().Select(i=>new MapCell{X=i%2==0?i/2:-i/2-1,Z=i%7-3,Biome="Mountain"}).ToList()});
+   seen.Clear();pages=0;pending=true;
+   while(pending&&pages++<10){var page=store.MapPage("mixed",new(){"p"},cursor2);foreach(var cell in page.Cells)seen.Add(cell.X+","+cell.Z);cursor2=page.Cursor;pending=page.More;}
+   check(seen.Count==300&&!pending,"Revision paging delivers every out-of-order updated tile exactly once");
+  }
+
  }
 }

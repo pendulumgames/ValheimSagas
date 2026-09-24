@@ -148,11 +148,12 @@ foreach(var route in new[]{"@preset/fellowship","vendor/paid"}){
  await new LoreEngine(options,client,()=>true).GenerateServerAsync("Northern Hall",serverFacts,null,default);
  var delegated=JObject.Parse(handler.Bodies.Last());
  Check((string?)delegated["model"]==route&&delegated.Property("provider")==null,"Host paid routing leaves OpenRouter preset/account price and provider controls untouched");
- Check((int?)delegated["max_tokens"]==1000&&(string?)delegated["tool_choice"]=="none","Host paid routing preserves bounded narrative requests");
+ Check((int?)delegated["max_tokens"]==2000&&(string?)delegated["tool_choice"]=="none","Host paid routing preserves bounded narrative requests");
 }
 options.LoreAllowPaid=false;options.LoreModel="@preset/fellowship";handler.Responses.Enqueue(Valid());
 await new LoreEngine(options,client,()=>true).GenerateServerAsync("Northern Hall",serverFacts,null,default);
 Check((decimal?)JObject.Parse(handler.Bodies.Last())["provider"]?["max_price"]?["completion"]==0,"Account pricing flag cannot bypass paid opt-in");
+await SceneChecks.Run(Check);
 await ContextChecks.Run(Check);
 Console.WriteLine($"PASS: {assertions} lore checks (synthetic HTTP only; no credentials or game required).");
 

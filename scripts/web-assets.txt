@@ -27,3 +27,13 @@ biomes/grounded/ashlands-3840.webp
 biomes/grounded/deep-north-1920.webp
 biomes/grounded/deep-north-2560.webp
 biomes/grounded/deep-north-3840.webp
+bosses/eikthyr.webp
+bosses/elder.webp
+bosses/bonemass.webp
+bosses/moder.webp
+bosses/yagluth.webp
+bosses/queen.webp
+bosses/fader.webp
+bosses/kall-monument.webp
+journey.js
+journey.css

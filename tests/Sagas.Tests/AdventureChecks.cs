@@ -33,6 +33,17 @@ static class AdventureChecks {
   s.Player(new(){World="w",PlayerId="a",Name="a",ShareProfile=true,ShareMap=false});check(!Json(service.ChapterMap("w","chapter"))["moments"]!.Any(),"Map sharing withdrawal immediately removes chapter coordinates");
   s.Player(new(){World="w",PlayerId="a",Name="a",ShareProfile=false,ShareMap=true});check(!Json(service.ChapterMap("w","chapter"))["moments"]!.Any(),"Profile withdrawal immediately hides chapter and locations");
   s.Player(new(){World="w",PlayerId="a",Name="a",ShareProfile=true,ShareMap=true});chapter.Participants.Add(new(){PlayerId="private"});s.Chapter(chapter);check(!Json(service.ChapterMap("w","chapter"))["moments"]!.Any(),"Chapter participant consent enforced before map links");
+  // High-star evidence must never borrow a faster duration from a lower tier.
+  var high=Event("high");high.Boss=true;high.Stars=4;high.DurationSeconds=null;s.AddEvent(high);
+  JObject Trophy(TimeWindow period)=> (JObject)Json(service.Adventures("w",period))["trophies"]!.Single(t=>(string?)t["key"]=="Eikthyr");
+  var h=Trophy(all)["highestStars"]!;check((int)h["stars"]! ==4&&h["durationSeconds"]!.Type==JTokenType.Null,"Highest-star record keeps missing timing; lower-tier speed is not substituted");
+  var tie=Event("high-timed");tie.Boss=true;tie.Stars=4;tie.DurationSeconds=90;s.AddEvent(tie);
+  var slower=Event("high-slower");slower.Boss=true;slower.Stars=4;slower.DurationSeconds=120;s.AddEvent(slower);
+  h=Trophy(all)["highestStars"]!;check((double)h["durationSeconds"]! ==90&&(double)Trophy(all)["fastest"]!["durationSeconds"]! ==30,"Highest tier uses fastest timed tie but overall fastest remains separate");
+  var empty=Trophy(new TimeWindow(now.AddDays(1),now.AddDays(2)));check((bool)empty["earned"]!&&(int)empty["kills"]! ==0&&empty["highestStars"]!.Type==JTokenType.Null,"Empty time window preserves all-time unlock without inventing period records");
+  s.Player(new(){World="w",PlayerId="a",Name="a",ShareProfile=false});s.Player(new(){World="w",PlayerId="b",Name="b",ShareProfile=false});
+  check(!(bool)Trophy(all)["earned"]!,"Private victory evidence cannot unlock a public trophy");
+  s.Player(new(){World="w",PlayerId="a",Name="a",ShareProfile=true,ShareMap=true});s.Player(new(){World="w",PlayerId="b",Name="b",ShareProfile=true,ShareMap=true});
   for(int i=0;i<110;i++)s.AddEvent(Event("cap"+i,"death"));var capped=Json(service.Adventures("w",all,now.AddDays(-1)));check(capped["recap"]!["moments"]!.Count()==100&&(bool)capped["recap"]!["truncated"]!,"Recap bounded independently of exact totals");
   check(!Json(service.Adventures("w",all,DateTime.UtcNow.AddDays(1)))["recap"]!["moments"]!.Any(),"Future visitor timestamp clamped safely");
  }

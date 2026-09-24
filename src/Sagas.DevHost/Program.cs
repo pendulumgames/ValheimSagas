@@ -2,8 +2,8 @@ using ValheimSagas;
 // This host is an isolated synthetic fixture harness, never a game-telemetry substitute.
 var root=Path.GetFullPath(args.Length>0?args[0]:".dev/fixture");
 var token="synthetic-development-token-only";
-using var service=new SagaService(new SagaOptions{ServerVersion="0.3.33",DataDirectory=root,WebDirectory=Path.GetFullPath("src/Sagas.Web"),ListenPrefix="http://127.0.0.1:9847/",RequireViewerToken=true,ViewerToken=token,World="synthetic-midgard",Synthetic=true,LoreEnabled=true,OpenRouterKey="synthetic-never-sent-to-openrouter",LoreMilestoneEvents=3,LoreCooldownMinutes=1,Log=Console.WriteLine},new HttpClient(new SyntheticLoreHandler()));
-service.Start();
+using var service=new SagaService(new SagaOptions{ServerVersion="0.3.36",DataDirectory=root,WebDirectory=Path.GetFullPath("src/Sagas.Web"),ListenPrefix="http://127.0.0.1:9847/",RequireViewerToken=true,ViewerToken=token,World="synthetic-midgard",Synthetic=true,LoreEnabled=true,OpenRouterKey="synthetic-never-sent-to-openrouter",LoreMilestoneEvents=3,LoreCooldownMinutes=1,Log=Console.WriteLine},new HttpClient(new SyntheticLoreHandler()));
+service.Start();JourneyFixture.Add(service);
 var names=new[]{"Astrid Ashwalker","Bjorn of the Pines"};var now=DateTime.UtcNow;
 for(int p=0;p<2;p++) {
  var id="fixture-"+p;var gear=new List<GearItem>{new GearItem{Slot="Chest",Name="Wolf armor chest",Type="Chest",Quality=3,Rarity="Rare",Durability=810,MaxDurability=1200,BaseStats=new(){{"Armor",20}},Stats=new(){{"Armor",24},{"Movement modifier",-0.05f}},Effects=new(){"Synthetic example: frost resistance; conditional effect not aggregated"}},new GearItem{Slot="RightHand",Name="Silver sword",Type="OneHandedWeapon",Quality=2,Rarity="Epic",Durability=158,MaxDurability=225,BaseStats=new(){{"Slash",75},{"Spirit",30}},Stats=new(){{"Slash",81},{"Spirit",35}},Effects=new(){"Synthetic example: +10% attack speed"}}};

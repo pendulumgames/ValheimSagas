@@ -10,3 +10,7 @@ docs/IN-GAME-TESTS.md
 docs/screenshots/character.png
 docs/screenshots/atlas.png
 docs/screenshots/leaderboard.png
+docs/BOSS-ARTWORK.md
+docs/ADVENTURE-PRESENTATION.md
+
+docs/screenshots/saga.png
